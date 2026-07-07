@@ -9,3 +9,4 @@ export { InsightCard } from "./insight-card";
 export { GlassPanel } from "./glass-panel";
 export { FeatureCard } from "./feature-card";
 export { MotionSection } from "./motion-section";
+export { MouseSpotlight } from "./mouse-spotlight";
