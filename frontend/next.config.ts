@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    // Limit parallel build workers to avoid OOM on memory-constrained machines
+    cpus: 2,
+  },
 };
 
 export default nextConfig;
