@@ -1,0 +1,27 @@
+{
+  "model_name": "Stacked LSTM Forecasting Kendaraan",
+  "framework": "PyTorch",
+  "features": [
+    "mobil_penumpang",
+    "bus",
+    "truk",
+    "sepeda_motor"
+  ],
+  "window": 3,
+  "input_shape": [
+    3,
+    4
+  ],
+  "output_shape": [
+    4
+  ],
+  "hidden_size": 64,
+  "num_layers": 2,
+  "dropout": 0.2,
+  "learning_rate": 0.001,
+  "best_val_loss": 0.006211343027340869,
+  "tahun_awal_data": 2015,
+  "tahun_akhir_data": 2025,
+  "jumlah_provinsi": 38,
+  "catatan_input": "Input model adalah data 3 tahun terakhir dengan urutan kolom mobil_penumpang, bus, truk, sepeda_motor."
+}

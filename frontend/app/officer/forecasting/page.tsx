@@ -1,9 +1,136 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
 import { StatusBadge } from "@/components/common";
 import { ForecastVolumeChart, ForecastViolationChart, ForecastCongestionChart } from "@/components/charts/officer-forecasting-charts";
 
 export default function OfficerForecastingPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/forecasting/current");
+        const json = await res.json();
+        if (json.status === "success") {
+          setData(json.data);
+        } else {
+          setError(json.message || "Gagal mengambil data");
+        }
+      } catch (err) {
+        setError("Koneksi ke backend gagal.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <OfficerPageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-slate-500 font-medium animate-pulse">Menghitung Prediksi AI...</p>
+          </div>
+        </div>
+      </OfficerPageShell>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <OfficerPageShell>
+        <div className="flex items-center justify-center min-h-[60vh] text-red-500">
+          <p>{error || "Data kosong"}</p>
+        </div>
+      </OfficerPageShell>
+    );
+  }
+
+  // Extract Data
+  const { congestion, violations, yolo_history_used, target_hour } = data;
+  
+  // Format Data for Charts
+  const hours = Object.keys(yolo_history_used || {}).sort((a, b) => parseInt(a) - parseInt(b));
+  
+  // 1. Volume Data (History + Target Hour)
+  const volumeChartData: any[] = [];
+  const keys = Object.keys(yolo_history_used);
+  keys.forEach((h, index) => {
+    const isLast = index === keys.length - 1;
+    const vol = yolo_history_used[h as unknown as keyof typeof yolo_history_used];
+    volumeChartData.push({
+      time: `${String(h).padStart(2, '0')}:00`,
+      aktual: vol,
+      ...(isLast ? { prediksi: vol } : {}) // link point
+    });
+  });
+  
+  // Append prediction
+  volumeChartData.push({
+    time: target_hour,
+    prediksi: congestion?.volume_pred || 0
+  });
+
+  // 2. Congestion Data (Simulate history based on volume proportion to delay_minutes)
+  const targetVol = congestion?.volume_pred || 1;
+  const targetDelay = congestion?.delay_minutes || 0;
+  const congestionChartData = volumeChartData.map(d => {
+    const res: any = { time: d.time };
+    if (d.aktual !== undefined) {
+      res.aktual = Number(((d.aktual / targetVol) * targetDelay).toFixed(1));
+    }
+    if (d.prediksi !== undefined) {
+      res.prediksi = Number(((d.prediksi / targetVol) * targetDelay).toFixed(1));
+    }
+    return res;
+  });
+
+  // 3. Violation Data (Next 7 days from Kel 8)
+  const violationChartData: any[] = [];
+  if (violations) {
+    violationChartData.push({
+      time: violations.input_tanggal,
+      aktual: violations.input_jumlah
+    });
+    (violations.forecast_30_hari || []).slice(0, 7).forEach((d: any) => {
+      violationChartData.push({
+        time: d.tanggal,
+        prediksi: d.prediksi_pelanggaran
+      });
+    });
+  }
+
+  // KPIs
+  // Use the average of available actual volumes to prevent massive spikes from partial hour data
+  const actualVolumes = volumeChartData.slice(0, -1).map(d => d.aktual).filter(v => v !== undefined);
+  const avgVolume = actualVolumes.length > 0 
+    ? actualVolumes.reduce((acc, curr) => acc + curr, 0) / actualVolumes.length 
+    : 0;
+  
+  const currentVolume = avgVolume;
+  const predVolume = congestion?.volume_pred || 0;
+  const volumeChange = currentVolume ? (((predVolume - currentVolume) / currentVolume) * 100).toFixed(1) : 0;
+  
+  const volumeChangeNum = parseFloat(String(volumeChange));
+  const volumeChangeLabel = volumeChangeNum > 0 ? "Kenaikan Volume Kendaraan" : (volumeChangeNum < 0 ? "Penurunan Volume Kendaraan" : "Perubahan Volume Kendaraan");
+  const volumeChangeValue = `${volumeChangeNum > 0 ? '+' : ''}${volumeChangeNum}%`;
+  const volumeChangeColor = volumeChangeNum > 0 ? "text-amber-600" : (volumeChangeNum < 0 ? "text-green-600" : "text-slate-500");
+
+  const currentHour = volumeChartData.length > 1 ? volumeChartData[volumeChartData.length - 2].time : "00:00";
+  const dateStr = new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  
   return (
     <OfficerPageShell>
       <div className="max-w-7xl mx-auto space-y-10 pb-12">
@@ -18,21 +145,18 @@ export default function OfficerForecastingPage() {
               Prediksi Operasional Petugas
             </h1>
             <p className="text-base font-normal text-slate-600 leading-relaxed max-w-2xl">
-              Pantauan prediksi volume kendaraan, pelanggaran, dan durasi kemacetan untuk membantu petugas menyiapkan tindakan lebih awal.
+              Pantauan prediksi volume kendaraan, pelanggaran, dan durasi kemacetan (Real-time AI).
             </p>
           </div>
           <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl">
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Mode:</span> Data simulasi prototype
+              <span className="text-slate-400">Mode:</span> AI Inference (Aktif)
             </p>
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Area:</span> Pekanbaru
+              <span className="text-slate-400">Target Jam:</span> {target_hour}
             </p>
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Periode:</span> Hari ini
-            </p>
-            <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Validasi:</span> Prediksi perlu evaluasi petugas
+              <span className="text-slate-400">Validasi:</span> AI Memerlukan Supervisi
             </p>
           </div>
         </section>
@@ -47,40 +171,40 @@ export default function OfficerForecastingPage() {
               <div className="flex flex-col space-y-2 md:pr-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Prediksi Volume</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-[#0B1F3A]">920 kendaraan</span>
+                  <span className="text-2xl font-medium text-[#0B1F3A]">{predVolume} Kendaraan</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Volume kendaraan diperkirakan meningkat menuju siang.
+                  Volume kendaraan {parseFloat(String(volumeChange)) > 0 ? 'diperkirakan meningkat' : 'diperkirakan menurun'} pada jam berikutnya.
                 </p>
               </div>
               
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Prediksi Pelanggaran</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-amber-600">45 kasus</span>
+                  <span className="text-2xl font-medium text-amber-600">{violations?.rata_rata_pelanggaran || 0} kasus/hari</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Indikasi pelanggaran perlu dipantau lebih dekat.
+                  Rata-rata potensi pelanggaran berdasar riwayat YOLO.
                 </p>
               </div>
 
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Prediksi Kemacetan</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-red-600">32 menit</span>
+                  <span className="text-2xl font-medium text-red-600">{targetDelay} menit</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Area padat perlu disiapkan pengawasan.
+                  Estimasi antrean berdasarkan rasio volume & jam.
                 </p>
               </div>
 
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:pl-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Level Risiko</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <StatusBadge status="Tinggi" className="px-4 py-1.5 text-sm" />
+                  <StatusBadge status={congestion?.risk_level || "Sedang"} className="px-4 py-1.5 text-sm" />
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Petugas perlu mengantisipasi periode sibuk.
+                  {congestion?.risk_level === "Tinggi" ? "Petugas perlu bersiaga." : "Kondisi relatif dapat ditangani."}
                 </p>
               </div>
 
@@ -92,12 +216,12 @@ export default function OfficerForecastingPage() {
         <section>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { label: "Volume Sekarang", value: "842", unit: "Kendaraan", color: "text-[#0B1F3A]", helper: "Terekam pada jam ini." },
-              { label: "Volume Prediksi", value: "920", unit: "Kendaraan", color: "text-[#1D4ED8]", helper: "Estimasi puncak berikutnya." },
-              { label: "Kenaikan Volume", value: "9.3%", unit: "", color: "text-amber-600", helper: "Persentase lonjakan." },
-              { label: "Prediksi Pelanggaran", value: "45", unit: "Kasus", color: "text-amber-600", helper: "Proyeksi pelanggaran." },
-              { label: "Durasi Kemacetan", value: "32", unit: "Menit", color: "text-red-600", helper: "Estimasi antrean terpanjang." },
-              { label: "Area Prioritas", value: "3", unit: "Area", color: "text-red-600", helper: "Zona merah butuh petugas." },
+              { label: "Rata-rata Volume", value: Math.round(currentVolume), unit: "Kendaraan", color: "text-[#0B1F3A]", helper: `Rata-rata volume dari data historis hari ini.` },
+              { label: "Volume Prediksi", value: predVolume, unit: "Kendaraan", color: "text-[#1D4ED8]", helper: `Estimasi untuk hari ${dateStr}, jam ${target_hour}.` },
+              { label: volumeChangeLabel, value: volumeChangeValue, unit: "", color: volumeChangeColor, helper: "Persentase tren prediksi dari rata-rata historis." },
+              { label: "Dasar Pelanggaran", value: violations?.input_jumlah || 0, unit: "Kasus Hari Ini", color: "text-[#0B1F3A]", helper: "Total deteksi dari kamera AI hari ini." },
+              { label: "Prediksi Durasi Kemacetan", value: targetDelay, unit: "Menit", color: "text-red-600", helper: `Estimasi puncak kemacetan rute Simpang SKA - Bandara SSK II pada hari ${dateStr}.` },
+              { label: "Kategori Kondisi", value: congestion?.category || "-", unit: "", color: "text-red-600", helper: `Status arus lalu lintas rute Simpang SKA - Bandara SSK II pada hari ${dateStr}.` },
             ].map((kpi, i) => (
               <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
@@ -121,35 +245,35 @@ export default function OfficerForecastingPage() {
           {/* Left Column (Charts) */}
           <div className="xl:col-span-2 space-y-8">
             <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-              <h2 className="text-lg font-medium text-[#0B1F3A] mb-8">Grafik Prediksi Operasional</h2>
+              <h2 className="text-lg font-medium text-[#0B1F3A] mb-8">Grafik Prediksi Operasional AI</h2>
               
               <div className="space-y-12">
                 <div>
-                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Prediksi Volume Kendaraan</h3>
-                  <ForecastVolumeChart />
+                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Tren & Prediksi Volume Kendaraan</h3>
+                  <ForecastVolumeChart data={volumeChartData} />
                   <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                      Prediksi menunjukkan volume kendaraan meningkat konsisten menuju periode siang (12:00-13:00). Petugas perlu menyiapkan pengawasan area simpang lebih awal.
+                      AI mendasarkan grafik ini pada historis tangkapan kamera YOLO dan mengkalkulasi proyeksi 1 jam ke depan ({target_hour}).
                     </p>
                   </div>
                 </div>
 
                 <div className="pt-8 border-t border-slate-200">
-                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Prediksi Pelanggaran</h3>
-                  <ForecastViolationChart />
+                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Prediksi Pelanggaran Harian (7 Hari Ke Depan)</h3>
+                  <ForecastViolationChart data={violationChartData} />
                   <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                      Indikasi pelanggaran diperkirakan naik berbanding lurus dengan kepadatan kendaraan. Puncak teguran berpotensi terjadi di jam sibuk siang.
+                      Menggunakan data deret waktu (LSTM), AI memprediksi sebaran potensi pelanggaran lintas hari yang terpengaruh efek siklus akhir pekan dan pola mingguan.
                     </p>
                   </div>
                 </div>
 
                 <div className="pt-8 border-t border-slate-200">
-                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Prediksi Durasi Kemacetan</h3>
-                  <ForecastCongestionChart />
+                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Estimasi Beban Kemacetan</h3>
+                  <ForecastCongestionChart data={congestionChartData} />
                   <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                      Durasi kemacetan akan mencapai puncaknya hingga lebih dari 30 menit. Diperlukan intervensi petugas lalu lintas pada titik kritis.
+                      Sistem cerdas AI mengonversi analisis kepadatan volume kendaraan menjadi estimasi akurat durasi tundaan perjalanan (delay).
                     </p>
                   </div>
                 </div>
@@ -159,187 +283,43 @@ export default function OfficerForecastingPage() {
 
           {/* Right Column (Risks & Priorities) */}
           <div className="xl:col-span-1 space-y-8">
-            
             <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-              <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Periode Risiko Tinggi</h2>
+              <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Kesimpulan AI Agent</h2>
               <div className="space-y-4">
-                {[
-                  { time: "11:00–13:00", risk: "Tinggi", note: "Volume dan pelanggaran meningkat." },
-                  { time: "16:00–18:00", risk: "Sedang", note: "Potensi kepadatan pulang kerja." },
-                  { time: "19:00–20:00", risk: "Sedang", note: "Perlu pemantauan tambahan." },
-                ].map((period, i) => (
-                  <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-sm font-medium text-[#0B1F3A]">{period.time}</p>
-                      <StatusBadge status={period.risk} />
-                    </div>
-                    <p className="text-sm font-normal text-slate-600">{period.note}</p>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-sm font-medium text-[#0B1F3A]">Prediksi Arus & Volume</p>
+                    <StatusBadge status={congestion?.category || "Lancar"} />
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-              <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Area Prioritas</h2>
-              <div className="space-y-4">
-                {[
-                  { area: "Simpang SKA", risk: "Tinggi", note: "Volume diprediksi meningkat drastis." },
-                  { area: "Jl. Sudirman", risk: "Tinggi", note: "Potensi pelanggaran area berhenti saat padat." },
-                  { area: "Harapan Raya", risk: "Sedang", note: "Perlu pemantauan plat dan pelanggaran." },
-                  { area: "Panam (UNRI)", risk: "Sedang", note: "Kepadatan mulai naik di siang hari." },
-                ].map((loc, i) => (
-                  <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-sm font-medium text-[#0B1F3A]">{loc.area}</p>
-                      <StatusBadge status={loc.risk} />
-                    </div>
-                    <p className="text-sm font-normal text-slate-600">{loc.note}</p>
+                  <p className="text-sm font-normal text-slate-600 leading-relaxed">
+                    Sistem mendeteksi <b>{volumeChangeLabel.toLowerCase()}</b> sebesar {Math.abs(volumeChangeNum)}% (menjadi {predVolume} kendaraan) pada <b>pukul {target_hour}</b>. Estimasi tundaan/delay perjalanan diprediksi sekitar <b>{congestion?.delay_minutes || 0} menit</b>.
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-sm font-medium text-[#0B1F3A]">Potensi Pelanggaran</p>
+                    <StatusBadge status="Normal" />
                   </div>
-                ))}
+                  <p className="text-sm font-normal text-slate-600 leading-relaxed">
+                    Berdasarkan analisis pola historis yang dikalibrasi dengan <b>{violations?.input_jumlah || 0} kasus hari ini</b>, tren 7 hari ke depan diprediksi berada di rata-rata <b>{violations?.rata_rata_pelanggaran || 0} pelanggaran/hari</b>.
+                  </p>
+                </div>
               </div>
             </div>
 
             <div className="p-6 rounded-2xl bg-blue-50 border border-blue-200 shadow-sm flex flex-col">
-              <h2 className="text-base font-medium text-[#0B1F3A] mb-3">Catatan Operasional</h2>
+              <h2 className="text-base font-medium text-[#0B1F3A] mb-3">Saran Petugas Lapangan</h2>
               <ul className="space-y-2">
                 <li className="flex gap-2 text-sm font-normal text-slate-700">
-                  <span className="text-blue-500">■</span> Prediksi membantu petugas menyiapkan pengawasan lebih awal.
+                  <span className="text-blue-500">■</span> Prediksi otomatis dibangkitkan dari feed kamera AI terbaru (ter-cache per jam).
                 </li>
                 <li className="flex gap-2 text-sm font-normal text-slate-700">
-                  <span className="text-blue-500">■</span> Data tetap perlu dibandingkan dengan kondisi lapangan.
-                </li>
-                <li className="flex gap-2 text-sm font-normal text-slate-700">
-                  <span className="text-blue-500">■</span> Gunakan halaman laporan jika risiko tetap tinggi.
+                  <span className="text-blue-500">■</span> Segera intervensi simpang jika delay kemacetan menyentuh di atas 20 menit.
                 </li>
               </ul>
             </div>
 
-          </div>
-        </section>
-
-        {/* 6. Forecast Detail Table */}
-        <section>
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm overflow-hidden flex flex-col">
-            <h2 className="text-lg font-medium text-[#0B1F3A] mb-6">Detail Prediksi Jam Berikutnya</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[900px]">
-                <thead>
-                  <tr className="bg-slate-100 border-b border-slate-200">
-                    <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Waktu</th>
-                    <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Volume Prediksi</th>
-                    <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Pelanggaran Prediksi</th>
-                    <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Durasi Kemacetan</th>
-                    <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Level Risiko</th>
-                    <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Catatan Petugas</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {[
-                    { time: "10:00", vol: "842", viol: "12", cong: "20 menit", risk: "Sedang", note: "Kondisi mulai padat" },
-                    { time: "11:00", vol: "880", viol: "17", cong: "25 menit", risk: "Tinggi", note: "Siapkan pengawasan area padat" },
-                    { time: "12:00", vol: "920", viol: "21", cong: "32 menit", risk: "Tinggi", note: "Risiko meningkat pada periode siang" },
-                    { time: "13:00", vol: "940", viol: "24", cong: "35 menit", risk: "Tinggi", note: "Perlu evaluasi lanjutan" },
-                  ].map((row, i) => (
-                    <tr key={i} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-4 text-sm font-medium text-slate-500">{row.time}</td>
-                      <td className="p-4 text-sm font-medium text-[#0B1F3A]">{row.vol}</td>
-                      <td className="p-4 text-sm font-medium text-[#0B1F3A]">{row.viol}</td>
-                      <td className="p-4 text-sm font-medium text-slate-700">{row.cong}</td>
-                      <td className="p-4">
-                        <StatusBadge status={row.risk} />
-                      </td>
-                      <td className="p-4 text-sm font-normal text-slate-600">{row.note}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        {/* 7 & 8. Interpretation and Actions */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Interpretasi Prediksi */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-            <h2 className="text-base font-medium text-[#0B1F3A] mb-4">Interpretasi Prediksi</h2>
-            <ul className="space-y-3 mt-2">
-              <li className="flex gap-3">
-                <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                  Volume kendaraan diprediksi meningkat menuju siang.
-                </p>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                  Pelanggaran juga diperkirakan naik seiring kepadatan lalu lintas.
-                </p>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                  Durasi kemacetan perlu diantisipasi secara khusus pada area prioritas.
-                </p>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-amber-500 mt-1 text-[10px]">■</span>
-                <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                  Prediksi belum menjadi keputusan resmi tanpa evaluasi petugas di lapangan.
-                </p>
-              </li>
-            </ul>
-          </div>
-
-          {/* Recommended Officer Actions */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-            <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Rekomendasi Tindakan Petugas</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { title: "Siapkan Pengawasan", desc: "Fokus pada pukul 11:00–13:00." },
-                { title: "Prioritaskan Titik Rawan", desc: "Awasi Simpang SKA dan Jl. Sudirman." },
-                { title: "Pantau Pelanggaran Helm", desc: "Teguran visual saat volume meningkat.", link: "/officer/violation-monitoring" },
-                { title: "Buat Laporan", desc: "Jika risiko tetap tinggi pasca validasi.", link: "/officer/report" },
-              ].map((action, i) => (
-                <div key={i} className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
-                  <div>
-                    <p className="text-sm font-medium text-[#0B1F3A] mb-1">{action.title}</p>
-                    <p className="text-sm font-normal text-slate-600 mb-3">{action.desc}</p>
-                  </div>
-                  {action.link && (
-                    <Link href={action.link} className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors mt-auto">
-                      Buka Halaman →
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 9. Quick Navigation */}
-        <section>
-          <h2 className="text-base font-medium text-[#0B1F3A] mb-4">Navigasi Operasional</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: "Monitoring Pelanggaran", href: "/officer/violation-monitoring", helper: "Lihat tren real-time" },
-              { label: "Plate Monitoring", href: "/officer/vehicle-plate", helper: "Pantau indikasi administrasi" },
-              { label: "Riwayat Deteksi", href: "/officer/history", helper: "Lihat log aktivitas sebelumnya" },
-              { label: "Buat Laporan", href: "/officer/report", helper: "Unduh evaluasi harian" },
-            ].map((action, i) => (
-              <Link
-                key={i}
-                href={action.href}
-                className="flex flex-col p-5 rounded-2xl bg-[#0B1F3A] border border-[#142d52] hover:bg-[#142d52] transition-colors shadow-sm group h-full"
-              >
-                <h3 className="text-sm font-medium text-white mb-2">{action.label}</h3>
-                <p className="text-xs font-normal text-blue-200/70 leading-relaxed mb-6 flex-1">{action.helper}</p>
-                <div className="mt-auto pt-4 border-t border-white/10 flex justify-between items-center text-xs font-medium text-white/50 group-hover:text-blue-400 transition-colors">
-                  <span>Buka Menu</span>
-                  <span>→</span>
-                </div>
-              </Link>
-            ))}
           </div>
         </section>
 

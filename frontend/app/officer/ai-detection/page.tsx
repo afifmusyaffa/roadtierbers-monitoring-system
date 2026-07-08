@@ -1,13 +1,207 @@
+"use client";
+
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
 import { StatusBadge } from "@/components/common";
+import { UploadCloud, Loader2, AlertTriangle, CheckCircle, Image as ImageIcon } from "lucide-react";
+
+// Types for YOLO Response
+interface BoundingBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+interface DetectionItem {
+  name: string;
+  class: number;
+  confidence: number;
+  box: BoundingBox;
+}
+interface ModelResult {
+  status: string;
+  message?: string;
+  data?: DetectionItem[];
+}
+interface AnalyzeResponse {
+  status: string;
+  message: string;
+  data: {
+    history_id: number;
+    detections: Record<string, ModelResult>;
+  };
+}
 
 export default function OfficerAIDetectionPage() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imgSize, setImgSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [results, setResults] = useState<AnalyzeResponse | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setResults(null);
+      
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+
+      const img = new Image();
+      img.onload = () => {
+        setImgSize({ width: img.width, height: img.height });
+      };
+      img.src = url;
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const runDetection = async () => {
+    if (!selectedFile) return;
+    setIsDetecting(true);
+    setResults(null);
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      const res = await fetch("http://localhost:8000/detection/analyze-all", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      setResults(data);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to backend API");
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
+  // Render bounding boxes
+  const renderBoundingBoxes = () => {
+    if (!results || !results.data || !results.data.detections) return null;
+    if (imgSize.width === 0 || imgSize.height === 0) return null;
+
+    const allBoxes: React.ReactNode[] = [];
+    const colors = {
+      helm: "border-red-500 bg-red-500/10",
+      boncengan: "border-orange-500 bg-orange-500/10",
+      plat: "border-yellow-500 bg-yellow-500/10",
+      pajak: "border-green-500 bg-green-500/10",
+      kendaraan: "border-blue-500 bg-blue-500/10",
+    };
+    const textColors = {
+      helm: "bg-red-500",
+      boncengan: "bg-orange-500",
+      plat: "bg-yellow-500",
+      pajak: "bg-green-500",
+      kendaraan: "bg-blue-500",
+    };
+
+    Object.entries(results.data.detections).forEach(([modelName, modelRes]) => {
+      if (modelRes.status === "success" && modelRes.data) {
+        modelRes.data.forEach((item, idx) => {
+          const { x1, y1, x2, y2 } = item.box;
+          const left = (x1 / imgSize.width) * 100;
+          const top = (y1 / imgSize.height) * 100;
+          const width = ((x2 - x1) / imgSize.width) * 100;
+          const height = ((y2 - y1) / imgSize.height) * 100;
+          
+          const colorClass = colors[modelName as keyof typeof colors] || "border-purple-500 bg-purple-500/10";
+          const bgClass = textColors[modelName as keyof typeof textColors] || "bg-purple-500";
+
+          const isNearTop = top < 5;
+          allBoxes.push(
+            <div
+              key={`${modelName}-${idx}`}
+              className={`absolute border-[3px] shadow-sm ${colorClass}`}
+              style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
+            >
+              <div className={`absolute left-[-3px] ${isNearTop ? 'top-[-3px]' : '-top-7'} ${bgClass} text-white text-[11px] font-semibold px-2 py-0.5 whitespace-nowrap z-10 shadow-sm`}>
+                {item.name} ({(item.confidence * 100).toFixed(0)}%)
+              </div>
+            </div>
+          );
+        });
+      }
+    });
+    return allBoxes;
+  };
+
+  // Build table data
+  const buildTableData = () => {
+    if (!results || !results.data || !results.data.detections) return [];
+    
+    let rows: any[] = [];
+    Object.entries(results.data.detections).forEach(([modelName, modelRes]) => {
+      if (modelRes.status === "success" && modelRes.data) {
+        if (modelRes.data.length === 0) {
+          rows.push({
+             time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+             obj: modelName,
+             res: "Tidak terdeteksi",
+             count: "0",
+             risk: "Aman",
+             note: `Model ${modelName} aktif, hasil kosong`
+          });
+        } else {
+          // Group by class name
+          const counts: Record<string, number> = {};
+          modelRes.data.forEach((item) => {
+            counts[item.name] = (counts[item.name] || 0) + 1;
+          });
+          
+          Object.entries(counts).forEach(([className, count]) => {
+             rows.push({
+               time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+               obj: modelName,
+               res: className,
+               count: count,
+               risk: modelName === "helm" || modelName === "boncengan" ? "Sedang" : "Rendah",
+               note: `Terdeteksi oleh model ${modelName}`
+             });
+          });
+        }
+      } else if (modelRes.status === "belum_tersedia") {
+         rows.push({
+             time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+             obj: modelName,
+             res: "Model Belum Tersedia",
+             count: "-",
+             risk: "Rendah",
+             note: modelRes.message
+         });
+      }
+    });
+    return rows;
+  };
+
+  const tableData = results ? buildTableData() : [];
+  
+  // Calculate Summaries
+  let totalVehicles = 0;
+  let totalViolations = 0;
+  
+  if (results && results.data && results.data.detections) {
+      if (results.data.detections.kendaraan?.data) {
+          totalVehicles = results.data.detections.kendaraan.data.length;
+      }
+      if (results.data.detections.helm?.data) totalViolations += results.data.detections.helm.data.length;
+      if (results.data.detections.boncengan?.data) totalViolations += results.data.detections.boncengan.data.length;
+  }
+
   return (
     <OfficerPageShell>
       <div className="max-w-7xl mx-auto space-y-10 pb-12">
-        
-        {/* 1. Header Bar */}
+        {/* Header */}
         <section className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-6 border-b border-slate-200">
           <div className="space-y-2">
             <span className="inline-flex items-center gap-2.5 rounded-full border border-blue-200 bg-blue-50/80 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-[#1D4ED8]">
@@ -17,18 +211,18 @@ export default function OfficerAIDetectionPage() {
               Pusat Deteksi AI
             </h1>
             <p className="text-base font-normal text-slate-600 leading-relaxed max-w-2xl">
-              Panel kerja untuk membaca hasil deteksi kendaraan, rambu, dan indikasi pelanggaran dari sample pemantauan.
+              Panel kerja interaktif untuk menguji dan mendeteksi kendaraan serta pelanggaran dari tangkapan gambar.
             </p>
           </div>
           <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl">
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Mode:</span> Data simulasi prototype
+              <span className="text-slate-400">Mode:</span> Testing & Integrasi API
             </p>
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Sumber:</span> Sample kamera
+              <span className="text-slate-400">Sumber:</span> Upload File Manual
             </p>
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Validasi:</span> Perlu pemeriksaan petugas
+              <span className="text-slate-400">Status:</span> {results ? "Selesai" : (isDetecting ? "Proses..." : "Menunggu input")}
             </p>
           </div>
         </section>
@@ -37,79 +231,76 @@ export default function OfficerAIDetectionPage() {
           {/* Left Column: Input Panel & Visual Preview */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* 2. Detection Input Panel */}
+            {/* Input Panel */}
             <section>
               <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div className="space-y-3">
-                  <h2 className="text-lg font-medium text-[#0B1F3A]">Sumber Analisis</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-                    <p className="text-sm font-medium text-slate-600">
-                      <span className="text-slate-400 w-24 inline-block">Sumber:</span> Kamera Simpang SKA
-                    </p>
-                    <p className="text-sm font-medium text-slate-600">
-                      <span className="text-slate-400 w-24 inline-block">Waktu:</span> Hari ini, 10:15 WIB
-                    </p>
-                    <p className="text-sm font-medium text-slate-600">
-                      <span className="text-slate-400 w-24 inline-block">Jenis:</span> Kendaraan, Rambu, Pelanggaran
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-400 w-24">Status:</span>
-                      <StatusBadge status="Selesai" className="bg-blue-50 text-blue-700 border-blue-200 ring-blue-100" />
-                    </div>
-                  </div>
+                  <h2 className="text-lg font-medium text-[#0B1F3A]">Uji Gambar Deteksi</h2>
+                  <p className="text-sm text-slate-500 max-w-md">Silakan upload gambar lalu klik "Deteksi API" untuk menjalankan kelima model AI YOLO secara paralel di backend FastAPI.</p>
+                  {results && (
+                     <div className="flex items-center gap-2 mt-2">
+                       <span className="text-sm font-medium text-slate-400 w-24">Status DB:</span>
+                       <StatusBadge status="Tersimpan" className="bg-green-50 text-green-700 border-green-200 ring-green-100" />
+                       <span className="text-xs text-slate-400 ml-2">ID Riwayat: {results.data.history_id}</span>
+                     </div>
+                  )}
                 </div>
 
-                <div className="shrink-0 p-4 bg-slate-50 rounded-xl border border-slate-200 border-dashed text-center min-w-[200px]">
-                  <p className="text-sm font-medium text-[#0B1F3A] mb-1">Area Upload Prototype</p>
-                  <p className="text-xs font-normal text-slate-500 mb-3">Gunakan sample kamera</p>
-                  <span className="inline-block px-3 py-1.5 bg-white border border-slate-200 rounded text-xs font-medium text-slate-400 cursor-not-allowed">
-                    Belum terhubung
-                  </span>
+                <div className="shrink-0 flex flex-col gap-3 min-w-[200px]">
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+                  <button 
+                    onClick={handleUploadClick}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#0B1F3A] border border-slate-300 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <UploadCloud className="w-4 h-4" />
+                    Pilih Gambar
+                  </button>
+                  <button 
+                    onClick={runDetection}
+                    disabled={!selectedFile || isDetecting}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#1D4ED8] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    {isDetecting ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Proses API...</>
+                    ) : (
+                      "Deteksi API"
+                    )}
+                  </button>
                 </div>
               </div>
             </section>
 
-            {/* 3. Visual Detection Preview */}
+            {/* Visual Detection Preview */}
             <section>
               <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm">
-                <h2 className="text-lg font-medium text-[#0B1F3A] mb-4">Preview Deteksi Visual</h2>
+                <h2 className="text-lg font-medium text-[#0B1F3A] mb-4 flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-slate-400" /> Preview Deteksi Visual
+                </h2>
                 
-                {/* CSS Visual Box */}
-                <div className="relative w-full aspect-video bg-slate-100 rounded-xl border border-slate-200 overflow-hidden mb-4">
-                  {/* Road backdrop elements */}
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,#e2e8f0_0%,#f1f5f9_100%)] opacity-50" />
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-full border-x-4 border-dashed border-white/60 transform perspective-[1000px] rotateX-[60deg]" />
-                  
-                  {/* Motor + Tanpa helm bbox */}
-                  <div className="absolute top-[30%] left-[25%] w-[15%] h-[40%] border-2 border-red-500 bg-red-500/10 rounded-sm">
-                    <div className="absolute -top-7 left-0 flex gap-1">
-                      <span className="bg-red-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap">Motor</span>
-                      <span className="bg-red-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap">Tanpa Helm</span>
+                {previewUrl ? (
+                  <div className="relative w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
+                    {/* The image itself */}
+                    <img 
+                      src={previewUrl} 
+                      alt="Uploaded preview" 
+                      className="w-full h-auto object-contain block" 
+                    />
+                    {/* Bounding Boxes Container absolutely positioned over the image */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {renderBoundingBoxes()}
                     </div>
                   </div>
-
-                  {/* Mobil bbox */}
-                  <div className="absolute top-[40%] left-[55%] w-[25%] h-[35%] border-2 border-blue-500 bg-blue-500/10 rounded-sm">
-                    <div className="absolute -top-5 left-0 bg-blue-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap">
-                      Mobil
-                    </div>
+                ) : (
+                  <div className="relative w-full aspect-video bg-slate-100 rounded-xl border border-slate-200 border-dashed flex flex-col items-center justify-center text-slate-400 mb-4">
+                     <ImageIcon className="w-10 h-10 mb-2 opacity-50" />
+                     <p className="text-sm font-medium">Belum ada gambar</p>
+                     <p className="text-xs">Upload gambar untuk melihat hasil deteksi</p>
                   </div>
-
-                  {/* Rambu bbox */}
-                  <div className="absolute top-[15%] right-[10%] w-[8%] h-[20%] border-2 border-teal-500 bg-teal-500/10 rounded-sm">
-                    <div className="absolute -bottom-5 left-0 bg-teal-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap">
-                      Rambu
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-xs font-medium text-slate-500 text-center">
-                  ℹ️ Hasil visual merupakan representasi sample pemantauan untuk kebutuhan demo.
-                </p>
+                )}
               </div>
             </section>
             
-            {/* 6. Detection Result Table */}
+            {/* Detection Result Table */}
             <section>
               <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm overflow-hidden flex flex-col">
                 <h2 className="text-lg font-medium text-[#0B1F3A] mb-4">Rincian Hasil Deteksi</h2>
@@ -118,31 +309,34 @@ export default function OfficerAIDetectionPage() {
                     <thead>
                       <tr className="bg-slate-100 border-b border-slate-200">
                         <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Waktu</th>
-                        <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Objek</th>
-                        <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Hasil Deteksi</th>
+                        <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Model AI</th>
+                        <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Class / Hasil</th>
                         <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Jumlah</th>
                         <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Risiko</th>
-                        <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Catatan Petugas</th>
+                        <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Catatan</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {[
-                        { time: "10:15", obj: "Motor", res: "Tanpa helm", count: 5, risk: "Tinggi", note: "Perlu validasi visual" },
-                        { time: "10:15", obj: "Motor", res: "Bonceng >2", count: 2, risk: "Sedang", note: "Cek ulang frame sample" },
-                        { time: "10:15", obj: "Rambu", res: "Dilarang berhenti", count: 1, risk: "Sedang", note: "Perhatikan area sekitar rambu" },
-                        { time: "10:15", obj: "Mobil", res: "Kendaraan normal", count: 14, risk: "Rendah", note: "Tidak ada tindakan khusus" },
-                      ].map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-50 transition-colors">
-                          <td className="p-4 text-sm font-medium text-slate-500">{row.time}</td>
-                          <td className="p-4 text-sm font-medium text-[#0B1F3A]">{row.obj}</td>
-                          <td className="p-4 text-sm font-normal text-slate-600">{row.res}</td>
-                          <td className="p-4 text-sm font-normal text-slate-600">{row.count}</td>
-                          <td className="p-4">
-                            <StatusBadge status={row.risk} />
-                          </td>
-                          <td className="p-4 text-sm font-normal text-slate-600">{row.note}</td>
-                        </tr>
-                      ))}
+                      {tableData.length > 0 ? (
+                        tableData.map((row, i) => (
+                          <tr key={i} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4 text-sm font-medium text-slate-500">{row.time}</td>
+                            <td className="p-4 text-sm font-medium text-[#0B1F3A] capitalize">{row.obj}</td>
+                            <td className="p-4 text-sm font-normal text-slate-600">{row.res}</td>
+                            <td className="p-4 text-sm font-normal text-slate-600">{row.count}</td>
+                            <td className="p-4">
+                              <StatusBadge status={row.risk} />
+                            </td>
+                            <td className="p-4 text-sm font-normal text-slate-600">{row.note}</td>
+                          </tr>
+                        ))
+                      ) : (
+                         <tr>
+                            <td colSpan={6} className="p-8 text-center text-sm text-slate-500">
+                               Belum ada data deteksi. Silakan upload gambar dan jalankan deteksi.
+                            </td>
+                         </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -154,103 +348,48 @@ export default function OfficerAIDetectionPage() {
           {/* Right Column: Summaries, Validation, Actions */}
           <div className="lg:col-span-1 space-y-8">
             
-            {/* 4. Detection Summary Cards */}
+            {/* Detection Summary Cards */}
             <section>
               <h2 className="text-lg font-medium text-[#0B1F3A] mb-4">Rangkuman Deteksi</h2>
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { value: "38", label: "Kendaraan Terdeteksi", helper: "Total objek", colSpan: "col-span-2" },
-                  { value: "24", label: "Motor", helper: "Roda dua" },
-                  { value: "14", label: "Mobil", helper: "Roda empat+" },
-                  { value: "3", label: "Rambu Terdeteksi", helper: "Total objek" },
-                  { value: "7", label: "Indikasi Pelanggaran", helper: "Perlu cek" },
-                ].map((item, i) => (
-                  <div key={i} className={`p-4 rounded-xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between ${item.colSpan || ''}`}>
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-1">{item.label}</p>
-                    <p className="text-3xl font-medium text-[#1D4ED8] mb-2">{item.value}</p>
-                    <p className="text-xs font-normal text-slate-500">{item.helper}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* 5. Violation Detection Result */}
-            <section>
-              <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm">
-                <h2 className="text-base font-medium text-[#0B1F3A] mb-4">Kategori Pelanggaran</h2>
-                <div className="space-y-3">
-                  {[
-                    { type: "Tanpa helm", count: "5 kasus", risk: "Tinggi" },
-                    { type: "Bonceng lebih dari 2", count: "2 kasus", risk: "Sedang" },
-                    { type: "Melanggar area berhenti", count: "1 kasus", risk: "Sedang" },
-                  ].map((v, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
-                      <div>
-                        <p className="text-sm font-medium text-[#0B1F3A]">{v.type}</p>
-                        <p className="text-xs font-normal text-slate-500 mt-0.5">{v.count}</p>
-                      </div>
-                      <StatusBadge status={v.risk} />
-                    </div>
-                  ))}
+                <div className="p-4 rounded-xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between col-span-2">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-1">Total Kendaraan</p>
+                  <p className="text-3xl font-medium text-[#1D4ED8] mb-2">{totalVehicles || "-"}</p>
+                  <p className="text-xs font-normal text-slate-500">Berdasarkan model Kelompok 6</p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100">
-                  <p className="text-xs font-normal text-slate-600 leading-relaxed">
-                    Kategori ini perlu diperiksa kembali oleh petugas sebelum dijadikan dasar laporan resmi.
-                  </p>
+                <div className="p-4 rounded-xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between col-span-2">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-1">Indikasi Pelanggaran</p>
+                  <p className="text-3xl font-medium text-red-500 mb-2">{totalViolations || "-"}</p>
+                  <p className="text-xs font-normal text-slate-500">Helm & Boncengan</p>
                 </div>
               </div>
             </section>
 
-            {/* 7. Officer Validation Panel */}
+            {/* Officer Validation Panel */}
             <section>
               <div className="p-5 rounded-2xl bg-blue-50 border border-blue-200 shadow-sm">
                 <h2 className="text-base font-medium text-[#0B1F3A] mb-3 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">!</span>
-                  Validasi Petugas Tetap Diperlukan
+                  <AlertTriangle className="w-5 h-5 text-blue-600" />
+                  Validasi Petugas
                 </h2>
                 <ul className="space-y-2">
                   <li className="flex gap-2">
-                    <span className="text-blue-500 mt-0.5 text-xs">■</span>
+                    <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                     <p className="text-sm font-normal text-slate-700">AI membantu mempercepat pembacaan sample pemantauan.</p>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-blue-500 mt-0.5 text-xs">■</span>
-                    <p className="text-sm font-normal text-slate-700">Petugas tetap perlu memeriksa konteks visual.</p>
+                    <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                    <p className="text-sm font-normal text-slate-700">Petugas tetap perlu memeriksa konteks visual dari Bounding Box.</p>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-blue-500 mt-0.5 text-xs">■</span>
-                    <p className="text-sm font-normal text-slate-700">Hasil deteksi belum menjadi keputusan resmi tanpa verifikasi.</p>
+                    <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                    <p className="text-sm font-normal text-slate-700">Status "Belum Tersedia" berarti model belum dipasang di backend.</p>
                   </li>
                 </ul>
               </div>
             </section>
 
-            {/* 8. Recommended Actions */}
-            <section>
-              <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm">
-                <h2 className="text-base font-medium text-[#0B1F3A] mb-4">Rekomendasi Tindakan</h2>
-                <div className="space-y-3">
-                  {[
-                    { title: "Periksa Kasus Tanpa Helm", desc: "Validasi visual pada frame sample." },
-                    { title: "Prioritaskan Risiko Tinggi", desc: "Awasi area yang memiliki banyak kasus tinggi." },
-                    { title: "Gunakan Violation Monitoring", desc: "Lihat rangkuman jenis pelanggaran.", link: "/officer/violation-monitoring" },
-                    { title: "Buat Laporan", desc: "Jika pelanggaran terkonfirmasi.", link: "/officer/report" },
-                  ].map((action, i) => (
-                    <div key={i} className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
-                      <p className="text-sm font-medium text-[#0B1F3A] mb-1">{action.title}</p>
-                      <p className="text-sm font-normal text-slate-600 mb-2">{action.desc}</p>
-                      {action.link && (
-                        <Link href={action.link} className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                          Buka Halaman →
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* 9. Quick Navigation */}
+            {/* Quick Navigation */}
             <section>
               <h2 className="text-base font-medium text-[#0B1F3A] mb-4">Navigasi Terkait</h2>
               <div className="flex flex-col gap-3">
