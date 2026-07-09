@@ -18,7 +18,6 @@ export const historyRows = [
   { time: "10:18", loc: "Simpang SKA (Utara)", cat: "Kendaraan", res: "Motor terpantau", count: "8", risk: "Rendah", val: "Ditinjau", note: "Arus normal", follow: "Forecasting" },
   { time: "10:22", loc: "Simpang SKA (Selatan)", cat: "Plat", res: "BM 2*** CD", count: "1", risk: "Sedang", val: "Perlu validasi", note: "Plat terhalang", follow: "Plate Monitoring" },
   { time: "10:25", loc: "Simpang SKA (Timur)", cat: "Kendaraan", res: "Mobil terpantau", count: "4", risk: "Rendah", val: "Ditinjau", note: "Arus lancar", follow: "Dashboard" },
-  { time: "10:30", loc: "Simpang SKA (Selatan)", cat: "Rambu", res: "Batas Berhenti", count: "1", risk: "Sedang", val: "Ditinjau", note: "Dekat garis marka", follow: "AI Detection" },
   { time: "10:35", loc: "Simpang SKA (Utara)", cat: "Pelanggaran", res: "Boncengan Tiga", count: "1", risk: "Tinggi", val: "Perlu validasi", note: "Verifikasi visual", follow: "Monitoring Pelanggaran" },
   { time: "10:40", loc: "Simpang SKA (Selatan)", cat: "Forecasting", res: "Estimasi Normal", count: "1", risk: "Rendah", val: "Ditinjau", note: "Berdasarkan volume", follow: "Forecasting" },
   { time: "10:45", loc: "Simpang SKA (Barat)", cat: "Pelanggaran", res: "Tanpa helm", count: "2", risk: "Tinggi", val: "Perlu validasi", note: "Pengendara dan penumpang", follow: "Dashboard" },

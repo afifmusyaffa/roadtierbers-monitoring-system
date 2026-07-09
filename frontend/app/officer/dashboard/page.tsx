@@ -140,7 +140,7 @@ export default function OfficerDashboardPage() {
                 label: "Total Deteksi", 
                 value: data.total_detections_today.toLocaleString('id-ID'), 
                 color: "text-[#1D4ED8]",
-                helper: "Analisis kamera AI hari ini."
+                helper: "Analisis kamera CCTV hari ini."
               },
               { 
                 label: "Total Pelanggaran", 
@@ -271,13 +271,13 @@ export default function OfficerDashboardPage() {
             
             {/* Right: Area Monitoring Priority */}
             <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-              <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Prioritas Area (Pekanbaru)</h2>
+              <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Prioritas Area (Simpang SKA)</h2>
               <div className="space-y-4">
                 {[
-                  { area: "Simpang SKA", status: data.traffic_condition, note: "Pusat pantauan." },
-                  { area: "Panam (UNRI)", status: "Lancar", note: "Simulasi sekunder." },
-                  { area: "Jl. Sudirman", status: "Lancar", note: "Simulasi sekunder." },
-                  { area: "Harapan Raya", status: "Lancar", note: "Simulasi sekunder." },
+                  { area: "Kamera Utama (Tengah)", status: data.traffic_condition, note: "Pusat pantauan." },
+                  { area: "Kamera Utara (Jl. Tuanku Tambusai)", status: "Lancar", note: "Pantauan sekunder." },
+                  { area: "Kamera Selatan (Jl. Soekarno Hatta)", status: "Lancar", note: "Pantauan sekunder." },
+                  { area: "Kamera Timur (Arah Sudirman)", status: "Lancar", note: "Pantauan sekunder." },
                 ].map((loc, i) => (
                   <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <div className="flex justify-between items-start mb-2">
@@ -293,7 +293,7 @@ export default function OfficerDashboardPage() {
             {/* 8. Recommended Officer Actions */}
             <div className="p-6 rounded-2xl bg-blue-50/50 backdrop-blur-xl border border-blue-200 shadow-sm flex flex-col">
               <h2 className="text-base font-medium text-[#0B1F3A] mb-5 flex items-center gap-2">
-                <span className="text-blue-600">ℹ️</span> Rekomendasi Tindakan
+                Rekomendasi Tindakan
               </h2>
               <div className="space-y-4">
                 {[

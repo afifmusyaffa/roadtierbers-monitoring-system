@@ -123,6 +123,7 @@ export default function OfficerAIDetectionPage() {
     };
 
     Object.entries(results.data.detections).forEach(([modelName, modelRes]) => {
+      if (modelName === "edukasi") return;
       if (modelRes.status === "success" && modelRes.data) {
         modelRes.data.forEach((item, idx) => {
           const { x1, y1, x2, y2 } = item.box;
@@ -158,10 +159,11 @@ export default function OfficerAIDetectionPage() {
     
     let rows: any[] = [];
     Object.entries(results.data.detections).forEach(([modelName, modelRes]) => {
+      if (modelName === "edukasi") return;
       if (modelRes.status === "success" && modelRes.data) {
         if (modelRes.data.length === 0) {
           rows.push({
-             time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+             time: new Date().toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':'),
              obj: modelName,
              res: "Tidak terdeteksi",
              count: "0",
@@ -177,7 +179,7 @@ export default function OfficerAIDetectionPage() {
           
           Object.entries(counts).forEach(([className, count]) => {
              rows.push({
-               time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+               time: new Date().toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':'),
                obj: modelName,
                res: className,
                count: count,
@@ -188,7 +190,7 @@ export default function OfficerAIDetectionPage() {
         }
       } else if (modelRes.status === "belum_tersedia") {
          rows.push({
-             time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+             time: new Date().toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':'),
              obj: modelName,
              res: "Model Belum Tersedia",
              count: "-",
@@ -324,7 +326,7 @@ export default function OfficerAIDetectionPage() {
                   <table className="w-full text-left border-collapse min-w-[700px]">
                     <thead>
                       <tr className="bg-slate-100 border-b border-slate-200">
-                        <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Waktu</th>
+                        <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Timestamp</th>
                         <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Model AI</th>
                         <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Class / Hasil</th>
                         <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Jumlah</th>

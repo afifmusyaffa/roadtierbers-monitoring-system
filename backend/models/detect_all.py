@@ -9,7 +9,6 @@ MODEL_PATHS = {
     "helm": "weights/best_kelompok2_helm.pt",
     "boncengan": "weights/best_kelompok1_boncengan.pt",
     "plat": "weights/best_kelompok4_plat.pt",
-    "pajak": "weights/best_kelompok5_pajak.pt",
     "kendaraan": "weights/best_kelompok6_kendaraan.onnx",
     "edukasi": "weights/best_edukasi.pt"
 }

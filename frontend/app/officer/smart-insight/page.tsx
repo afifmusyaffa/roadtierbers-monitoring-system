@@ -246,7 +246,7 @@ export default function OfficerSmartInsightPage() {
                 <li className="flex gap-3">
                   <span className="text-amber-500 mt-1 text-[10px]">■</span>
                   <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                    Pelanggaran tertentu (seperti tanpa helm dan berhenti melewati garis) muncul secara sistematis di lokasi yang sama setiap hari.
+                    Pelanggaran tertentu (seperti tanpa helm) muncul secara sistematis di lokasi yang sama setiap hari.
                   </p>
                 </li>
               </ul>
@@ -258,7 +258,6 @@ export default function OfficerSmartInsightPage() {
                 {[
                   { type: "Tanpa Helm", risk: "Tinggi", note: `${data.kasus_perlu_validasi} kasus perlu validasi` },
                   { type: "Plat Perlu Pemeriksaan", risk: "Sedang", note: "Beberapa data perlu dicek" },
-                  { type: "Area Berhenti", risk: "Sedang", note: "Kasus perlu verifikasi" },
                 ].map((item, i) => (
                   <div key={i} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <div>

@@ -25,8 +25,7 @@ const trendData = [
 const compositionData = [
   { name: "Tanpa helm", count: 24, color: "#f59e0b" },
   { name: "Bonceng >2", count: 8, color: "#14b8a6" },
-  { name: "Plat/Pajak", count: 5, color: "#1d4ed8" },
-  { name: "Area Berhenti", count: 4, color: "#ef4444" },
+  { name: "Plat/Pajak Mati", count: 5, color: "#1d4ed8" },
 ];
 
 export function ViolationTrendChart({ data }: { data?: any[] }) {

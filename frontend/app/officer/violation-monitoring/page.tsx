@@ -63,8 +63,7 @@ export default function OfficerViolationMonitoringPage() {
 
   const helmCount = data.composition_data.find((c: any) => c.name === "Tanpa helm")?.count || 0;
   const boncengCount = data.composition_data.find((c: any) => c.name === "Bonceng >2")?.count || 0;
-  const platPajakCount = data.composition_data.find((c: any) => c.name === "Plat/Pajak")?.count || 0;
-  const areaBerhentiCount = data.composition_data.find((c: any) => c.name === "Area Berhenti")?.count || 0;
+  const platPajakCount = data.composition_data.find((c: any) => c.name === "Plat/Pajak Mati")?.count || 0;
 
   const dominantViolation = helmCount >= boncengCount ? "Tanpa Helm" : "Bonceng >2";
 
@@ -145,8 +144,7 @@ export default function OfficerViolationMonitoringPage() {
             {[
               { label: "Tanpa Helm", value: helmCount, unit: "Kasus", color: "text-amber-600", helper: "Mendominasi pelanggaran hari ini." },
               { label: "Bonceng Lebih Dari 2", value: boncengCount, unit: "Kasus", color: "text-teal-600", helper: "Mulai meningkat siang ini." },
-              { label: "Plat/Pajak Bermasalah", value: platPajakCount, unit: "Kasus", color: "text-[#1D4ED8]", helper: "Terdeteksi dari pemindaian ANPR." },
-              { label: "Melanggar Area Berhenti", value: areaBerhentiCount, unit: "Kasus", color: "text-red-600", helper: "Terutama di persimpangan utama." },
+              { label: "Plat/Pajak Mati", value: platPajakCount, unit: "Kasus", color: "text-[#1D4ED8]", helper: "Terdeteksi dari pemindaian ANPR." },
               { label: "Kasus Perlu Validasi", value: data.kasus_perlu_validasi, unit: "Kasus", color: "text-slate-700", helper: "Tunggu konfirmasi petugas." },
               { label: "Area Risiko Tinggi", value: data.area_risiko_tinggi, unit: "Area", color: "text-red-600", helper: "Titik pantau Simpang SKA." },
             ].map((kpi, i) => (
@@ -205,7 +203,6 @@ export default function OfficerViolationMonitoringPage() {
               <div className="space-y-4">
                 {[
                   { area: "Simpang SKA (Utara)", risk: "Tinggi", note: "Tanpa helm dominan pada lajur kiri.", focus: "Fokus edukasi helm" },
-                  { area: "Simpang SKA (Timur)", risk: "Tinggi", note: "Pelanggaran marka area berhenti.", focus: "Awasi marka jalan" },
                   { area: "Simpang SKA (Barat)", risk: "Sedang", note: "Kepadatan antrean lajur lambat dekat mall.", focus: "Pantau antrean" },
                   { area: "Simpang SKA (Selatan)", risk: "Sedang", note: "Boncengan lebih dari 2 orang meningkat.", focus: "Teguran visual" },
                 ].map((loc, i) => (

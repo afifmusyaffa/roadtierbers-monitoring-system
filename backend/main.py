@@ -578,7 +578,7 @@ async def get_dashboard_summary():
         total_detections_today = len(records_today)
         total_violations_today = 0
         total_vehicles = 0
-        violation_counts = {"Tanpa Helm": 0, "Bonceng >2": 0, "Plat/Pajak": 0}
+        violation_counts = {"Tanpa Helm": 0, "Bonceng >2": 0, "Plat/Pajak Mati": 0}
         
         # for volume chart
         hourly_volume = {}
@@ -612,13 +612,13 @@ async def get_dashboard_summary():
             if isinstance(plat_res, dict) and plat_res.get('status') == 'success' and plat_res.get('data'):
                 c = len(plat_res['data'])
                 total_violations_today += c
-                violation_counts["Plat/Pajak"] += c
+                violation_counts["Plat/Pajak Mati"] += c
 
             pajak_res = record.results.get('pajak', {})
             if isinstance(pajak_res, dict) and pajak_res.get('status') == 'success' and pajak_res.get('data'):
                 c = len(pajak_res['data'])
                 total_violations_today += c
-                violation_counts["Plat/Pajak"] += c
+                violation_counts["Plat/Pajak Mati"] += c
 
         # format volume data for chart
         volume_data = []
@@ -631,7 +631,7 @@ async def get_dashboard_summary():
         violation_data = [
             {"name": "Tanpa Helm", "count": violation_counts["Tanpa Helm"], "color": "#f59e0b"},
             {"name": "Bonceng >2", "count": violation_counts["Bonceng >2"], "color": "#14b8a6"},
-            {"name": "Plat/Pajak", "count": violation_counts["Plat/Pajak"], "color": "#1d4ed8"},
+            {"name": "Plat/Pajak Mati", "count": violation_counts["Plat/Pajak Mati"], "color": "#1d4ed8"},
         ]
         
         dominant_violation = max(violation_counts, key=violation_counts.get) if total_violations_today > 0 else "Tidak Ada"
@@ -675,7 +675,6 @@ async def get_violations_summary():
         helm_count = 0
         boncengan_count = 0
         plat_pajak_count = 0
-        area_berhenti_count = 0
         kasus_perlu_validasi = 0
         
         hourly_violations = {f"{hour:02d}:00": 0 for hour in range(8, 23)}
@@ -731,18 +730,8 @@ async def get_violations_summary():
                     if hr_str in hourly_violations:
                         hourly_violations[hr_str] += c
             
-            # Area Berhenti (Simulasi berdasarkan kepadatan kendaraan)
-            kendaraan_res = record.results.get('kendaraan', {})
-            if isinstance(kendaraan_res, dict) and kendaraan_res.get('status') == 'success' and kendaraan_res.get('data'):
-                v_count = len(kendaraan_res['data'])
-                if v_count > 25: # Jika padat sekali, ada simulasi pelanggaran garis berhenti
-                    c = 1
-                    area_berhenti_count += c
-                    total_violations_today += c
-                    has_violation_in_record = True
-                    if hr_str in hourly_violations:
-                        hourly_violations[hr_str] += c
             
+
             if has_violation_in_record:
                 kasus_perlu_validasi += 1
 
@@ -754,8 +743,7 @@ async def get_violations_summary():
         composition_data = [
             {"name": "Tanpa helm", "count": helm_count, "color": "#f59e0b"},
             {"name": "Bonceng >2", "count": boncengan_count, "color": "#14b8a6"},
-            {"name": "Plat/Pajak", "count": plat_pajak_count, "color": "#1d4ed8"},
-            {"name": "Area Berhenti", "count": area_berhenti_count, "color": "#ef4444"},
+            {"name": "Plat/Pajak Mati", "count": plat_pajak_count, "color": "#1d4ed8"}
         ]
         
         # Get recent cases
@@ -822,7 +810,6 @@ async def get_violations_summary():
             cases_list = [
                 { "time": "10:15", "loc": "Simpang SKA", "type": "Tanpa helm", "count": 5, "risk": "Tinggi", "val": "Perlu validasi", "note": "Cek ulang frame sample" },
                 { "time": "10:20", "loc": "Panam (UNRI)", "type": "Bonceng >2", "count": 2, "risk": "Sedang", "val": "Perlu validasi", "note": "Periksa konteks kepadatan" },
-                { "time": "10:25", "loc": "Jl. Sudirman", "type": "Area berhenti", "count": 1, "risk": "Sedang", "val": "Perlu validasi", "note": "Perhatikan rambu sekitar" },
                 { "time": "10:30", "loc": "Harapan Raya", "type": "Plat/pajak bermasalah", "count": 3, "risk": "Tinggi", "val": "Perlu validasi", "note": "Arahkan ke Plate Monitoring" }
             ]
 
@@ -1146,7 +1133,7 @@ async def get_reports_summary():
             { "cat": "Volume Kendaraan", "res": "Volume kendaraan terpantau", "count": str(total_vehicles), "risk": "Sedang" if total_vehicles > 1000 else "Rendah", "val": f"{total_vehicles} unit", "note": "Volume lalu lintas harian terpantau lancar" },
             { "cat": "Pelanggaran Helm", "res": "Pengendara tanpa helm", "count": str(helm_count), "risk": "Tinggi" if helm_count > 10 else "Sedang", "val": f"{helm_count} kasus", "note": "Kategori pelanggaran dominan hari ini" },
             { "cat": "Boncengan >2", "res": "Bonceng lebih dari 2 orang", "count": str(bonceng_count), "risk": "Sedang", "val": f"{bonceng_count} kasus", "note": "Perlu edukasi visual berkala di persimpangan" },
-            { "cat": "Plat/Pajak", "res": "Plat/pajak kendaraan bermasalah", "count": str(plat_pajak_count), "risk": "Tinggi" if plat_pajak_count > 2 else "Aman", "val": f"{plat_pajak_count} kasus", "note": "Indikasi plat mati terdeteksi oleh sistem" },
+            { "cat": "Plat/Pajak Mati", "res": "Plat/pajak kendaraan bermasalah (mati)", "count": str(plat_pajak_count), "risk": "Tinggi" if plat_pajak_count > 2 else "Aman", "val": f"{plat_pajak_count} kasus", "note": "Indikasi plat/pajak mati terdeteksi oleh sistem" },
         ]
 
         # KPIs format
@@ -1277,7 +1264,7 @@ Berikut adalah konteks deteksi terbaru dari sistem:
 
 Berikan insight yang berguna, ringkas, dan praktis. Jangan mengarang data yang tidak ada di konteks. Jika ditanya tentang prioritas area, sebutkan area dengan pelanggaran terbanyak dari data. Jika data kosong, sampaikan bahwa belum ada data deteksi.
 """
-        model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=system_instruction)
+        model = genai.GenerativeModel("gemini-2.5-flash", system_instruction=system_instruction)
         
         # format history for gemini
         formatted_history = []
