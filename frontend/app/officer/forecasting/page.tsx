@@ -1,28 +1,50 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
 import { StatusBadge } from "@/components/common";
 import { ForecastVolumeChart, ForecastViolationChart, ForecastCongestionChart } from "@/components/charts/officer-forecasting-charts";
 
+interface ForecastResponseData {
+  data_available?: boolean;
+  mode?: string;
+  model_loaded?: boolean;
+  message?: string;
+  target_hour?: string;
+  congestion?: {
+    category?: string;
+    delay_minutes?: number;
+    volume_pred?: number;
+    risk_level?: string;
+  };
+  violations?: {
+    input_tanggal?: string;
+    input_jumlah?: number;
+    rata_rata_pelanggaran?: number;
+    forecast_30_hari?: Array<{tanggal: string; prediksi_pelanggaran: number}>;
+  };
+  yolo_history_used?: Record<string, number>;
+}
+
 export default function OfficerForecastingPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ForecastResponseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/forecasting/current");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${apiUrl}/forecasting/current`);
         const json = await res.json();
         if (json.status === "success") {
+          // Store full data including data_available flag
           setData(json.data);
         } else {
           setError(json.message || "Gagal mengambil data");
         }
-      } catch (err) {
-        setError("Koneksi ke backend gagal.");
+      } catch {
+        setError("Koneksi ke backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
       } finally {
         setLoading(false);
       }
@@ -43,11 +65,49 @@ export default function OfficerForecastingPage() {
     );
   }
 
-  if (error || !data) {
+  if (error) {
     return (
       <OfficerPageShell>
-        <div className="flex items-center justify-center min-h-[60vh] text-red-500">
-          <p>{error || "Data kosong"}</p>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center space-y-3 max-w-md">
+            <p className="text-red-500 font-medium">{error}</p>
+          </div>
+        </div>
+      </OfficerPageShell>
+    );
+  }
+
+  // No-data state: backend reachable but no detection records yet
+  if (!data || data.data_available === false) {
+    return (
+      <OfficerPageShell>
+        <div className="max-w-7xl mx-auto pb-12">
+          <section className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-6 border-b border-slate-200">
+            <div className="space-y-2">
+              <span className="inline-flex items-center gap-2.5 rounded-full border border-purple-200 bg-purple-50/80 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-purple-700">
+                Officer Forecasting
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-[#0B1F3A]">Prediksi Operasional Petugas</h1>
+              <p className="text-base font-normal text-slate-600 leading-relaxed max-w-2xl">
+                Pantauan prediksi volume kendaraan, pelanggaran, dan durasi kemacetan (Real-time AI).
+              </p>
+            </div>
+          </section>
+          <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 text-center">
+            <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm max-w-lg w-full">
+              <p className="text-4xl mb-4">📊</p>
+              <h2 className="text-lg font-medium text-[#0B1F3A] mb-2">Belum Ada Data Monitoring</h2>
+              <p className="text-sm font-normal text-slate-600 leading-relaxed mb-6">
+                {data?.message || "Upload sample gambar melalui halaman Pusat Deteksi AI untuk mulai menghasilkan data monitoring."}
+              </p>
+              <a
+                href="/officer/ai-detection"
+                className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#0B1F3A] text-white text-sm font-semibold hover:bg-[#142d52] transition-colors"
+              >
+                Buka Pusat Deteksi AI
+              </a>
+            </div>
+          </div>
         </div>
       </OfficerPageShell>
     );
@@ -57,14 +117,15 @@ export default function OfficerForecastingPage() {
   const { congestion, violations, yolo_history_used, target_hour } = data;
   
   // Format Data for Charts
-  const hours = Object.keys(yolo_history_used || {}).sort((a, b) => parseInt(a) - parseInt(b));
+  // hours not directly used — use keys inline below
   
   // 1. Volume Data (History + Target Hour)
-  const volumeChartData: any[] = [];
-  const keys = Object.keys(yolo_history_used);
-  keys.forEach((h, index) => {
+  const volumeChartData: {time: string; aktual?: number; prediksi?: number}[] = [];
+  const yoloHistoryUsed = yolo_history_used ?? {};
+  Object.keys(yoloHistoryUsed).forEach((h, index) => {
+    const keys = Object.keys(yoloHistoryUsed);
     const isLast = index === keys.length - 1;
-    const vol = yolo_history_used[h as unknown as keyof typeof yolo_history_used];
+    const vol = yoloHistoryUsed[h] as number;
     volumeChartData.push({
       time: `${String(h).padStart(2, '0')}:00`,
       aktual: vol,
@@ -74,7 +135,7 @@ export default function OfficerForecastingPage() {
   
   // Append prediction
   volumeChartData.push({
-    time: target_hour,
+    time: target_hour ?? "--:--",
     prediksi: congestion?.volume_pred || 0
   });
 
@@ -82,7 +143,7 @@ export default function OfficerForecastingPage() {
   const targetVol = congestion?.volume_pred || 1;
   const targetDelay = congestion?.delay_minutes || 0;
   const congestionChartData = volumeChartData.map(d => {
-    const res: any = { time: d.time };
+    const res: {time: string; aktual?: number; prediksi?: number} = { time: d.time };
     if (d.aktual !== undefined) {
       res.aktual = Number(((d.aktual / targetVol) * targetDelay).toFixed(1));
     }
@@ -93,13 +154,13 @@ export default function OfficerForecastingPage() {
   });
 
   // 3. Violation Data (Next 7 days from Kel 8)
-  const violationChartData: any[] = [];
+  const violationChartData: {time: string; aktual?: number; prediksi?: number}[] = [];
   if (violations) {
     violationChartData.push({
-      time: violations.input_tanggal,
-      aktual: violations.input_jumlah
+      time: violations.input_tanggal ?? "--",
+      aktual: violations.input_jumlah ?? 0
     });
-    (violations.forecast_30_hari || []).slice(0, 7).forEach((d: any) => {
+    (violations.forecast_30_hari as Array<{tanggal: string; prediksi_pelanggaran: number}> || []).slice(0, 7).forEach((d) => {
       violationChartData.push({
         time: d.tanggal,
         prediksi: d.prediksi_pelanggaran
@@ -123,7 +184,6 @@ export default function OfficerForecastingPage() {
   const volumeChangeValue = `${volumeChangeNum > 0 ? '+' : ''}${volumeChangeNum}%`;
   const volumeChangeColor = volumeChangeNum > 0 ? "text-amber-600" : (volumeChangeNum < 0 ? "text-green-600" : "text-slate-500");
 
-  const currentHour = volumeChartData.length > 1 ? volumeChartData[volumeChartData.length - 2].time : "00:00";
   const dateStr = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
     year: "numeric",
@@ -150,7 +210,7 @@ export default function OfficerForecastingPage() {
           </div>
           <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl">
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Mode:</span> AI Inference (Aktif)
+              <span className="text-slate-400">Sumber:</span> {data.mode === "real_inference" ? "Model AI + Data Deteksi" : "Agregasi Hasil Deteksi"}
             </p>
             <p className="text-xs font-medium text-slate-500">
               <span className="text-slate-400">Target Jam:</span> {target_hour}

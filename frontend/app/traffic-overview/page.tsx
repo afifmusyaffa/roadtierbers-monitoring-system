@@ -10,8 +10,21 @@ import {
   MotionSection,
 } from "@/components/common";
 
+
+interface ForecastData {
+  data_available?: boolean;
+  mode?: string;
+  message?: string;
+  target_hour?: string;
+  congestion?: {
+    category?: string;
+    delay_minutes?: number;
+    volume_pred?: number;
+  };
+}
+
 export default function TrafficOverviewPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ForecastData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +32,6 @@ export default function TrafficOverviewPage() {
     const fetchData = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        // Call forecasting with default params for overview
         const response = await fetch(`${apiUrl}/forecasting/current?origin=Simpang SKA&destination=Bandara SSK II`);
         
         if (!response.ok) {
@@ -27,14 +39,15 @@ export default function TrafficOverviewPage() {
         }
         
         const res = await response.json();
-        if (res.status === "success" && res.data && res.data.congestion) {
+        if (res.status === "success") {
+          // Store full data; may have data_available: false
           setData(res.data);
         } else {
-          throw new Error("Data tidak valid");
+          throw new Error(res.message || "Data tidak valid");
         }
       } catch (err) {
         console.error(err);
-        setError("Gagal memuat kondisi lalu lintas saat ini.");
+        setError("Koneksi backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
       } finally {
         setIsLoading(false);
       }
@@ -91,7 +104,7 @@ export default function TrafficOverviewPage() {
     };
   };
 
-  const statusInfo = getStatusInfo(congestion?.category);
+  const statusInfo = getStatusInfo(congestion?.category ?? "");
   const delayMinutes = congestion?.delay_minutes ?? 0;
   const categoryStr = congestion?.category ?? "Tidak Diketahui";
 
@@ -136,6 +149,16 @@ export default function TrafficOverviewPage() {
            <div className="text-center py-20 relative z-20">
              <p className="text-red-500 font-bold">{error}</p>
            </div>
+        ) : data?.data_available === false ? (
+          <div className="flex flex-col items-center justify-center py-24 relative z-20 px-4">
+            <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm max-w-lg w-full text-center">
+              <p className="text-4xl mb-4">📊</p>
+              <h2 className="text-lg font-medium text-[#0B1F3A] mb-2">Belum Ada Data Monitoring</h2>
+              <p className="text-sm font-normal text-slate-600 leading-relaxed mb-6">
+                {data?.message || "Upload sample gambar melalui halaman Pusat Deteksi AI untuk mulai menghasilkan data monitoring."}
+              </p>
+            </div>
+          </div>
         ) : (
           <>
             <section className="relative z-20 pb-16">
@@ -199,16 +222,15 @@ export default function TrafficOverviewPage() {
                       <div className="absolute top-1/2 left-4 right-4 h-[2px] bg-slate-100 rounded-full -translate-y-1/2 z-0" />
                       
                       {(() => {
-                        // Generate a simple timeline based on current status and some dummy variations
                         // In reality, this would be a map over historical/predicted hourly data
-                        const currentHour = parseInt(data.target_hour?.split(":")[0] || "12");
+                        const currentHour = parseInt(data?.target_hour?.split(":")[0] || "12");
                         const timeline = [-2, -1, 0, 1, 2].map(offset => {
                           const h = (currentHour + offset + 24) % 24;
                           const t = `${h.toString().padStart(2, '0')}:00`;
                           
                           let cat = "Sedang";
                           let col = "bg-amber-400";
-                          let act = offset === 0;
+                          const act = offset === 0;
                           
                           if (act) {
                              if (statusInfo.color.includes("red")) { cat = "Padat"; col = "bg-red-500"; }
