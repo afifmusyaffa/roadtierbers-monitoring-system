@@ -147,38 +147,68 @@ export default function AboutPage() {
           </div>
 
           <div className="grid lg:grid-cols-12 gap-8 items-start">
-            {/* Desktop Left / Mobile Top - List */}
-            <div className="lg:col-span-5 grid gap-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            {/* Left List (Mobile Accordion / Desktop List) */}
+            <div className="lg:col-span-5 grid gap-3 lg:max-h-[600px] lg:overflow-y-auto lg:pr-2 custom-scrollbar">
               {models.map((model, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedModel(idx)}
-                  className={`w-full text-left flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                    selectedModel === idx 
-                      ? "bg-blue-50 border-blue-200 shadow-sm" 
-                      : "bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                      selectedModel === idx ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"
-                    }`}>
-                      <model.icon className="w-4 h-4" />
+                <div key={idx} className="flex flex-col gap-2">
+                  <button
+                    onClick={() => setSelectedModel(idx)}
+                    className={`w-full text-left flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                      selectedModel === idx 
+                        ? "bg-blue-50 border-blue-200 shadow-sm" 
+                        : "bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                        selectedModel === idx ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"
+                      }`}>
+                        <model.icon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className={`text-sm font-bold ${selectedModel === idx ? "text-blue-900" : "text-[#0B1F3A]"}`}>
+                          {model.name}
+                        </h4>
+                        <p className="text-xs font-medium text-slate-500">{model.group}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className={`text-sm font-bold ${selectedModel === idx ? "text-blue-900" : "text-[#0B1F3A]"}`}>
-                        {model.name}
-                      </h4>
-                      <p className="text-xs font-medium text-slate-500">{model.group}</p>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${selectedModel === idx ? "text-blue-600 rotate-90 lg:rotate-0" : "text-slate-300"}`} />
+                  </button>
+
+                  {/* Mobile-only expanded detail */}
+                  {selectedModel === idx && (
+                    <div className="lg:hidden bg-slate-50 border border-slate-100 rounded-2xl p-5 shadow-inner">
+                      <div className="grid gap-4">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Fungsi Utama</p>
+                          <p className="text-sm font-bold text-slate-700">{model.func}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status Integrasi</p>
+                          <div className="inline-flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${model.status === "Terhubung" ? "bg-teal-500" : "bg-slate-400"}`} />
+                            <span className="text-sm font-bold text-slate-700">{model.status}</span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-2 text-center">
+                          <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Input</p>
+                            <p className="text-xs font-bold text-[#0B1F3A]">{model.input}</p>
+                          </div>
+                          <div className="bg-blue-600 p-3 rounded-xl shadow-md text-white border border-blue-700">
+                            <p className="text-[10px] font-bold text-blue-200 uppercase tracking-wider mb-1">Output</p>
+                            <p className="text-xs font-bold">{model.output}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <ChevronRight className={`w-4 h-4 ${selectedModel === idx ? "text-blue-600" : "text-slate-300"}`} />
-                </button>
+                  )}
+                </div>
               ))}
             </div>
 
-            {/* Desktop Right / Mobile Bottom - Details */}
-            <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 p-8 lg:p-10 lg:sticky lg:top-24">
+            {/* Desktop Right - Details */}
+            <div className="hidden lg:block lg:col-span-7 bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 p-8 lg:p-10 lg:sticky lg:top-24">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-widest mb-6">
                 Detail Model
               </div>
