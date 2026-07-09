@@ -10,8 +10,25 @@ import {
   MotionSection,
 } from "@/components/common";
 
+
+interface CongestionData {
+  category?: string;
+  delay_minutes?: number;
+  volume_pred?: number;
+  risk_level?: string;
+  weather?: string;
+}
+
+interface ForecastData {
+  data_available?: boolean;
+  mode?: string;
+  message?: string;
+  target_hour?: string;
+  congestion?: CongestionData;
+}
+
 export default function DepartureRecommendationPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ForecastData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,14 +43,15 @@ export default function DepartureRecommendationPage() {
         }
         
         const res = await response.json();
-        if (res.status === "success" && res.data && res.data.congestion) {
+        if (res.status === "success") {
+          // Store full data; may have data_available: false
           setData(res.data);
         } else {
-          throw new Error("Data tidak valid");
+          throw new Error(res.message || "Gagal mengambil data");
         }
       } catch (err) {
         console.error(err);
-        setError("Gagal memuat rekomendasi saat ini.");
+        setError("Koneksi backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
       } finally {
         setIsLoading(false);
       }
@@ -44,7 +62,7 @@ export default function DepartureRecommendationPage() {
 
   const congestion = data?.congestion;
   
-  const getStatusInfo = (congestion: any, targetHour: string) => {
+  const getStatusInfo = (congestion: CongestionData | null | undefined, targetHour: string) => {
     const cat = congestion?.category?.toLowerCase() || "";
     const delay = congestion?.delay_minutes || 0;
     const vol = congestion?.volume_pred || 0;
@@ -135,7 +153,7 @@ export default function DepartureRecommendationPage() {
     };
   };
 
-  const statusInfo = getStatusInfo(congestion, data?.target_hour);
+  const statusInfo = getStatusInfo(congestion, data?.target_hour ?? "--:--");
   const delayMinutes = congestion?.delay_minutes ?? 0;
 
   return (
@@ -182,8 +200,18 @@ export default function DepartureRecommendationPage() {
           </section>
         ) : error ? (
           <section className="relative z-20 pb-16 min-h-[40vh] flex items-center justify-center">
-            <div className="p-6 rounded-2xl bg-red-50 border border-red-200 text-center">
+            <div className="p-6 rounded-2xl bg-red-50 border border-red-200 text-center max-w-md">
               <p className="text-red-500 font-medium">{error}</p>
+            </div>
+          </section>
+        ) : data?.data_available === false ? (
+          <section className="relative z-20 pb-16 min-h-[40vh] flex items-center justify-center px-4">
+            <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm max-w-lg w-full text-center">
+              <p className="text-4xl mb-4">📊</p>
+              <h2 className="text-lg font-medium text-[#0B1F3A] mb-2">Belum Ada Data Monitoring</h2>
+              <p className="text-sm font-normal text-slate-600 leading-relaxed mb-6">
+                {data?.message || "Upload sample gambar melalui halaman Pusat Deteksi AI untuk mulai menghasilkan data rekomendasi."}
+              </p>
             </div>
           </section>
         ) : (
