@@ -71,7 +71,8 @@ export default function OfficerAIDetectionPage() {
     formData.append("file", selectedFile);
 
     try {
-      const res = await fetch("http://localhost:8000/detection/analyze-all", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const res = await fetch(`${apiUrl}/detection/analyze-all`, {
         method: "POST",
         body: formData,
       });

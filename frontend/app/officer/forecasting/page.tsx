@@ -14,7 +14,8 @@ export default function OfficerForecastingPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/forecasting/current");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${apiUrl}/forecasting/current`);
         const json = await res.json();
         if (json.status === "success") {
           setData(json.data);
