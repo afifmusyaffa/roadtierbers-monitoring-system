@@ -135,7 +135,7 @@ export default function OfficerForecastingPage() {
   
   // Append prediction
   volumeChartData.push({
-    time: target_hour ?? "--:--",
+    time: (target_hour ?? "--:--") + " (Est)",
     prediksi: congestion?.volume_pred || 0
   });
 
