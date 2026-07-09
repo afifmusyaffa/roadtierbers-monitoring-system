@@ -122,17 +122,22 @@ export function FilterSummaryBar({ activeFilter, setActiveFilter }: { activeFilt
 
 export function HistoryKpiGrid({ data }: { data: HistoryData }) {
   const kpis = [
-    { label: "Total Data Deteksi", value: data.total_records, color: "text-[#1D4ED8]" },
-    { label: "Anomali Pelanggaran", value: data.historyRows.filter(r => r.risk === "Tinggi").length, color: "text-amber-600" },
+    { label: "Total Data Deteksi", value: data.total_records, color: "text-[#1D4ED8]", helper: "Total akumulasi aktivitas deteksi oleh sistem AI." },
+    { label: "Anomali Pelanggaran", value: data.historyRows.filter(r => r.risk === "Tinggi").length, color: "text-amber-600", helper: "Jumlah kasus pelanggaran dengan tingkat risiko tinggi." },
   ];
   return (
     <section>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {kpis.map((kpi, i) => (
           <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
-            <div className="mb-4">
-              <span className={`text-3xl font-medium ${kpi.color} tracking-tight`}>{kpi.value}</span>
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
+              <div className="mb-4">
+                <span className={`text-3xl font-medium ${kpi.color} tracking-tight`}>{kpi.value}</span>
+              </div>
+            </div>
+            <div className="mt-auto pt-4 border-t border-slate-100">
+              <p className="text-sm font-normal text-slate-500">{kpi.helper}</p>
             </div>
           </div>
         ))}
