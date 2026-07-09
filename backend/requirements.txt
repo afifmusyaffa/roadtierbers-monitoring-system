@@ -1,21 +1,21 @@
 # ============================================================
-# CATATAN KOMPATIBILITAS (jangan ubah tanpa cek):
-#   - numpy DIKUNCI 1.26.4 (bukan 2.x): TensorFlow 2.15 wajib numpy<2.0.
-#   - opencv-python 4.10.0.84 (bukan 5.x): versi 5 wajib numpy>=2 -> bentrok TF.
+# requirements.txt - Backend RoadTierbers Monitoring System
 # ============================================================
-# ============================================================
-# OMNI-ROAD Backend - requirements.txt
-# Dibersihkan: hapus duplikat (sebelumnya seluruh daftar tertulis 2x).
-# Dependency berat yang WAJIB (dipakai kode):
-#   - torch/torchvision  -> dipakai ultralytics YOLO & models/forecasting_kendaraan.py (import torch langsung)
-#   - ultralytics        -> models/detect_all.py (deteksi YOLO)
-#   - tensorflow         -> models/forecasting_kel8.py & kel9.py (LSTM .keras)
-#   - onnxruntime/onnx   -> model kendaraan .onnx
-#   - scikit-learn/joblib-> load scaler .pkl/.joblib
-#   - google-generativeai-> fitur assistant (butuh env GEMINI_API_KEY)
+# CATATAN KOMPATIBILITAS - jangan naikkan versi sembarangan:
+#   tensorflow 2.15.0 mengunci : numpy<2.0 | protobuf<5 | grpcio<2 | wrapt<1.15
+#   onnxruntime 1.27.0 butuh   : protobuf>=4.25.8
+#   -> titik temu protobuf     : 4.25.8  (irisan >=4.25.8 dan <5)
+#   -> numpy 1.26.4            : seri 1.x terakhir (syarat tensorflow 2.15)
+#   -> opencv 4.10.0.84        : cocok numpy 1.x (opencv 5 minta numpy>=2)
+#
+# Riwayat perbaikan deploy:
+#   v2 : numpy 2.2.6 -> 1.26.4 ; opencv 5.0.0.93 -> 4.10.0.84
+#   v3 : protobuf 7.35.1 -> 4.25.8 (bentrok tensorflow<5 vs onnxruntime>=4.25.8)
 # ============================================================
 
-# --- Web framework ---
+
+
+# --- Web framework / API ---
 fastapi==0.139.0
 uvicorn==0.50.2
 starlette==1.3.1
@@ -27,7 +27,7 @@ pydantic_core==2.46.4
 SQLAlchemy==2.0.51
 greenlet==3.5.3
 
-# --- Computer Vision / YOLO ---
+# --- Deep learning: YOLO / PyTorch / ONNX ---
 ultralytics==8.4.90
 ultralytics-thop==2.0.20
 torch==2.12.1
@@ -36,13 +36,13 @@ opencv-python==4.10.0.84
 onnxruntime==1.27.0
 onnx
 
-# --- Forecasting (LSTM) ---
+# --- TensorFlow & ML klasik ---
 tensorflow==2.15.0
 ml_dtypes
 scikit-learn==1.3.2
 joblib==1.3.2
 
-# --- Data / numerik ---
+# --- Numerik & visualisasi ---
 numpy==1.26.4
 polars==1.42.1
 polars-runtime-32==1.42.1
@@ -54,11 +54,11 @@ kiwisolver==1.5.0
 pyparsing==3.3.2
 pillow==12.3.0
 
-# --- AI Assistant ---
+# --- Gemini API ---
 google-generativeai
 python-dotenv
 
-# --- Utilitas & dependency transitif ---
+# --- Utilitas & dependency terkunci hasil freeze ---
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.14.1
@@ -78,7 +78,7 @@ mpmath==1.3.0
 networkx==3.4.2
 nvidia-ml-py==13.610.43
 packaging==26.2
-protobuf==7.35.1
+protobuf==4.25.8
 psutil==7.2.2
 python-dateutil==2.9.0.post0
 pytz==2026.2
