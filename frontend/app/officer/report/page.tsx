@@ -43,13 +43,12 @@ export default function OfficerReportPage() {
     if (!data || !data.report_rows) return;
 
     // Generate CSV content
-    const headers = ["Kategori", "Data Utama", "Jumlah", "Risiko", "Status Validasi", "Catatan Laporan"];
+    const headers = ["Kategori", "Data Utama", "Jumlah", "Risiko", "Catatan Laporan"];
     const rows = data.report_rows.map((row: any) => [
       row.cat || "",
       row.res || "",
       row.count || "0",
       row.risk || "Rendah",
-      row.val || "",
       row.note || ""
     ]);
 
@@ -73,13 +72,12 @@ export default function OfficerReportPage() {
   const handleExportExcel = () => {
     if (!data || !data.report_rows) return;
 
-    const headers = ["Kategori", "Data Utama", "Jumlah", "Risiko", "Status Validasi", "Catatan Laporan"];
+    const headers = ["Kategori", "Data Utama", "Jumlah", "Risiko", "Catatan Laporan"];
     const rows = data.report_rows.map((row: any) => [
       row.cat || "",
       row.res || "",
       row.count || "0",
       row.risk || "Rendah",
-      row.val || "",
       row.note || ""
     ]);
 

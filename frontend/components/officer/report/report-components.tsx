@@ -3,7 +3,6 @@ import { StatusBadge } from "@/components/common";
 import { 
   reportKpis, 
   reportRows, 
-  validationChecklist, 
   recommendedReportActions, 
   reportQuickLinks 
 } from "@/data/officer-report";
@@ -35,20 +34,23 @@ export function ReportHeaderBar({ data }: { data?: any }) {
 export function ReportStatusSummary({ data }: { data?: any }) {
   const totalDetections = data ? data.total_data_masuk : 128;
   const totalViolations = data ? data.total_violations : 37;
-  const perluValidasi = data ? Math.max(Math.round(totalViolations * 0.15), 1) : 34;
+
+  const today = new Date();
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+  const dateString = today.toLocaleDateString('id-ID', options);
 
   return (
     <section>
       <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col relative overflow-hidden">
         <div className="absolute top-0 right-1/4 w-64 h-64 bg-blue-500/5 blur-[60px] rounded-full pointer-events-none" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10 divide-y md:divide-y-0 md:divide-x divide-slate-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 divide-y md:divide-y-0 md:divide-x divide-slate-200">
           <div className="flex flex-col space-y-2 md:pr-6">
             <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Total Data Masuk</p>
             <div className="flex items-center pt-1 pb-2">
               <span className="text-2xl font-medium text-[#0B1F3A]">{totalDetections} data</span>
             </div>
             <p className="text-sm font-normal text-slate-600 leading-relaxed">
-              Jumlah data dari database hari ini.
+              Jumlah data dari data pemantauan pada tanggal hari ini, {dateString}.
             </p>
           </div>
           <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
@@ -58,16 +60,6 @@ export function ReportStatusSummary({ data }: { data?: any }) {
             </div>
             <p className="text-sm font-normal text-slate-600 leading-relaxed">
               Indikasi pelanggaran yang masuk ke sistem.
-            </p>
-          </div>
-          <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Perlu Validasi</p>
-            <div className="flex items-center pt-1 pb-2">
-              <StatusBadge status="Sedang" className="px-4 py-1.5 text-sm" />
-              <span className="text-2xl font-medium text-amber-600 ml-3">{perluValidasi} data</span>
-            </div>
-            <p className="text-sm font-normal text-slate-600 leading-relaxed">
-              Data yang belum siap menjadi laporan final.
             </p>
           </div>
           <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:pl-6">
@@ -89,7 +81,7 @@ export function ReportKpiGrid({ kpis }: { kpis?: any[] }) {
   const gridKpis = kpis || reportKpis;
   return (
     <section>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {gridKpis.map((kpi, i) => (
           <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
             <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
@@ -116,6 +108,10 @@ export function ReportControlPanel({
   onExportExcel?: () => void; 
   onExportPdf?: () => void; 
 }) {
+  const today = new Date();
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+  const dateString = today.toLocaleDateString('id-ID', options);
+
   return (
     <section>
       <div className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200 flex flex-col lg:flex-row gap-6 justify-between items-center">
@@ -125,16 +121,12 @@ export function ReportControlPanel({
             <span className="text-[#0B1F3A]">Laporan harian</span>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-slate-400 uppercase tracking-wider">Rentang Waktu</span>
-            <span className="text-[#0B1F3A]">Hari ini</span>
+            <span className="text-xs text-slate-400 uppercase tracking-wider">Tanggal</span>
+            <span className="text-[#0B1F3A]">{dateString}</span>
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs text-slate-400 uppercase tracking-wider">Area</span>
-            <span className="text-[#0B1F3A]">Semua area sample</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-slate-400 uppercase tracking-wider">Status Validasi</span>
-            <span className="text-amber-600">Perlu pemeriksaan petugas</span>
+            <span className="text-[#0B1F3A]">Semua area pemantauan</span>
           </div>
         </div>
         <div className="flex flex-wrap gap-3 shrink-0 w-full lg:w-auto">
@@ -241,7 +233,6 @@ export function ReportDetailTable({ rows }: { rows?: any[] }) {
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Data Utama</th>
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider text-center">Jumlah</th>
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Risiko</th>
-                <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Status Validasi</th>
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Catatan Laporan</th>
               </tr>
             </thead>
@@ -252,7 +243,6 @@ export function ReportDetailTable({ rows }: { rows?: any[] }) {
                   <td className="p-4 text-sm font-normal text-[#0B1F3A]">{row.res}</td>
                   <td className="p-4 text-sm font-medium text-[#0B1F3A] text-center">{row.count}</td>
                   <td className="p-4 whitespace-nowrap"><StatusBadge status={row.risk} /></td>
-                  <td className="p-4 text-sm font-normal text-slate-600 whitespace-nowrap">{row.val}</td>
                   <td className="p-4 text-sm font-normal text-slate-600 min-w-[200px]">{row.note}</td>
                 </tr>
               ))}
@@ -266,21 +256,7 @@ export function ReportDetailTable({ rows }: { rows?: any[] }) {
 
 export function ValidationChecklistPanel() {
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-        <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Daftar Periksa Validasi Laporan</h2>
-        <div className="space-y-4">
-          {validationChecklist.map((item, i) => (
-            <div key={i} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-200 gap-4">
-              <p className="text-sm font-normal text-slate-700 leading-relaxed">{item.task}</p>
-              <span className={`shrink-0 px-3 py-1 text-xs font-medium rounded-md ${item.color}`}>
-                {item.status}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
+    <section>
       <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
         <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Rekomendasi Tindak Lanjut</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

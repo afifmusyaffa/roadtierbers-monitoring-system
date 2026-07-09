@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/common";
 import { 
-  validationQueue, 
-  riskTimeline, 
-  recommendedActions, 
-  quickLinks 
+  riskTimeline,
+  quickLinks
 } from "@/data/officer-history";
 
 // New prop types
@@ -50,27 +48,22 @@ export function HistoryHeaderBar() {
 }
 
 export function HistoryStatusSummary({ total, validationNeeded, highRisk }: { total: number, validationNeeded: number, highRisk: number }) {
+  const today = new Date();
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+  const dateString = today.toLocaleDateString('id-ID', options);
+
   return (
     <section>
       <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col relative overflow-hidden">
         <div className="absolute top-0 right-1/4 w-64 h-64 bg-blue-500/5 blur-[60px] rounded-full pointer-events-none" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10 divide-y md:divide-y-0 md:divide-x divide-slate-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 divide-y md:divide-y-0 md:divide-x divide-slate-200">
           <div className="flex flex-col space-y-2 md:pr-6">
             <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Total Riwayat</p>
             <div className="flex items-center pt-1 pb-2">
               <span className="text-2xl font-medium text-[#0B1F3A]">{total} data</span>
             </div>
             <p className="text-sm font-normal text-slate-600 leading-relaxed">
-              Jumlah data deteksi yang tercatat pada sample hari ini.
-            </p>
-          </div>
-          <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Perlu Validasi</p>
-            <div className="flex items-center pt-1 pb-2">
-              <span className="text-2xl font-medium text-amber-600">{validationNeeded} data</span>
-            </div>
-            <p className="text-sm font-normal text-slate-600 leading-relaxed">
-              Data yang masih perlu diperiksa ulang oleh petugas.
+              Jumlah data deteksi yang tercatat pada tanggal hari ini, {dateString}.
             </p>
           </div>
           <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
@@ -80,7 +73,7 @@ export function HistoryStatusSummary({ total, validationNeeded, highRisk }: { to
               <span className="text-2xl font-medium text-red-600 ml-3">{highRisk} data</span>
             </div>
             <p className="text-sm font-normal text-slate-600 leading-relaxed">
-              Data yang perlu diprioritaskan untuk validasi.
+              Data yang perlu diprioritaskan untuk penanganan.
             </p>
           </div>
           <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:pl-6">
@@ -99,7 +92,7 @@ export function HistoryStatusSummary({ total, validationNeeded, highRisk }: { to
 }
 
 export function FilterSummaryBar({ activeFilter, setActiveFilter }: { activeFilter?: string, setActiveFilter?: (f: string) => void }) {
-  const filters = ["Semua data", "Risiko tinggi", "Perlu validasi", "Pelanggaran", "Plat", "Forecasting"];
+  const filters = ["Semua data", "Risiko tinggi", "Pelanggaran", "Plat", "Forecasting"];
   return (
     <section>
       <div className="p-4 rounded-xl bg-slate-50/50 border border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-center">
@@ -131,11 +124,10 @@ export function HistoryKpiGrid({ data }: { data: HistoryData }) {
   const kpis = [
     { label: "Total Data Deteksi", value: data.total_records, color: "text-[#1D4ED8]" },
     { label: "Anomali Pelanggaran", value: data.historyRows.filter(r => r.risk === "Tinggi").length, color: "text-amber-600" },
-    { label: "Menunggu Validasi", value: data.historyRows.filter(r => r.val.toLowerCase() === "perlu validasi").length, color: "text-red-600" },
   ];
   return (
     <section>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {kpis.map((kpi, i) => (
           <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
             <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
@@ -155,7 +147,7 @@ export function MainHistoryTable({ rows }: { rows: HistoryRow[] }) {
       <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm overflow-hidden flex flex-col">
         <h2 className="text-lg font-medium text-[#0B1F3A] mb-6">Log Riwayat Deteksi Asli</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1100px]">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-slate-100 border-b border-slate-200">
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Waktu</th>
@@ -164,7 +156,6 @@ export function MainHistoryTable({ rows }: { rows: HistoryRow[] }) {
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Hasil Deteksi</th>
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Jumlah</th>
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Risiko</th>
-                <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Status Validasi</th>
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Catatan Petugas</th>
                 <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Tindak Lanjut</th>
               </tr>
@@ -183,10 +174,9 @@ export function MainHistoryTable({ rows }: { rows: HistoryRow[] }) {
                     )}
                   </td>
                   <td className="p-4 text-sm font-medium text-[#0B1F3A] text-center">{row.count}</td>
-                  <td className="p-4 whitespace-nowrap">
+                  <td className="p-4 text-sm font-medium text-slate-700 whitespace-nowrap">
                     <StatusBadge status={row.risk} />
                   </td>
-                  <td className="p-4 text-sm font-normal text-slate-600 whitespace-nowrap">{row.val}</td>
                   <td className="p-4 text-sm font-normal text-slate-600 min-w-[200px]">{row.note}</td>
                   <td className="p-4 text-sm font-medium text-blue-600 whitespace-nowrap">{row.follow}</td>
                 </tr>
@@ -201,25 +191,7 @@ export function MainHistoryTable({ rows }: { rows: HistoryRow[] }) {
 
 export function ValidationAndTimeline() {
   return (
-    <section className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-      <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-        <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Antrean Validasi Petugas</h2>
-        <div className="space-y-4">
-          {validationQueue.map((item, i) => (
-            <div key={i} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <div>
-                <p className="text-sm font-medium text-[#0B1F3A]">{item.type}</p>
-                <p className="text-sm font-normal text-slate-600">{item.count}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <StatusBadge status={item.risk} className="text-[10px] px-2 py-0.5" />
-                <span className="text-xs font-medium text-slate-400">Prioritas {item.risk}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
+    <section>
       <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
         <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Alur Aktivitas Risiko (Hari Ini)</h2>
         <div className="relative border-l-2 border-slate-200 ml-4 space-y-6 pb-4">
