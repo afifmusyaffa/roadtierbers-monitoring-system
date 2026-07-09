@@ -16,10 +16,10 @@ const SIGN_INFO: Record<string, { name: string; kategori: string; arti: string; 
 };
 
 const DEFAULT_INFO = {
-  name: "Rambu Terdeteksi",
+  name: "Rambu tidak dikenali",
   kategori: "Umum",
-  arti: "Rambu ini memberi instruksi atau informasi tertentu di area ini.",
-  tindakan: "Perhatikan dan ikuti arahan rambu dengan hati-hati.",
+  arti: "Sistem mendeteksi objek sebagai rambu lalu lintas, tetapi nama rambu ini belum dipetakan di frontend.",
+  tindakan: "Ikuti arahan rambu di sekitar Anda dan tetap berhati-hati.",
   pentingnya: "Rambu membantu menjaga alur jalan tetap aman dan teratur."
 };
 
@@ -88,7 +88,9 @@ export default function TrafficSignEducationPage() {
 
   // Get info based on detection result or use default
   const signId = detectionResult ? String(detectionResult.name) : null;
-  const currentInfo = signId && SIGN_INFO[signId] ? SIGN_INFO[signId] : (signId ? { ...DEFAULT_INFO, name: `Rambu ID: ${signId}` } : null);
+  const currentInfo = signId && SIGN_INFO[signId] 
+    ? { ...SIGN_INFO[signId], rawId: signId } 
+    : (signId ? { ...DEFAULT_INFO, rawId: signId } : null);
 
   const getCategoryMeta = (kategori: string) => {
     const k = kategori.toLowerCase();
@@ -165,10 +167,10 @@ export default function TrafficSignEducationPage() {
           </div>
 
           {/* 2. Main Feature Panel */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col lg:flex-row">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col lg:flex-row min-h-[440px]">
             
             {/* Left: Upload Area */}
-            <div className="lg:w-1/2 p-6 sm:p-8 flex flex-col">
+            <div className="lg:w-[45%] p-6 sm:p-8 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-100">
               <h3 className="text-sm font-extrabold text-[#0B1F3A] uppercase tracking-wider mb-2">Deteksi Rambu</h3>
               <p className="text-sm text-slate-500 mb-6">Unggah gambar rambu untuk membantu mengenali jenis dan arti rambu.</p>
               
@@ -214,7 +216,7 @@ export default function TrafficSignEducationPage() {
             </div>
             
             {/* Right: Result Area */}
-            <div className="lg:w-1/2 p-6 sm:p-8 bg-slate-50 border-t lg:border-t-0 lg:border-l border-slate-100 flex flex-col justify-center min-h-[350px]">
+            <div className="lg:w-[55%] p-6 sm:p-8 bg-slate-50 flex flex-col justify-center min-h-[350px]">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center text-center space-y-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1D4ED8]"></div>
@@ -229,30 +231,35 @@ export default function TrafficSignEducationPage() {
                   </div>
                 </div>
               ) : currentInfo ? (
-                <div className={`h-full flex flex-col justify-center p-6 bg-white border ${getCategoryMeta(currentInfo.kategori).borderColor} border-l-[6px] ${getCategoryMeta(currentInfo.kategori).leftBorder} rounded-xl shadow-sm`}>
+                <div className={`w-full flex flex-col justify-center p-6 sm:p-8 bg-white border ${getCategoryMeta(currentInfo.kategori).borderColor} border-l-[6px] ${getCategoryMeta(currentInfo.kategori).leftBorder} rounded-xl shadow-sm`}>
                   <div className="mb-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest ${getCategoryMeta(currentInfo.kategori).bg} ${getCategoryMeta(currentInfo.kategori).text} border ${getCategoryMeta(currentInfo.kategori).borderColor}`}>
-                        {currentInfo.kategori}
-                      </span>
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest ${getCategoryMeta(currentInfo.kategori).bg} ${getCategoryMeta(currentInfo.kategori).text} border ${getCategoryMeta(currentInfo.kategori).borderColor}`}>
+                          {currentInfo.kategori}
+                        </span>
+                        {currentInfo.rawId && (
+                          <span className="text-[10px] font-medium text-slate-400">ID Kelas: {currentInfo.rawId}</span>
+                        )}
+                      </div>
                       {detectionResult?.confidence && (
-                        <span className="text-xs font-bold text-slate-400">
+                        <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
                           Akurasi: {(detectionResult.confidence * 100).toFixed(1)}%
                         </span>
                       )}
                     </div>
-                    <h3 className={`text-2xl font-extrabold ${getCategoryMeta(currentInfo.kategori).text} leading-tight`}>
+                    <h3 className={`text-2xl sm:text-3xl font-extrabold ${getCategoryMeta(currentInfo.kategori).text} leading-tight`}>
                       {currentInfo.name}
                     </h3>
                   </div>
                   
-                  <div className="space-y-4 mt-2">
+                  <div className="space-y-5 mt-2 pt-5 border-t border-slate-100">
                     <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Arti Rambu</p>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Arti Rambu</p>
                       <p className="text-sm font-semibold text-[#0B1F3A] leading-relaxed">{currentInfo.arti}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Tindakan Pengguna Jalan</p>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Tindakan Pengguna Jalan</p>
                       <p className="text-sm font-semibold text-[#0B1F3A] leading-relaxed">{currentInfo.tindakan}</p>
                     </div>
                   </div>
