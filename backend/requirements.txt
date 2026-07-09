@@ -1,4 +1,9 @@
 # ============================================================
+# CATATAN KOMPATIBILITAS (jangan ubah tanpa cek):
+#   - numpy DIKUNCI 1.26.4 (bukan 2.x): TensorFlow 2.15 wajib numpy<2.0.
+#   - opencv-python 4.10.0.84 (bukan 5.x): versi 5 wajib numpy>=2 -> bentrok TF.
+# ============================================================
+# ============================================================
 # OMNI-ROAD Backend - requirements.txt
 # Dibersihkan: hapus duplikat (sebelumnya seluruh daftar tertulis 2x).
 # Dependency berat yang WAJIB (dipakai kode):
@@ -27,7 +32,7 @@ ultralytics==8.4.90
 ultralytics-thop==2.0.20
 torch==2.12.1
 torchvision==0.27.1
-opencv-python==5.0.0.93
+opencv-python==4.10.0.84
 onnxruntime==1.27.0
 onnx
 
@@ -38,7 +43,7 @@ scikit-learn==1.3.2
 joblib==1.3.2
 
 # --- Data / numerik ---
-numpy==2.2.6
+numpy==1.26.4
 polars==1.42.1
 polars-runtime-32==1.42.1
 matplotlib==3.10.9
