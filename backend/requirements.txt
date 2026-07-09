@@ -2,18 +2,25 @@
 # requirements.txt - Backend RoadTierbers Monitoring System
 # ============================================================
 # CATATAN KOMPATIBILITAS - jangan naikkan versi sembarangan:
-#   tensorflow 2.15.0 mengunci : numpy<2.0 | protobuf<5 | grpcio<2 | wrapt<1.15
 #   onnxruntime 1.27.0 butuh   : protobuf>=4.25.8
-#   -> titik temu protobuf     : 4.25.8  (irisan >=4.25.8 dan <5)
-#   -> numpy 1.26.4            : seri 1.x terakhir (syarat tensorflow 2.15)
-#   -> opencv 4.10.0.84        : cocok numpy 1.x (opencv 5 minta numpy>=2)
+#   numpy 1.26.4               : dibutuhkan scikit-learn 1.3.2 & opencv 4.10
+#   opencv 4.10.0.84           : cocok numpy 1.x (opencv 5 minta numpy>=2)
+#
+# TENSORFLOW SENGAJA DIHAPUS (v4):
+#   CPU server produksi TIDAK punya instruksi AVX (hanya SSE2).
+#   Binary resmi TensorFlow wajib AVX -> import tensorflow membuat
+#   proses mati seketika: "Illegal instruction (core dumped)".
+#   Model LSTM kel8 & kel9 (.keras) telah dikonversi ke bobot .npz+.json
+#   (tools/export_lstm_weights.py) dan dijalankan dengan NumPy murni
+#   (models/lstm_numpy.py). Hasil identik (parity check < 1e-7).
+#   JANGAN menambahkan kembali tensorflow ke file ini.
 #
 # Riwayat perbaikan deploy:
 #   v2 : numpy 2.2.6 -> 1.26.4 ; opencv 5.0.0.93 -> 4.10.0.84
 #   v3 : protobuf 7.35.1 -> 4.25.8 (bentrok tensorflow<5 vs onnxruntime>=4.25.8)
+#   v4 : tensorflow & ml_dtypes DIHAPUS (CPU server tanpa AVX);
+#        LSTM kel8/kel9 pindah ke runtime NumPy (lstm_numpy.py)
 # ============================================================
-
-
 
 # --- Web framework / API ---
 fastapi==0.139.0
@@ -36,9 +43,7 @@ opencv-python==4.10.0.84
 onnxruntime==1.27.0
 onnx
 
-# --- TensorFlow & ML klasik ---
-tensorflow==2.15.0
-ml_dtypes
+# --- ML klasik (scaler .pkl/.joblib) ---
 scikit-learn==1.3.2
 joblib==1.3.2
 

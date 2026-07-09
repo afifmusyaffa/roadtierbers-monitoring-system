@@ -1,25 +1,27 @@
 import numpy as np
 import math
 import joblib
-from tensorflow.keras.models import load_model
-import tensorflow.keras.layers as layers
 from datetime import datetime, date
 import os
 
-_original_dense_from_config = layers.Dense.from_config
-
-def _patched_dense_from_config(cls, config):
-    config.pop('quantization_config', None)
-    return _original_dense_from_config(config)
-
-layers.Dense.from_config = classmethod(_patched_dense_from_config)
+# ============================================================
+# Server produksi ber-CPU tanpa AVX sehingga TensorFlow tidak bisa
+# dijalankan (crash "Illegal instruction"). Model .keras telah
+# dikonversi ke bobot .npz + .json (tools/export_lstm_weights.py,
+# parity check vs Keras < 1e-7) dan dijalankan dengan NumPy murni
+# lewat models/lstm_numpy.py. Perilaku & hasil prediksi identik.
+# ============================================================
+try:
+    from models.lstm_numpy import NumpyLSTMModel
+except ImportError:
+    from lstm_numpy import NumpyLSTMModel
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEIGHTS_DIR = os.path.join(BASE_DIR, "..", "weights", "forecasting_kel9")
 
 # Load model dan scaler
 try:
-    model_kel9 = load_model(os.path.join(WEIGHTS_DIR, "pku_lstm_model.keras"))
+    model_kel9 = NumpyLSTMModel.load(os.path.join(WEIGHTS_DIR, "pku_lstm_model"))
     scaler_X_kel9 = joblib.load(os.path.join(WEIGHTS_DIR, "pku_scaler_X.pkl"))
     scaler_y_kel9 = joblib.load(os.path.join(WEIGHTS_DIR, "pku_scaler_y.pkl"))
     feature_cols = joblib.load(os.path.join(WEIGHTS_DIR, "feature_columns.pkl"))

@@ -6,12 +6,23 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 KEL8_DIR = os.path.join(BASE_DIR, "..", "weights", "kelompok_8_Jumlah Pelanggaran Lalu Lintas")
 MODEL_PATH = os.path.join(KEL8_DIR, "model_pelanggaran.keras")
 
-# We would ideally load the keras model here, but we will mock it if not available.
+# ============================================================
+# Server produksi ber-CPU tanpa AVX sehingga TensorFlow tidak bisa
+# dijalankan (crash "Illegal instruction"). Model .keras telah
+# dikonversi ke bobot .npz + .json (tools/export_lstm_weights.py,
+# parity check vs Keras < 1e-7) dan dijalankan dengan NumPy murni
+# lewat models/lstm_numpy.py. Perilaku & hasil prediksi identik.
+# ============================================================
 try:
-    from tensorflow.keras.models import load_model
+    try:
+        from models.lstm_numpy import NumpyLSTMModel
+    except ImportError:
+        from lstm_numpy import NumpyLSTMModel
     import pickle
-    if os.path.exists(MODEL_PATH):
-        model_kel8 = load_model(MODEL_PATH)
+
+    _MODEL_PREFIX = os.path.splitext(MODEL_PATH)[0]
+    if os.path.exists(_MODEL_PREFIX + ".npz"):
+        model_kel8 = NumpyLSTMModel.load(_MODEL_PREFIX)
         with open(os.path.join(KEL8_DIR, "scaler_x.pkl"), "rb") as f:
             scaler_X_kel8 = pickle.load(f)
         with open(os.path.join(KEL8_DIR, "scaler_y.pkl"), "rb") as f:
@@ -119,5 +130,5 @@ def predict_violations(tanggal_str: str, jumlah_sekarang: int, forecast_days: in
         "input_jumlah": jumlah_sekarang,
         "forecast_30_hari": predictions,
         "rata_rata_pelanggaran": round(avg_pred),
-        "note": "Menggunakan model simulasi (model_pelanggaran.keras belum tersedia di server)." if not model_kel8 else "Menggunakan model Deep Learning."
+        "note": "Menggunakan model simulasi (artefak model_pelanggaran .npz belum tersedia di server)." if not model_kel8 else "Menggunakan model Deep Learning."
     }
