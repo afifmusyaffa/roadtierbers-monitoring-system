@@ -78,12 +78,14 @@ async def analyze_all(file: UploadFile = File(...)):
         # Determine status
         status = "success"
         message = "All models ran successfully."
-        if errors > 0:
-            if errors == 5:
+        
+        unavailable_models = [k for k, v in results.items() if v.get("status") in ("belum_tersedia", "error")]
+        
+        if len(unavailable_models) > 0:
+            message = f"Detection completed with some unavailable or failed models: {', '.join(unavailable_models)}"
+            if len(unavailable_models) == len(results):
                 status = "error"
-                message = "All models failed to run."
-            else:
-                message = f"Detection completed with {errors} model error(s)."
+                message = "All models failed to run or are unavailable."
 
         # Save to DB
         db = SessionLocal()
@@ -122,7 +124,23 @@ async def plan_trip(
     temp_c: float = 30.0
 ):
     if not predict_congestion:
-        return ApiResponse(status="error", message="Forecasting model not loaded", data=None)
+        return ApiResponse(
+            status="success",
+            message="Forecasting menggunakan data simulasi prototype karena model belum tersedia.",
+            data={
+                "model_loaded": False,
+                "mode": time_mode,
+                "target_arrival": target_time if time_mode == "tiba" else None,
+                "departure_time": target_time if time_mode == "berangkat" else None,
+                "recommended_departure": "07:28" if time_mode == "tiba" else None,
+                "estimated_arrival": "08:32" if time_mode == "berangkat" else None,
+                "base_travel_time": 25,
+                "delay_minutes": 32,
+                "total_travel_time": 57,
+                "congestion_category": "Padat",
+                "risk_level": "Tinggi"
+            }
+        )
         
     try:
         from models.forecasting_kel9 import routes
@@ -238,7 +256,33 @@ async def get_forecast(
     temp_c: float = 30.0
 ):
     if not predict_congestion:
-        return ApiResponse(status="error", message="Forecasting model not loaded", data=None)
+        local_now = datetime.now()
+        target_hour = (local_now + timedelta(hours=1)).strftime("%H:00")
+        return ApiResponse(
+            status="success",
+            message="Forecasting menggunakan data simulasi prototype karena model belum tersedia.",
+            data={
+                "model_loaded": False,
+                "mode": "prototype_fallback",
+                "target_hour": target_hour,
+                "congestion": {
+                    "category": "Padat",
+                    "delay_minutes": 32,
+                    "volume_pred": 920,
+                    "risk_level": "Tinggi"
+                },
+                "violations": {
+                    "predicted_violations": 45,
+                    "note": "Prototype data"
+                },
+                "vehicles": {
+                    "Mobil": 450,
+                    "Motor": 470,
+                    "total": 920
+                },
+                "yolo_history_used": {}
+            }
+        )
 
     db = SessionLocal()
     try:
