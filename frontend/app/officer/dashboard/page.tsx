@@ -12,22 +12,29 @@ export default function OfficerDashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchData(isSilent = false) {
       try {
         const res = await fetch("http://127.0.0.1:8000/dashboard/summary");
         const json = await res.json();
         if (json.status === "success") {
           setData(json.data);
-        } else {
+          setError("");
+        } else if (!isSilent) {
           setError(json.message || "Gagal mengambil data dari server");
         }
       } catch (err) {
-        setError("Koneksi ke backend gagal.");
+        if (!isSilent) {
+          setError("Koneksi ke backend gagal.");
+        }
       } finally {
-        setLoading(false);
+        if (!isSilent) {
+          setLoading(false);
+        }
       }
     }
-    fetchData();
+    fetchData(false);
+    const interval = setInterval(() => fetchData(true), 5000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {

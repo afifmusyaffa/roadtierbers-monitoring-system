@@ -586,7 +586,8 @@ async def get_dashboard_summary():
         for record in records_today:
             if not record.results: continue
             
-            hr_str = record.timestamp.strftime("%H:00")
+            local_time = record.timestamp + timedelta(hours=7)
+            hr_str = local_time.strftime("%H:00")
             if hr_str not in hourly_volume:
                 hourly_volume[hr_str] = 0
                 
@@ -682,7 +683,8 @@ async def get_violations_summary():
         for record in records_today:
             if not record.results: continue
             
-            hr_str = record.timestamp.strftime("%H:00")
+            local_time = record.timestamp + timedelta(hours=7)
+            hr_str = local_time.strftime("%H:00")
             has_violation_in_record = False
             
             # Helm
@@ -758,22 +760,30 @@ async def get_violations_summary():
         
         # Get recent cases
         # Fetch latest 100 records from detection_history
-        all_records = db.query(DetectionHistory).order_by(DetectionHistory.timestamp.desc()).limit(100).all()
+        all_records = db.query(DetectionHistory).order_by(DetectionHistory.id.desc()).limit(100).all()
         cases_list = []
         for r in all_records:
             if not r.results: continue
             
             # Check violation details
-            helm_len = len(r.results.get('helm', {}).get('data', [])) if isinstance(r.results.get('helm'), dict) else 0
-            bonceng_len = len(r.results.get('boncengan', {}).get('data', [])) if isinstance(r.results.get('boncengan'), dict) else 0
-            plat_len = len(r.results.get('plat', {}).get('data', [])) if isinstance(r.results.get('plat'), dict) else 0
-            pajak_len = len(r.results.get('pajak', {}).get('data', [])) if isinstance(r.results.get('pajak'), dict) else 0
+            helm_res = r.results.get('helm')
+            helm_len = len(helm_res.get('data')) if isinstance(helm_res, dict) and isinstance(helm_res.get('data'), list) else 0
+            
+            bonceng_res = r.results.get('boncengan')
+            bonceng_len = len(bonceng_res.get('data')) if isinstance(bonceng_res, dict) and isinstance(bonceng_res.get('data'), list) else 0
+            
+            plat_res = r.results.get('plat')
+            plat_len = len(plat_res.get('data')) if isinstance(plat_res, dict) and isinstance(plat_res.get('data'), list) else 0
+            
+            pajak_res = r.results.get('pajak')
+            pajak_len = len(pajak_res.get('data')) if isinstance(pajak_res, dict) and isinstance(pajak_res.get('data'), list) else 0
             
             # Limit count of items in cases_list
             if len(cases_list) >= 15:
                 break
                 
-            time_str = r.timestamp.strftime("%d-%m-%Y %H:%M")
+            local_time = r.timestamp + timedelta(hours=7)
+            time_str = local_time.strftime("%d-%m-%Y %H:%M")
             loc_str = "Simpang SKA"
             
             if helm_len > 0:
@@ -859,7 +869,8 @@ async def get_vehicles_summary():
         for record in records_today:
             if not record.results: continue
             
-            hr_str = record.timestamp.strftime("%H:00")
+            local_time = record.timestamp + timedelta(hours=7)
+            hr_str = local_time.strftime("%H:00")
             
             # Vehs
             kendaraan_res = record.results.get('kendaraan', {})
@@ -879,8 +890,8 @@ async def get_vehicles_summary():
                         mobil_count += 1
             
             # Plate counts
-            plat_res = record.results.get('plat', {})
-            plat_len = len(plat_res.get('data', [])) if isinstance(plat_res, dict) and plat_res.get('status') == 'success' else 0
+            plat_res = record.results.get('plat')
+            plat_len = len(plat_res.get('data')) if isinstance(plat_res, dict) and isinstance(plat_res.get('data'), list) else 0
             
             # Let's simulate plate monitoring from kendaraan. If there are vehicles, we have plate readings.
             if v_len > 0:
@@ -908,11 +919,12 @@ async def get_vehicles_summary():
         ]
         
         # Plates list (recent plate monitoring table)
-        all_records = db.query(DetectionHistory).order_by(DetectionHistory.timestamp.desc()).limit(15).all()
+        all_records = db.query(DetectionHistory).order_by(DetectionHistory.id.desc()).limit(15).all()
         plates_list = []
         
         for idx, r in enumerate(all_records):
-            time_str = r.timestamp.strftime("%d-%m-%Y %H:%M")
+            local_time = r.timestamp + timedelta(hours=7)
+            time_str = local_time.strftime("%d-%m-%Y %H:%M")
             loc_str = "Simpang SKA"
             
             # Generate mock plate based on record id to feel real
@@ -1168,11 +1180,12 @@ async def get_reports_summary():
 async def get_history_list(limit: int = 100):
     db = SessionLocal()
     try:
-        records = db.query(DetectionHistory).order_by(DetectionHistory.timestamp.desc()).limit(limit).all()
+        records = db.query(DetectionHistory).order_by(DetectionHistory.id.desc()).limit(limit).all()
         history_rows = []
         
         for record in records:
-            time_str = record.timestamp.strftime("%d-%m-%Y %H:%M")
+            local_time = record.timestamp + timedelta(hours=7)
+            time_str = local_time.strftime("%d-%m-%Y %H:%M")
             loc_str = "Simpang SKA"
             
             if not record.results: continue
@@ -1248,7 +1261,7 @@ async def chat_with_assistant(req: ChatRequest):
     try:
         # Fetch detection history (latest 50)
         db = SessionLocal()
-        records = db.query(DetectionHistory).order_by(DetectionHistory.timestamp.desc()).limit(50).all()
+        records = db.query(DetectionHistory).order_by(DetectionHistory.id.desc()).limit(50).all()
         db.close()
         
         # Format context

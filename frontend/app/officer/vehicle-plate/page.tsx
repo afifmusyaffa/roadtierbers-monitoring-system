@@ -12,23 +12,30 @@ export default function OfficerVehiclePlatePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchData(isSilent = false) {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         const res = await fetch(`${apiUrl}/vehicles/summary`);
         const json = await res.json();
         if (json.status === "success") {
           setData(json.data);
-        } else {
+          setError("");
+        } else if (!isSilent) {
           setError(json.message || "Gagal mengambil data dari server");
         }
       } catch (err) {
-        setError("Koneksi ke backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
+        if (!isSilent) {
+          setError("Koneksi ke backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
+        }
       } finally {
-        setLoading(false);
+        if (!isSilent) {
+          setLoading(false);
+        }
       }
     }
-    fetchData();
+    fetchData(false);
+    const interval = setInterval(() => fetchData(true), 5000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
