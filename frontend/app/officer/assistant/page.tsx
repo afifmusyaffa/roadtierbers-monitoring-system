@@ -62,13 +62,13 @@ export default function AssistantPage() {
       }
 
       let responseText = data.response || "Maaf, terjadi kesalahan pada sistem AI.";
-      let shouldDownloadCSV = false;
+      let downloadFormat: string | null = null;
 
-      if (data.action === "download_report_csv") {
-        shouldDownloadCSV = true;
-      } else if (responseText.includes("[ACTION: DOWNLOAD_CSV]")) {
+      if (data.action === "download_report") {
+        downloadFormat = data.format;
+      } else if (data.action === "download_report_csv" || responseText.includes("[ACTION: DOWNLOAD_CSV]")) {
         // Fallback if using old string matching
-        shouldDownloadCSV = true;
+        downloadFormat = "csv";
         responseText = responseText.replace("[ACTION: DOWNLOAD_CSV]", "").trim();
       }
 
@@ -81,43 +81,94 @@ export default function AssistantPage() {
         },
       ]);
 
-      if (shouldDownloadCSV) {
+      if (downloadFormat) {
         try {
           const histRes = await fetch("http://localhost:8000/history/list");
           const histData = await histRes.json();
           if (histData.status === "success" && histData.data && Array.isArray(histData.data.historyRows)) {
-            const csvRows = [];
+            const rows = histData.data.historyRows;
             const headers = ["Waktu", "Lokasi", "Kategori", "Hasil", "Jumlah", "Risiko", "Status Validasi", "Catatan"];
-            csvRows.push(headers.join(","));
-            
-            histData.data.historyRows.forEach((item: any) => {
-              const waktu = `"${item.time}"`;
-              const lokasi = `"${item.loc}"`;
-              const kategori = `"${item.cat}"`;
-              const hasil = `"${item.res}"`;
-              const jumlah = `"${item.count}"`;
-              const risiko = `"${item.risk}"`;
-              const validasi = `"${item.val}"`;
-              const catatan = `"${item.note}"`;
+
+            if (downloadFormat === "csv") {
+              const csvRows = [headers.join(",")];
+              rows.forEach((item: any) => {
+                csvRows.push([
+                  `"${item.time}"`, `"${item.loc}"`, `"${item.cat}"`, `"${item.res}"`, 
+                  `"${item.count}"`, `"${item.risk}"`, `"${item.val}"`, `"${item.note}"`
+                ].join(","));
+              });
+              const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.setAttribute("href", url);
+              link.setAttribute("download", `Laporan_Deteksi_AI_${new Date().toISOString().split('T')[0]}.csv`);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            } else if (downloadFormat === "excel") {
+              let html = '<html><head><meta charset="utf-8"/></head><body><table border="1">';
+              html += '<thead><tr style="background-color: #0b1f3a; color: white;">';
+              headers.forEach(h => { html += `<th style="padding: 8px; font-weight: bold;">${h}</th>`; });
+              html += '</tr></thead><tbody>';
+              rows.forEach((item: any) => {
+                html += '<tr>';
+                [item.time, item.loc, item.cat, item.res, item.count, item.risk, item.val, item.note].forEach(val => {
+                  html += `<td style="padding: 6px;">${val || ""}</td>`;
+                });
+                html += '</tr>';
+              });
+              html += '</tbody></table></body></html>';
+              const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.setAttribute("href", url);
+              link.setAttribute("download", `Laporan_Deteksi_AI_${new Date().toISOString().split('T')[0]}.xls`);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            } else if (downloadFormat === "pdf") {
+              const printWrapper = document.createElement("div");
+              printWrapper.id = "print-area-wrapper";
+              let html = '<h2 style="margin-bottom: 20px; font-family: sans-serif;">Laporan Deteksi AI RoadTierbers</h2>';
+              html += '<table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px;">';
+              html += '<thead><tr style="background-color: #f1f5f9; text-align: left;">';
+              headers.forEach(h => { html += `<th style="padding: 8px; border-bottom: 2px solid #cbd5e1;">${h}</th>`; });
+              html += '</tr></thead><tbody>';
+              rows.forEach((item: any) => {
+                html += '<tr>';
+                [item.time, item.loc, item.cat, item.res, item.count, item.risk, item.val, item.note].forEach(val => {
+                  html += `<td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${val || ""}</td>`;
+                });
+                html += '</tr>';
+              });
+              html += '</tbody></table>';
+              printWrapper.innerHTML = html;
+              document.body.appendChild(printWrapper);
               
-              csvRows.push([waktu, lokasi, kategori, hasil, jumlah, risiko, validasi, catatan].join(","));
-            });
-            
-            const csvContent = csvRows.join("\n");
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Laporan_Deteksi_AI_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+              const style = document.createElement("style");
+              style.id = "print-style-override";
+              style.innerHTML = `
+                @media print {
+                  html, body { background: white !important; margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
+                  body > *:not(#print-area-wrapper) { display: none !important; }
+                  #print-area-wrapper { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 20px !important; margin: 0 !important; }
+                }
+              `;
+              document.head.appendChild(style);
+              
+              window.print();
+              
+              setTimeout(() => {
+                printWrapper.remove();
+                style.remove();
+              }, 1000);
+            }
           }
         } catch (e) {
-          console.error("Failed to download CSV", e);
+          console.error(`Failed to download ${downloadFormat}`, e);
           setMessages((prev) => [
             ...prev,
-            { role: "model", content: "Maaf, gagal mengunduh CSV. Pastikan backend berjalan dengan baik." },
+            { role: "model", content: `Maaf, gagal mengunduh format ${downloadFormat?.toUpperCase()}. Pastikan backend berjalan dengan baik.` },
           ]);
         }
       }
@@ -164,6 +215,9 @@ export default function AssistantPage() {
                     "Apa tindak lanjut yang disarankan?",
                     "Bantu susun poin laporan",
                     "Data apa yang perlu divalidasi?",
+                    "Unduh laporan format Excel",
+                    "Unduh laporan format PDF",
+                    "Unduh riwayat deteksi CSV",
                   ].map((prompt, idx) => (
                     <button
                       key={idx}
