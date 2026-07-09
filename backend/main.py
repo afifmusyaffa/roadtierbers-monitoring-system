@@ -1264,7 +1264,31 @@ Berikut adalah konteks deteksi terbaru dari sistem:
 
 Berikan insight yang berguna, ringkas, dan praktis. Jangan mengarang data yang tidak ada di konteks. Jika ditanya tentang prioritas area, sebutkan area dengan pelanggaran terbanyak dari data. Jika data kosong, sampaikan bahwa belum ada data deteksi.
 """
-        model = genai.GenerativeModel("gemini-2.5-flash", system_instruction=system_instruction)
+        
+        download_tool = {
+            "function_declarations": [
+                {
+                    "name": "download_report",
+                    "description": "Gunakan fungsi ini jika pengguna meminta untuk membuat, mengunduh, mengekspor, atau mendownload laporan. Format yang didukung: csv, excel, pdf.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "format": {
+                                "type": "string",
+                                "description": "Format laporan yang diminta: 'csv', 'excel', atau 'pdf'."
+                            }
+                        },
+                        "required": ["format"]
+                    }
+                }
+            ]
+        }
+        
+        model = genai.GenerativeModel(
+            "gemini-2.5-flash", 
+            system_instruction=system_instruction,
+            tools=[download_tool]
+        )
         
         # format history for gemini
         formatted_history = []
@@ -1275,6 +1299,27 @@ Berikan insight yang berguna, ringkas, dan praktis. Jangan mengarang data yang t
         chat = model.start_chat(history=formatted_history)
         response = chat.send_message(req.message)
         
+        action_name = None
+        action_format = "csv"
+        if response.candidates and response.candidates[0].content.parts:
+            for part in response.candidates[0].content.parts:
+                if getattr(part, "function_call", None):
+                    action_name = part.function_call.name
+                    try:
+                        args = dict(part.function_call.args)
+                        if "format" in args:
+                            action_format = args["format"].lower()
+                    except:
+                        pass
+                    break
+                    
+        if action_name == "download_report":
+            return {
+                "response": f"Baik, laporan riwayat deteksi Anda sedang disiapkan dan akan diunduh dalam format {action_format.upper()}...",
+                "action": "download_report",
+                "format": action_format
+            }
+            
         return {"response": response.text}
     except Exception as e:
         import traceback

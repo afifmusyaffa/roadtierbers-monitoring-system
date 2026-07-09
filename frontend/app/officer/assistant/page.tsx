@@ -61,14 +61,66 @@ export default function AssistantPage() {
         throw new Error(data.error);
       }
 
+      let responseText = data.response || "Maaf, terjadi kesalahan pada sistem AI.";
+      let shouldDownloadCSV = false;
+
+      if (data.action === "download_report_csv") {
+        shouldDownloadCSV = true;
+      } else if (responseText.includes("[ACTION: DOWNLOAD_CSV]")) {
+        // Fallback if using old string matching
+        shouldDownloadCSV = true;
+        responseText = responseText.replace("[ACTION: DOWNLOAD_CSV]", "").trim();
+      }
+
       // Add AI response
       setMessages((prev) => [
         ...prev,
         {
           role: "model",
-          content: data.response || "Maaf, terjadi kesalahan pada sistem AI.",
+          content: responseText,
         },
       ]);
+
+      if (shouldDownloadCSV) {
+        try {
+          const histRes = await fetch("http://localhost:8000/history/list");
+          const histData = await histRes.json();
+          if (histData.status === "success" && histData.data && Array.isArray(histData.data.historyRows)) {
+            const csvRows = [];
+            const headers = ["Waktu", "Lokasi", "Kategori", "Hasil", "Jumlah", "Risiko", "Status Validasi", "Catatan"];
+            csvRows.push(headers.join(","));
+            
+            histData.data.historyRows.forEach((item: any) => {
+              const waktu = `"${item.time}"`;
+              const lokasi = `"${item.loc}"`;
+              const kategori = `"${item.cat}"`;
+              const hasil = `"${item.res}"`;
+              const jumlah = `"${item.count}"`;
+              const risiko = `"${item.risk}"`;
+              const validasi = `"${item.val}"`;
+              const catatan = `"${item.note}"`;
+              
+              csvRows.push([waktu, lokasi, kategori, hasil, jumlah, risiko, validasi, catatan].join(","));
+            });
+            
+            const csvContent = csvRows.join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Laporan_Deteksi_AI_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        } catch (e) {
+          console.error("Failed to download CSV", e);
+          setMessages((prev) => [
+            ...prev,
+            { role: "model", content: "Maaf, gagal mengunduh CSV. Pastikan backend berjalan dengan baik." },
+          ]);
+        }
+      }
     } catch (error: any) {
       console.error("Chat error:", error);
       setMessages((prev) => [
