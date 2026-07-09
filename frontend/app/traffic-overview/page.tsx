@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
+import { ArrowRight, AlertTriangle, CheckCircle2, TrendingUp, TrendingDown, Clock, Map, MapPin, Database } from "lucide-react";
 
 interface ForecastData {
   data_available?: boolean;
@@ -14,6 +15,67 @@ interface ForecastData {
     delay_minutes?: number;
     volume_pred?: number;
   };
+}
+
+// Minimal Scroll Reveal Component for tasteful animations
+function ScrollReveal({ 
+  children, 
+  delay = 0, 
+  direction = "up",
+  className
+}: { 
+  children: ReactNode, 
+  delay?: number,
+  direction?: "up" | "left" | "right" | "none",
+  className?: string
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const domRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          if (domRef.current) observer.unobserve(domRef.current);
+        }
+      });
+    }, { rootMargin: "0px 0px -20px 0px", threshold: 0.1 });
+
+    const currentRef = domRef.current;
+    if (currentRef) observer.observe(currentRef);
+
+    return () => {
+      if (currentRef) observer.unobserve(currentRef);
+    };
+  }, []);
+
+  const getTransform = () => {
+    if (direction === "up") return "translateY(20px)";
+    if (direction === "left") return "translateX(20px)";
+    if (direction === "right") return "translateX(-20px)";
+    return "none";
+  };
+
+  return (
+    <div
+      ref={domRef}
+      className={className}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "none" : getTransform(),
+        transition: `opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export default function TrafficOverviewPage() {
@@ -61,9 +123,10 @@ export default function TrafficOverviewPage() {
         color: "text-red-700",
         bgStatus: "bg-red-50",
         borderColor: "border-red-200",
-        leftBorder: "border-l-red-500",
         badgeBg: "bg-red-600",
         trend: "Meningkat",
+        trendIcon: TrendingUp,
+        trendColor: "text-red-600",
         decision: "Pertimbangkan menunda perjalanan",
         decisionSub: "Kondisi jalan macet. Perjalanan akan memakan waktu lebih lama dari biasanya."
       };
@@ -72,9 +135,10 @@ export default function TrafficOverviewPage() {
         color: "text-amber-700",
         bgStatus: "bg-amber-50",
         borderColor: "border-amber-200",
-        leftBorder: "border-l-amber-500",
         badgeBg: "bg-amber-500",
         trend: "Stabil",
+        trendIcon: TrendingUp,
+        trendColor: "text-amber-500",
         decision: "Berangkat dengan waktu tambahan",
         decisionSub: "Kepadatan mulai terlihat. Sediakan waktu ekstra agar perjalanan lebih tenang."
       };
@@ -83,9 +147,10 @@ export default function TrafficOverviewPage() {
         color: "text-red-700",
         bgStatus: "bg-red-50",
         borderColor: "border-red-200",
-        leftBorder: "border-l-red-500",
         badgeBg: "bg-red-600",
         trend: "Meningkat",
+        trendIcon: TrendingUp,
+        trendColor: "text-red-600",
         decision: "Pertimbangkan menunda perjalanan",
         decisionSub: "Arus jalan terpantau lambat. Perjalanan Anda berisiko terhambat."
       };
@@ -94,9 +159,10 @@ export default function TrafficOverviewPage() {
         color: "text-teal-800",
         bgStatus: "bg-teal-50",
         borderColor: "border-teal-200",
-        leftBorder: "border-l-teal-500",
         badgeBg: "bg-teal-600", 
         trend: "Menurun",
+        trendIcon: TrendingDown,
+        trendColor: "text-teal-600",
         decision: "Berangkat sekarang",
         decisionSub: "Jalan terpantau lancar. Kondisi masih aman untuk perjalanan."
       };
@@ -106,9 +172,10 @@ export default function TrafficOverviewPage() {
       color: "text-slate-700",
       bgStatus: "bg-slate-50",
       borderColor: "border-slate-200",
-      leftBorder: "border-l-slate-400",
       badgeBg: "bg-slate-400",
       trend: "-",
+      trendIcon: TrendingUp,
+      trendColor: "text-slate-400",
       decision: "Rekomendasi belum tersedia",
       decisionSub: "Sistem menunggu data monitoring dari hasil deteksi."
     };
@@ -118,161 +185,204 @@ export default function TrafficOverviewPage() {
 
   return (
     <PublicPageShell>
-      <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      <div className="bg-[#F8FAFC] min-h-screen font-sans text-slate-800 selection:bg-blue-100 selection:text-blue-900 pb-24">
+        
+        {/* 1. Compact Feature Hero / Header */}
+        <section className="relative pt-24 pb-12 overflow-hidden bg-gradient-to-br from-[#0B1F3A] to-[#102A4C]">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none translate-x-1/3 -translate-y-1/3" />
           
-          {/* 1. Header Area */}
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-slate-200 pb-6">
-            <div className="max-w-2xl">
-              <h1 className="text-3xl font-extrabold text-[#0B1F3A] tracking-tight">Pantauan Lalu Lintas</h1>
-              <p className="text-base text-slate-500 mt-2">Ringkasan kondisi jalan dan rekomendasi perjalanan untuk wilayah Pekanbaru.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600 font-medium">
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-400 uppercase tracking-widest">Area</span>
-                <span className="text-[#0B1F3A] font-semibold">Pekanbaru</span>
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+              
+              <div className="max-w-2xl">
+                <ScrollReveal delay={0}>
+                  <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight mb-3">
+                    Pantauan Lalu Lintas
+                  </h1>
+                </ScrollReveal>
+                <ScrollReveal delay={0.1}>
+                  <p className="text-blue-100/80 font-medium text-base lg:text-lg">
+                    Cek kondisi jalan, estimasi kepadatan, dan rekomendasi perjalanan sebelum berangkat.
+                  </p>
+                </ScrollReveal>
               </div>
-              <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-400 uppercase tracking-widest">Sumber</span>
-                <span className="text-[#0B1F3A] font-semibold">Hasil deteksi sistem</span>
-              </div>
-              <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-400 uppercase tracking-widest">Evaluasi</span>
-                <span className="text-[#1D4ED8] font-bold">Mode aktif</span>
-              </div>
+
+              <ScrollReveal delay={0.2} direction="left">
+                <div className="flex flex-wrap items-center gap-4 text-xs font-medium bg-[#0B1F3A]/40 backdrop-blur-md border border-blue-800/50 p-4 rounded-2xl shadow-lg">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-blue-400" />
+                    <div>
+                      <p className="text-blue-300/60 uppercase tracking-wider text-[10px] font-bold">Area</p>
+                      <p className="text-white font-bold">Pekanbaru</p>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-blue-800/50 hidden sm:block"></div>
+                  <div className="flex items-center gap-2">
+                    <Database className="w-4 h-4 text-cyan-400" />
+                    <div>
+                      <p className="text-blue-300/60 uppercase tracking-wider text-[10px] font-bold">Sumber</p>
+                      <p className="text-white font-bold">Hasil deteksi sistem</p>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-blue-800/50 hidden sm:block"></div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <p className="text-blue-300/60 uppercase tracking-wider text-[10px] font-bold">Status</p>
+                      <p className="text-white font-bold">Mode evaluasi</p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
             </div>
           </div>
+        </section>
 
-          {/* Main State Handling */}
-          {isLoading ? (
-            <div className="py-20 flex flex-col items-center justify-center space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1D4ED8]"></div>
-              <span className="text-slate-500 text-sm font-medium">Mengambil pantauan lalu lintas...</span>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 -mt-6 relative z-20 space-y-8">
+          
+          {/* Status Loading/Error */}
+          {isLoading && (
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl flex items-center gap-4 text-slate-600">
+              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <span className="font-bold">Mengambil pantauan lalu lintas...</span>
             </div>
-          ) : error ? (
-            <div className="py-16 px-6 bg-red-50 border border-red-200 rounded-2xl text-center max-w-2xl mx-auto shadow-sm">
-              <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 text-xl mx-auto">⚠️</div>
-              <h2 className="text-lg font-bold text-red-800 mb-2">Koneksi server terputus</h2>
-              <p className="text-sm text-red-600">Pastikan layanan backend RoadTierbers sedang berjalan.</p>
+          )}
+
+          {error && !isLoading && (
+            <div className="bg-red-50 p-8 rounded-3xl border border-red-200 shadow-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+                <h3 className="font-bold text-red-900 text-lg">{error}</h3>
+              </div>
+              <p className="text-red-700 font-medium">Pastikan layanan backend RoadTierbers sedang berjalan.</p>
             </div>
-          ) : !hasData ? (
-            <div className="py-16 px-6 bg-white border border-slate-200 rounded-2xl text-center max-w-2xl mx-auto shadow-sm">
-              <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4 text-2xl border border-slate-100 mx-auto">📊</div>
-              <h2 className="text-lg font-bold text-[#0B1F3A] mb-2">Belum ada data monitoring</h2>
-              <p className="text-sm text-slate-500 mb-6">Sistem menunggu data monitoring dari hasil deteksi.</p>
-              <Link href="/officer/ai-detection" className="inline-flex items-center justify-center h-10 px-6 rounded-lg bg-[#1D4ED8] text-white text-sm font-semibold hover:bg-[#1e40af] transition-colors shadow-sm">
-                Ke Pusat Deteksi AI →
+          )}
+
+          {!isLoading && !error && !hasData && (
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl text-center">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-bold text-[#0B1F3A] mb-2">Belum ada data monitoring</h3>
+              <p className="text-slate-500 font-medium mb-6 max-w-md mx-auto">Sistem menunggu data dari hasil deteksi.</p>
+              <Link href="/officer/ai-detection" className="inline-flex items-center gap-2 text-blue-600 font-bold hover:text-blue-800 transition-colors">
+                Ke Pusat Deteksi AI <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          ) : (
-            <div className="space-y-10">
-              
-              {/* 2. Main Traffic Brief */}
-              <div className={`bg-white border ${statusInfo.borderColor} border-l-[6px] ${statusInfo.leftBorder} rounded-2xl shadow-sm overflow-hidden flex flex-col lg:flex-row`}>
-                
-                {/* Left side: Recommendation */}
-                <div className={`lg:w-1/2 p-6 sm:p-8 ${statusInfo.bgStatus} flex flex-col justify-center`}>
-                  <div className="flex items-center gap-3 mb-5">
-                    <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider bg-white shadow-sm ${statusInfo.color}`}>
-                      {categoryStr}
-                    </span>
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                      <span className="relative flex h-2 w-2">
-                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${statusInfo.badgeBg}`}></span>
-                        <span className={`relative inline-flex rounded-full h-2 w-2 ${statusInfo.badgeBg}`}></span>
-                      </span>
-                      Live
-                    </span>
-                  </div>
-                  <h2 className={`text-2xl sm:text-4xl font-extrabold tracking-tight ${statusInfo.color} mb-4 leading-tight`}>
-                    {statusInfo.decision}
-                  </h2>
-                  <p className={`text-base font-medium opacity-90 ${statusInfo.color}`}>
-                    {statusInfo.decisionSub}
-                  </p>
-                </div>
-                
-                {/* Right side: Key Numbers Grid */}
-                <div className="lg:w-1/2 p-6 sm:p-8 flex flex-col justify-center bg-white border-t lg:border-t-0 lg:border-l border-slate-100">
-                  <div className="grid grid-cols-2 gap-y-8 gap-x-6">
-                    <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Kepadatan</p>
-                      <p className="text-xl sm:text-2xl font-extrabold text-[#0B1F3A]">
-                        {congestion?.volume_pred !== undefined ? `${congestion.volume_pred} kend` : "Belum tersedia"}
+          )}
+
+          {/* 2. Main Traffic Brief Panel */}
+          {!isLoading && !error && hasData && (
+            <ScrollReveal delay={0.1}>
+              <div className={`bg-white rounded-3xl border ${statusInfo.borderColor} shadow-xl shadow-slate-200/50 overflow-hidden`}>
+                <div className={`p-8 lg:p-10 ${statusInfo.bgStatus}`}>
+                  <div className="flex flex-col lg:flex-row justify-between gap-8 lg:gap-12">
+                    
+                    {/* Primary Decision Area */}
+                    <div className="flex-1">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm mb-6">
+                        <div className={`w-2 h-2 rounded-full ${statusInfo.badgeBg} animate-pulse`} />
+                        <span className={`text-xs font-bold uppercase tracking-wider ${statusInfo.color}`}>{categoryStr}</span>
+                      </div>
+                      <h2 className={`text-3xl lg:text-4xl font-extrabold mb-4 tracking-tight ${statusInfo.color}`}>
+                        {statusInfo.decision}
+                      </h2>
+                      <p className="text-slate-600 font-medium text-lg leading-relaxed max-w-2xl">
+                        {statusInfo.decisionSub}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Keterlambatan</p>
-                      <p className="text-xl sm:text-2xl font-extrabold text-[#0B1F3A]">
-                        {delayMinutes !== undefined ? `${delayMinutes} menit` : "Belum tersedia"}
-                      </p>
+
+                    {/* Quick Stats Grid */}
+                    <div className="lg:w-[400px] shrink-0 grid grid-cols-2 gap-4">
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Kepadatan</p>
+                        <p className="text-2xl font-extrabold text-[#0B1F3A]">
+                          {congestion?.volume_pred !== undefined ? `${congestion.volume_pred} kend` : "Belum tersedia"}
+                        </p>
+                      </div>
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Keterlambatan</p>
+                        <p className="text-2xl font-extrabold text-[#0B1F3A]">
+                          {delayMinutes !== undefined ? `${delayMinutes} menit` : "Belum tersedia"}
+                        </p>
+                      </div>
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Risiko Perjalanan</p>
+                        <div className="flex items-center gap-2">
+                          <statusInfo.trendIcon className={`w-5 h-5 ${statusInfo.trendColor}`} />
+                          <p className={`text-xl font-extrabold ${statusInfo.trendColor}`}>
+                            {statusInfo.trend}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Pembaruan</p>
+                        <p className="text-lg font-extrabold text-[#0B1F3A] truncate">
+                          {data?.target_hour ? data.target_hour : "Belum tersedia"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Risiko Perjalanan</p>
-                      <p className={`text-xl sm:text-2xl font-extrabold ${statusInfo.trend === "Meningkat" ? "text-red-600" : (statusInfo.trend === "Menurun" ? "text-teal-600" : (statusInfo.trend === "-" ? "text-slate-500" : "text-amber-500"))}`}>
-                        {statusInfo.trend}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Pembaruan</p>
-                      <p className="text-xl sm:text-2xl font-extrabold text-[#0B1F3A]">
-                        {data?.target_hour ? data.target_hour : "Belum tersedia"}
-                      </p>
-                    </div>
+
                   </div>
                 </div>
               </div>
+            </ScrollReveal>
+          )}
 
-              {/* 3. Main Details Area (3 columns on desktop) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                
-                {/* Column 1: Area Pemantauan */}
-                <div className="lg:col-span-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                  <h3 className="text-sm font-extrabold text-[#0B1F3A] uppercase tracking-wider mb-5">Area Pemantauan</h3>
+          {/* 3. Monitoring Detail Section */}
+          {!isLoading && !error && hasData && (
+            <div className="grid lg:grid-cols-3 gap-6">
+              
+              <ScrollReveal delay={0.2} className="h-full">
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full">
+                  <h3 className="text-sm font-extrabold text-[#0B1F3A] uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <Map className="w-4 h-4 text-blue-600" /> Area Pemantauan
+                  </h3>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-start pb-4 border-b border-slate-100">
+                    <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                       <div>
-                        <p className="font-bold text-[#0B1F3A] text-sm mb-0.5">Simpang SKA</p>
-                        <p className="text-[11px] font-medium text-slate-400">Area utama</p>
+                        <p className="font-bold text-[#0B1F3A] text-sm">Simpang SKA</p>
+                        <p className="text-xs font-medium text-slate-400">Area utama</p>
                       </div>
-                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md capitalize bg-white border border-slate-200 shadow-sm ${statusInfo.color}`}>{categoryStr}</span>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md capitalize bg-slate-50 border border-slate-200 ${statusInfo.color}`}>{categoryStr}</span>
                     </div>
-                    <div className="flex justify-between items-start pb-4 border-b border-slate-100">
+                    <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                       <div>
-                        <p className="font-semibold text-slate-600 text-sm mb-0.5">Jl. Sudirman</p>
-                        <p className="text-[11px] font-medium text-slate-400">Menunggu sinkronisasi</p>
+                        <p className="font-bold text-slate-600 text-sm">Jl. Sudirman</p>
+                        <p className="text-xs font-medium text-slate-400">Menunggu sinkronisasi</p>
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-400">Belum tersedia</span>
+                      <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">Belum tersedia</span>
                     </div>
-                    <div className="flex justify-between items-start pb-4 border-b border-slate-100">
+                    <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                       <div>
-                        <p className="font-semibold text-slate-600 text-sm mb-0.5">Panam</p>
-                        <p className="text-[11px] font-medium text-slate-400">Menunggu sinkronisasi</p>
+                        <p className="font-bold text-slate-600 text-sm">Panam</p>
+                        <p className="text-xs font-medium text-slate-400">Menunggu sinkronisasi</p>
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-400">Belum tersedia</span>
+                      <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">Belum tersedia</span>
                     </div>
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-center">
                       <div>
-                        <p className="font-semibold text-slate-600 text-sm mb-0.5">Harapan Raya</p>
-                        <p className="text-[11px] font-medium text-slate-400">Menunggu sinkronisasi</p>
+                        <p className="font-bold text-slate-600 text-sm">Harapan Raya</p>
+                        <p className="text-xs font-medium text-slate-400">Menunggu sinkronisasi</p>
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-400">Belum tersedia</span>
+                      <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">Belum tersedia</span>
                     </div>
                   </div>
                 </div>
+              </ScrollReveal>
 
-                {/* Column 2: Estimasi Waktu */}
-                <div className="lg:col-span-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                  <h3 className="text-sm font-extrabold text-[#0B1F3A] uppercase tracking-wider mb-5">Estimasi Waktu</h3>
+              <ScrollReveal delay={0.3} className="h-full">
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full">
+                  <h3 className="text-sm font-extrabold text-[#0B1F3A] uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-blue-600" /> Estimasi Waktu
+                  </h3>
                   <div className="space-y-4">
                     {[0, 15, 30, 45].map((offset, i, arr) => {
                       const isNow = offset === 0;
                       const timeStr = isNow ? "Sekarang" : `+${offset} menit`;
                       const label = isNow ? categoryStr : "Belum tersedia";
                       const isLast = i === arr.length - 1;
-                      const dotColor = isNow ? statusInfo.badgeBg : "bg-slate-300";
+                      const dotColor = isNow ? statusInfo.badgeBg : "bg-slate-200";
                       
                       return (
                         <div key={offset} className={`flex items-center justify-between ${!isLast ? 'pb-4 border-b border-slate-100' : ''}`}>
@@ -280,53 +390,62 @@ export default function TrafficOverviewPage() {
                             <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`}></div>
                             <span className={isNow ? "font-bold text-[#0B1F3A] text-sm" : "font-medium text-slate-600 text-sm"}>{timeStr}</span>
                           </div>
-                          <span className={`text-[11px] font-semibold capitalize ${isNow ? statusInfo.color : 'text-slate-400'}`}>{label}</span>
+                          <span className={`text-[10px] font-bold capitalize ${isNow ? statusInfo.color + " bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200" : 'text-slate-400 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100'}`}>{label}</span>
                         </div>
                       );
                     })}
                   </div>
                 </div>
+              </ScrollReveal>
 
-                {/* Column 3: Catatan Perjalanan */}
-                <div className="lg:col-span-1 bg-blue-50/50 border border-blue-100 rounded-xl p-6 shadow-sm">
-                  <h3 className="text-sm font-extrabold text-[#0B1F3A] uppercase tracking-wider mb-5 flex items-center gap-2">
-                    <span className="text-[#1D4ED8]">🛡️</span> Catatan Perjalanan
+              <ScrollReveal delay={0.4} className="h-full">
+                <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 shadow-sm h-full">
+                  <h3 className="text-sm font-extrabold text-[#0B1F3A] uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-blue-600" /> Catatan Perjalanan
                   </h3>
-                  <ul className="space-y-4 text-sm text-slate-700 font-medium">
+                  <ul className="space-y-4">
                     <li className="flex items-start gap-3">
-                      <span className="text-[#1D4ED8] mt-0.5">•</span>
-                      <span>Periksa kondisi jalan sebelum berangkat.</span>
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                      <span className="text-sm font-medium text-slate-700 leading-relaxed">Periksa kondisi jalan sebelum berangkat.</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <span className="text-[#1D4ED8] mt-0.5">•</span>
-                      <span>Siapkan waktu tambahan jika area tujuan padat.</span>
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                      <span className="text-sm font-medium text-slate-700 leading-relaxed">Siapkan waktu tambahan jika area tujuan padat.</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <span className="text-[#1D4ED8] mt-0.5">•</span>
-                      <span>Ikuti rambu dan arahan petugas di lapangan.</span>
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                      <span className="text-sm font-medium text-slate-700 leading-relaxed">Ikuti rambu dan arahan petugas di lapangan.</span>
                     </li>
                   </ul>
                 </div>
-
-              </div>
-
-              {/* 7. Supporting Links */}
-              <div className="pt-6 border-t border-slate-200">
-                <div className="flex flex-wrap items-center gap-x-8 gap-y-4 text-sm font-bold">
-                  <Link href="/departure-recommendation" className="text-[#1D4ED8] hover:text-blue-800 transition-colors inline-flex items-center gap-1.5">
-                    Rekomendasi waktu berangkat <span aria-hidden="true">→</span>
-                  </Link>
-                  <Link href="/congestion-prediction" className="text-[#1D4ED8] hover:text-blue-800 transition-colors inline-flex items-center gap-1.5">
-                    Detail prediksi kemacetan <span aria-hidden="true">→</span>
-                  </Link>
-                  <Link href="/traffic-sign-education" className="text-[#1D4ED8] hover:text-blue-800 transition-colors inline-flex items-center gap-1.5">
-                    Edukasi rambu <span aria-hidden="true">→</span>
-                  </Link>
-                </div>
-              </div>
+              </ScrollReveal>
 
             </div>
           )}
+
+          {/* 4. Supporting Feature Links */}
+          {!isLoading && !error && (
+            <ScrollReveal delay={0.5}>
+              <div className="pt-10">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Lanjutkan dengan fitur terkait</p>
+                <div className="flex flex-wrap gap-4">
+                  <Link href="/congestion-prediction" className="group flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+                    <span className="text-sm font-bold text-[#0B1F3A] group-hover:text-blue-600 transition-colors">Prediksi kemacetan</span>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  </Link>
+                  <Link href="/departure-recommendation" className="group flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+                    <span className="text-sm font-bold text-[#0B1F3A] group-hover:text-blue-600 transition-colors">Rekomendasi waktu berangkat</span>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  </Link>
+                  <Link href="/traffic-sign-education" className="group flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+                    <span className="text-sm font-bold text-[#0B1F3A] group-hover:text-blue-600 transition-colors">Edukasi rambu</span>
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  </Link>
+                </div>
+              </div>
+            </ScrollReveal>
+          )}
+
         </div>
       </div>
     </PublicPageShell>
