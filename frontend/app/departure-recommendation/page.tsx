@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useState, useEffect, useRef, ReactNode } from "react";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
 import { ArrowRight, AlertTriangle, CheckCircle2, TrendingUp, TrendingDown, Clock, Map, MapPin, Database, Activity, CalendarClock, ShieldCheck } from "lucide-react";
+import { TrafficModuleNav } from "@/components/traffic/traffic-module-nav";
 
 interface ForecastData {
   data_available?: boolean;
@@ -241,7 +242,9 @@ export default function DepartureRecommendationPage() {
           </div>
         </section>
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 -mt-6 relative z-20 space-y-8">
+        <TrafficModuleNav />
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8 relative z-20 space-y-8">
           
           {/* Status Loading/Error */}
           {isLoading && (
