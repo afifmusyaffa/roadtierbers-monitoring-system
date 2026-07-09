@@ -11,6 +11,21 @@ from database import engine, Base, SessionLocal
 from db_models import DetectionHistory
 from datetime import datetime, timedelta
 import pytz
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+load_dotenv()
+if os.environ.get("GEMINI_API_KEY"):
+    genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list[ChatMessage] = []
 
 # --- Optional model imports — never crash on missing deps ---
 try:
@@ -1227,3 +1242,41 @@ async def get_history_list(limit: int = 100):
         return ApiResponse(status="error", message=str(e), data=None)
     finally:
         db.close()
+
+@app.post("/api/chat")
+async def chat_with_assistant(req: ChatRequest):
+    try:
+        # Fetch detection history (latest 50)
+        db = SessionLocal()
+        records = db.query(DetectionHistory).order_by(DetectionHistory.timestamp.desc()).limit(50).all()
+        db.close()
+        
+        # Format context
+        context = "Here are the latest detection records:\n"
+        for r in records:
+            # We can do a quick summary or just pass the raw dict
+            context += f"- Waktu: {r.timestamp}, File: {r.filename}, Hasil: {r.results}\n"
+            
+        system_instruction = f"""Anda adalah Asisten AI RoadTierbers untuk petugas lalu lintas.
+Tugas Anda adalah membaca data pemantauan lalu lintas terbaru dan menjawab pertanyaan petugas dalam bahasa Indonesia dengan jelas dan ringkas.
+Berikut adalah konteks deteksi terbaru dari sistem:
+{context}
+
+Berikan insight yang berguna, ringkas, dan praktis. Jangan mengarang data yang tidak ada di konteks. Jika ditanya tentang prioritas area, sebutkan area dengan pelanggaran terbanyak dari data. Jika data kosong, sampaikan bahwa belum ada data deteksi.
+"""
+        model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=system_instruction)
+        
+        # format history for gemini
+        formatted_history = []
+        for msg in req.history:
+            role = "user" if msg.role == "user" else "model"
+            formatted_history.append({"role": role, "parts": [{"text": msg.content}]})
+            
+        chat = model.start_chat(history=formatted_history)
+        response = chat.send_message(req.message)
+        
+        return {"response": response.text}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
