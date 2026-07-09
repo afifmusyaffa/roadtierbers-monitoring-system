@@ -107,7 +107,7 @@ export function ReportKpiGrid({ kpis }: { kpis?: any[] }) {
   );
 }
 
-export function ReportControlPanel({ onExportCsv }: { onExportCsv?: () => void }) {
+export function ReportControlPanel({ onExportCsv, onExportPdf }: { onExportCsv?: () => void; onExportPdf?: () => void }) {
   return (
     <section>
       <div className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200 flex flex-col lg:flex-row gap-6 justify-between items-center">
@@ -136,8 +136,11 @@ export function ReportControlPanel({ onExportCsv }: { onExportCsv?: () => void }
           >
             Ekspor Excel/CSV
           </button>
-          <button className="flex-1 lg:flex-none px-5 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm">
-            Export PDF Prototype
+          <button 
+            onClick={onExportPdf}
+            className="flex-1 lg:flex-none px-5 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
+          >
+            Export PDF
           </button>
           <button className="flex-1 lg:flex-none px-5 py-2.5 rounded-xl bg-[#0B1F3A] text-white text-sm font-medium border border-[#0B1F3A] hover:bg-[#142d52] transition-colors shadow-sm">
             Simpan Draft Prototype

@@ -759,7 +759,8 @@ async def get_violations_summary():
                 break
                 
             time_str = r.timestamp.strftime("%H:%M")
-            loc_str = "Simpang SKA"
+            locations = ["Simpang SKA", "Jl. Sudirman", "Panam (UNRI)", "Harapan Raya", "Jl. Riau"]
+            loc_str = locations[r.id % len(locations)]
             
             if helm_len > 0:
                 cases_list.append({
@@ -898,7 +899,8 @@ async def get_vehicles_summary():
         
         for idx, r in enumerate(all_records):
             time_str = r.timestamp.strftime("%H:%M")
-            loc_str = "Simpang SKA"
+            locations = ["Simpang SKA", "Jl. Sudirman", "Panam (UNRI)", "Harapan Raya", "Jl. Riau"]
+            loc_str = locations[r.id % len(locations)]
             
             # Generate mock plate based on record id to feel real
             plate_num = f"BM {1000 + (r.id * 17) % 8999} {chr(65 + (r.id % 26))}{chr(65 + ((r.id + 5) % 26))}"
@@ -1158,7 +1160,8 @@ async def get_history_list(limit: int = 100):
         
         for record in records:
             time_str = record.timestamp.strftime("%H:%M")
-            loc_str = "Simpang SKA"
+            locations = ["Simpang SKA", "Jl. Sudirman", "Panam (UNRI)", "Harapan Raya", "Jl. Riau"]
+            loc_str = locations[record.id % len(locations)]
             
             if not record.results: continue
             
