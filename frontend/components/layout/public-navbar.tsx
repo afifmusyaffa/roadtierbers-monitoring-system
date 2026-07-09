@@ -3,15 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-
-const NAV_LINKS = [
-  { label: "Beranda", path: "/" },
-  { label: "Kondisi", path: "/traffic-overview" },
-  { label: "Prediksi", path: "/congestion-prediction" },
-  { label: "Rekomendasi", path: "/departure-recommendation" },
-  { label: "Rambu", path: "/traffic-sign-education" },
-  { label: "Tentang", path: "/about" },
-];
+import { PUBLIC_ROUTES } from "@/lib/routes";
 
 export function PublicNavbar() {
   const pathname = usePathname();
@@ -28,7 +20,7 @@ export function PublicNavbar() {
 
         {/* Desktop nav */}
         <nav className="hidden lg:flex items-center gap-1.5">
-          {NAV_LINKS.map((route) => {
+          {PUBLIC_ROUTES.map((route) => {
             const isActive = pathname === route.path;
             return (
               <Link
@@ -53,7 +45,7 @@ export function PublicNavbar() {
             href="/login"
             className="inline-flex items-center justify-center h-[36px] px-5 rounded-full text-[13px] font-semibold bg-[#1D4ED8] text-white hover:bg-[#1e40af] transition-colors shadow-[0_4px_12px_rgba(29,78,216,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]"
           >
-            Command Center
+            Masuk Sistem
           </Link>
         </div>
       </header>

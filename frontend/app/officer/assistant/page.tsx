@@ -13,8 +13,8 @@ export default function AssistantPage() {
             Tanyakan ringkasan kondisi, risiko, prioritas area, atau bantuan penyusunan laporan.
           </p>
           <div className="flex justify-center items-center gap-2 pt-2">
-            <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs font-medium border border-slate-200">Frontend prototype</span>
-            <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs font-medium border border-slate-200">Belum terhubung ke AI</span>
+            <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs font-medium border border-slate-200">Mode evaluasi</span>
+            <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs font-medium border border-slate-200">Antarmuka asisten</span>
             <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs font-medium border border-slate-200">Data monitoring petugas</span>
           </div>
         </div>
@@ -37,7 +37,7 @@ export default function AssistantPage() {
                       Halo, saya Asisten AI RoadTierbers. Saya dapat membantu membaca ringkasan monitoring, menjelaskan risiko, memberi saran prioritas area, dan membantu menyusun poin laporan petugas.
                     </p>
                   </div>
-                  <p className="text-[11px] text-slate-400 ml-1">Mode prototype: jawaban masih berupa tampilan simulasi.</p>
+                  <p className="text-[11px] text-slate-400 ml-1">Jawaban yang ditampilkan merupakan contoh tampilan. Modul AI belum terhubung.</p>
                 </div>
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function AssistantPage() {
               </div>
               <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
                 <Info className="w-3 h-3" />
-                Prototype frontend: fitur percakapan belum terhubung ke model AI.
+                Modul percakapan belum terhubung ke sistem AI.
               </div>
             </div>
           </div>

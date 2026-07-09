@@ -268,9 +268,9 @@ export default function OfficerDashboardPage() {
               <div className="space-y-4">
                 {[
                   { area: "Simpang SKA", status: data.traffic_condition, note: "Pusat pantauan." },
-                  { area: "Panam (UNRI)", status: "Lancar", note: "Simulasi sekunder." },
-                  { area: "Jl. Sudirman", status: "Lancar", note: "Simulasi sekunder." },
-                  { area: "Harapan Raya", status: "Lancar", note: "Simulasi sekunder." },
+                  { area: "Panam (UNRI)", status: "Lancar", note: "Area pemantauan tambahan." },
+                  { area: "Jl. Sudirman", status: "Lancar", note: "Area pemantauan tambahan." },
+                  { area: "Harapan Raya", status: "Lancar", note: "Area pemantauan tambahan." },
                 ].map((loc, i) => (
                   <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <div className="flex justify-between items-start mb-2">

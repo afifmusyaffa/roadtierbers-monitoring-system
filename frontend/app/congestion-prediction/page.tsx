@@ -37,7 +37,7 @@ export default function CongestionPredictionPage() {
             <MotionSection direction="up" delay={0.2}>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-white/80 shadow-sm backdrop-blur-md mt-4">
                 <span className="w-2 h-2 rounded-full bg-[#1D4ED8] animate-pulse shadow-[0_0_8px_#1D4ED8]" />
-                <span className="text-xs font-bold text-[#0B1F3A]/70">Sample pemantauan</span>
+                <span className="text-xs font-bold text-[#0B1F3A]/70">Contoh area pemantauan</span>
               </div>
             </MotionSection>
           </div>
@@ -53,7 +53,7 @@ export default function CongestionPredictionPage() {
                 <InteractiveGlassCard intensity="medium" className="p-8 rounded-[2rem] border-white shadow-sm flex flex-col justify-between w-full lg:w-1/3 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-[#14B8A6]/5 blur-[40px] rounded-full pointer-events-none" />
                   <div className="relative z-10 space-y-6">
-                    <p className="text-xs font-bold text-[#0B1F3A]/60 uppercase tracking-widest">Konteks (Simulasi Prototype)</p>
+                    <p className="text-xs font-bold text-[#0B1F3A]/60 uppercase tracking-widest">Konteks Pemantauan</p>
                     <div className="space-y-4">
                       <div>
                         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Area / Rute</p>

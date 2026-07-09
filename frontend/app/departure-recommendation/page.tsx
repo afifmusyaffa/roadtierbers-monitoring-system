@@ -220,13 +220,13 @@ export default function DepartureRecommendationPage() {
                          <div className="flex bg-slate-100 p-1 rounded-xl">
                             <button 
                               onClick={() => setTimeMode("berangkat")}
-                              className={\`flex-1 text-xs font-bold py-2 rounded-lg transition-colors \${timeMode === "berangkat" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}\`}
+                              className={timeMode === "berangkat" ? "flex-1 text-xs font-bold py-2 rounded-lg transition-colors bg-white text-blue-600 shadow-sm" : "flex-1 text-xs font-bold py-2 rounded-lg transition-colors text-slate-500 hover:text-slate-700"}
                             >
                                Berangkat Pukul
                             </button>
                             <button 
                               onClick={() => setTimeMode("tiba")}
-                              className={\`flex-1 text-xs font-bold py-2 rounded-lg transition-colors \${timeMode === "tiba" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}\`}
+                              className={timeMode === "tiba" ? "flex-1 text-xs font-bold py-2 rounded-lg transition-colors bg-white text-blue-600 shadow-sm" : "flex-1 text-xs font-bold py-2 rounded-lg transition-colors text-slate-500 hover:text-slate-700"}
                             >
                                Harus Tiba Pukul
                             </button>
@@ -340,7 +340,7 @@ export default function DepartureRecommendationPage() {
                       </div>
                       <div className="p-5 rounded-2xl bg-white/80 border border-white/80 shadow-sm backdrop-blur-md flex justify-between items-center">
                         <p className="text-xs font-bold text-[#0B1F3A]/60 uppercase tracking-widest">Status Perjalanan</p>
-                        <span className={\`text-sm font-bold px-3 py-1 rounded-full border \${statusInfo.color} \${statusInfo.bgStatus} \${statusInfo.borderColor}\`}>{statusInfo.statusText}</span>
+                        <span className={[statusInfo.color, statusInfo.bgStatus, statusInfo.borderColor, "text-sm font-bold px-3 py-1 rounded-full border"].join(" ")}>{statusInfo.statusText}</span>
                       </div>
                     </div>
                   </InteractiveGlassCard>
@@ -357,8 +357,8 @@ export default function DepartureRecommendationPage() {
                       <InteractiveGlassCard intensity="medium" className="p-6 h-full border-white shadow-sm flex flex-col">
                         <div className="flex-1">
                           <p className="text-[11px] font-bold text-[#0B1F3A]/50 uppercase tracking-widest mb-3">{item.title}</p>
-                          <div className={\`inline-flex items-center px-2.5 py-1 rounded-md border \${item.bgStatus} \${item.borderColor} mb-4\`}>
-                            <span className={\`text-[11px] font-bold uppercase tracking-widest \${item.statusColor}\`}>{item.status}</span>
+                          <div className={["inline-flex items-center px-2.5 py-1 rounded-md border mb-4", item.bgStatus, item.borderColor].join(" ")}>
+                            <span className={["text-[11px] font-bold uppercase tracking-widest", item.statusColor].join(" ")}>{item.status}</span>
                           </div>
                         </div>
                         <p className="text-sm font-medium text-slate-500 leading-relaxed mt-2">{item.helper}</p>
@@ -374,7 +374,7 @@ export default function DepartureRecommendationPage() {
               <div className="mx-auto max-w-4xl px-4 sm:px-6">
                 <ScrollRevealRow direction="up" delay={0.1}>
                   <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white/80 p-8 shadow-sm">
-                    <h3 className="text-sm font-bold text-[#0B1F3A] mb-8 text-center sm:text-left">Pola Waktu Kedepan (Simulasi AI)</h3>
+                    <h3 className="text-sm font-bold text-[#0B1F3A] mb-8 text-center sm:text-left">Estimasi Pola Waktu Ke Depan</h3>
                     
                     <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-6 relative">
                       {/* Connecting Line (Desktop) */}
@@ -385,7 +385,7 @@ export default function DepartureRecommendationPage() {
                       
                       {statusInfo.polaWaktu.map((node, i) => (
                         <div key={i} className="flex flex-row sm:flex-col items-center gap-4 sm:gap-3 relative z-10 bg-white/70 sm:bg-white/60 p-3 sm:px-4 sm:py-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-white/50 w-full sm:max-w-[140px] shadow-sm sm:shadow-none hover:shadow-md transition-shadow">
-                          <div className={\`w-3.5 h-3.5 rounded-full \${node.color} ring-4 \${node.ring} shadow-sm shrink-0\`} />
+                          <div className={["w-3.5 h-3.5 rounded-full ring-4 shadow-sm shrink-0", node.color, node.ring].join(" ")} />
                           <div className="flex flex-col sm:items-center w-full">
                             <span className="text-xs font-bold text-[#0B1F3A]/60 sm:mb-1">{node.time}</span>
                             <span className="text-sm sm:text-[11px] font-bold text-[#0B1F3A] sm:uppercase sm:tracking-widest">{node.label}</span>

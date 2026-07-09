@@ -30,7 +30,7 @@ export default function AboutPage() {
                 RoadTierbers menyatukan informasi lalu lintas dan command center dalam satu pengalaman.
               </h1>
               <p className="text-base sm:text-xl text-[#0B1F3A]/70 font-medium leading-relaxed max-w-2xl mx-auto">
-                Prototype akademik berbasis Deep Learning untuk membantu memahami kondisi jalan, mendeteksi pola lalu lintas, dan mendukung keputusan petugas.
+                Sistem terpadu berbasis kecerdasan buatan yang membantu memahami kondisi jalan, mendeteksi pola lalu lintas, dan mendukung keputusan petugas.
               </p>
             </MotionSection>
           </div>
@@ -43,7 +43,7 @@ export default function AboutPage() {
               <InteractiveGlassCard intensity="strong" className="p-8 sm:p-12 rounded-[2.5rem] border-white shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-[#1D4ED8]/5 blur-[80px] rounded-full pointer-events-none" />
                 <div className="relative z-10">
-                  <h2 className="text-2xl font-bold text-[#0B1F3A] mb-8">Tujuan Prototype</h2>
+                  <h2 className="text-2xl font-bold text-[#0B1F3A] mb-8">Tujuan Sistem</h2>
                   <div className="grid sm:grid-cols-2 gap-6">
                     {[
                       { icon: "Users", title: "Untuk Publik", desc: "Memudahkan masyarakat memahami kondisi lalu lintas." },
@@ -155,9 +155,9 @@ export default function AboutPage() {
                   <span className="text-amber-600 font-bold text-lg">i</span>
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-[#0B1F3A] mb-2">Disclaimer Prototype Akademik</h3>
+                  <h3 className="text-base font-bold text-[#0B1F3A] mb-2">Catatan Penggunaan</h3>
                   <p className="text-sm font-medium text-slate-600 leading-relaxed">
-                    RoadTierbers merupakan prototype akademik berbasis Deep Learning untuk kebutuhan pembelajaran dan demonstrasi. 
+                    RoadTierbers dikembangkan untuk keperluan akademik dan evaluasi sistem berbasis Deep Learning. 
                     Sistem ini belum ditujukan sebagai alat keputusan resmi tanpa validasi lanjutan.
                   </p>
                 </div>

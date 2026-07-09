@@ -13,7 +13,7 @@ export function PublicFooter() {
               {APP_INFO.name}
             </p>
             <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-              Prototype akademik berbasis Deep Learning untuk demonstrasi dan pembelajaran.
+              Sistem pemantauan lalu lintas berbasis kecerdasan buatan untuk mendukung keputusan petugas dan informasi publik.
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -21,19 +21,19 @@ export function PublicFooter() {
               href="/about"
               className="text-xs text-slate-400 hover:text-slate-700 transition-colors"
             >
-              Tentang
+              Tentang Sistem
             </Link>
             <Link
               href="/login"
               className="text-xs text-slate-400 hover:text-slate-700 transition-colors"
             >
-              Petugas
+              Area Petugas
             </Link>
           </div>
         </div>
         <div className="mt-6 border-t border-slate-100 pt-4">
           <p className="text-xs text-slate-300">
-            &copy; {year} RoadTierbers. Data simulasi prototype — bukan untuk penggunaan resmi.
+            &copy; {year} RoadTierbers. Sistem berjalan dalam mode evaluasi akademik.
           </p>
         </div>
       </div>
