@@ -226,7 +226,7 @@ export default function TrafficSignEducationPage() {
   };
 
   // Get info based on detection result or use default
-  const rawDetectionName = detectionResult?.name ?? detectionResult?.class_id ?? detectionResult?.id ?? detectionResult?.label ?? detectionResult?.class_name ?? detectionResult?.className;
+  const rawDetectionName = detectionResult?.class ?? detectionResult?.class_id ?? detectionResult?.name ?? detectionResult?.id ?? detectionResult?.label ?? detectionResult?.class_name ?? detectionResult?.className;
   const signId = rawDetectionName != null ? String(rawDetectionName) : null;
   const currentInfo = signId && TRAFFIC_SIGN_INFO[signId] 
     ? { ...TRAFFIC_SIGN_INFO[signId], rawId: signId } 
@@ -559,3 +559,4 @@ export default function TrafficSignEducationPage() {
     </PublicPageShell>
   );
 }
+
