@@ -278,10 +278,10 @@ export default function OfficerSmartInsightPage() {
               <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Peringkat Prioritas Area</h2>
               <div className="space-y-4">
                 {[
-                  { rank: "1", area: "Simpang SKA", risk: "Tinggi", note: "Volume dan pelanggaran meningkat drastis." },
-                  { rank: "2", area: "Jl. Sudirman", risk: "Tinggi", note: "Pelanggaran area berhenti sangat perlu dipantau." },
-                  { rank: "3", area: "Harapan Raya", risk: "Sedang", note: "Validasi plat tersamarkan perlu perhatian." },
-                  { rank: "4", area: "Panam (UNRI)", risk: "Sedang", note: "Kepadatan antrean perlahan mulai naik." },
+                  { rank: "1", area: "Simpang SKA (Utara)", risk: "Tinggi", note: "Volume dan pelanggaran helm meningkat drastis." },
+                  { rank: "2", area: "Simpang SKA (Timur)", risk: "Tinggi", note: "Pelanggaran marka area lampu merah perlu dipantau." },
+                  { rank: "3", area: "Simpang SKA (Selatan)", risk: "Sedang", note: "Validasi plat tersamarkan perlu perhatian khusus." },
+                  { rank: "4", area: "Simpang SKA (Barat)", risk: "Sedang", note: "Kepadatan antrean dekat area komersial mulai naik." },
                 ].map((loc, i) => (
                   <div key={i} className="flex gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-sm font-medium text-slate-700 shrink-0">
@@ -305,7 +305,7 @@ export default function OfficerSmartInsightPage() {
                 <li className="flex gap-3">
                   <span className="text-blue-500 mt-1 text-[10px]">■</span>
                   <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                    Prioritaskan pengerahan pengawasan di Simpang SKA dan Jl. Sudirman.
+                    Prioritaskan pengerahan pengawasan di seluruh penjuru Simpang SKA.
                   </p>
                 </li>
                 <li className="flex gap-3">

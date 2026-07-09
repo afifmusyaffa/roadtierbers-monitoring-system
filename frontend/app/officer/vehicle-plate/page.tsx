@@ -326,10 +326,10 @@ export default function OfficerVehiclePlatePage() {
             <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Prioritas Area</h2>
             <div className="space-y-4">
               {[
-                { area: "Simpang SKA", risk: "Tinggi", note: "Banyak kendaraan dan validasi plat.", focus: "Validasi visual plat" },
-                { area: "Harapan Raya", risk: "Tinggi", note: "Administrasi perlu pemeriksaan.", focus: "Periksa status pajak" },
-                { area: "Panam (UNRI)", risk: "Sedang", note: "Kepadatan meningkat.", focus: "Pantau antrean kendaraan" },
-                { area: "Jl. Sudirman", risk: "Sedang", note: "Beberapa plat tidak jelas.", focus: "Cek kualitas frame" },
+                { area: "Simpang SKA (Utara)", risk: "Tinggi", note: "Banyak kendaraan roda dua dan validasi plat.", focus: "Validasi visual plat" },
+                { area: "Simpang SKA (Timur)", risk: "Tinggi", note: "Administrasi pajak plat perlu pemeriksaan.", focus: "Periksa status pajak" },
+                { area: "Simpang SKA (Barat)", risk: "Sedang", note: "Kepadatan kendaraan melambat dekat mall.", focus: "Pantau antrean kendaraan" },
+                { area: "Simpang SKA (Selatan)", risk: "Sedang", note: "Beberapa plat tersamarkan tidak jelas.", focus: "Cek kualitas frame" },
               ].map((loc, i) => (
                 <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <div className="flex justify-between items-start mb-2">

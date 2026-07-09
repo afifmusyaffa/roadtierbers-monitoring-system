@@ -141,7 +141,7 @@ export default function OfficerViolationMonitoringPage() {
               { label: "Plat/Pajak Bermasalah", value: platPajakCount, unit: "Kasus", color: "text-[#1D4ED8]", helper: "Terdeteksi dari pemindaian ANPR." },
               { label: "Melanggar Area Berhenti", value: areaBerhentiCount, unit: "Kasus", color: "text-red-600", helper: "Terutama di persimpangan utama." },
               { label: "Kasus Perlu Validasi", value: data.kasus_perlu_validasi, unit: "Kasus", color: "text-slate-700", helper: "Tunggu konfirmasi petugas." },
-              { label: "Area Risiko Tinggi", value: data.area_risiko_tinggi, unit: "Area", color: "text-red-600", helper: "Simpang SKA, Sudirman, Harapan Raya." },
+              { label: "Area Risiko Tinggi", value: data.area_risiko_tinggi, unit: "Area", color: "text-red-600", helper: "Titik pantau Simpang SKA." },
             ].map((kpi, i) => (
               <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
@@ -197,10 +197,10 @@ export default function OfficerViolationMonitoringPage() {
               <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Prioritas Area</h2>
               <div className="space-y-4">
                 {[
-                  { area: "Simpang SKA", risk: "Tinggi", note: "Tanpa helm dominan.", focus: "Fokus edukasi helm" },
-                  { area: "Jl. Sudirman", risk: "Tinggi", note: "Pelanggaran area berhenti.", focus: "Awasi marka jalan" },
-                  { area: "Panam (UNRI)", risk: "Sedang", note: "Kepadatan meningkat.", focus: "Pantau antrean" },
-                  { area: "Harapan Raya", risk: "Sedang", note: "Bonceng >2 meningkat.", focus: "Teguran visual" },
+                  { area: "Simpang SKA (Utara)", risk: "Tinggi", note: "Tanpa helm dominan pada lajur kiri.", focus: "Fokus edukasi helm" },
+                  { area: "Simpang SKA (Timur)", risk: "Tinggi", note: "Pelanggaran marka area berhenti.", focus: "Awasi marka jalan" },
+                  { area: "Simpang SKA (Barat)", risk: "Sedang", note: "Kepadatan antrean lajur lambat dekat mall.", focus: "Pantau antrean" },
+                  { area: "Simpang SKA (Selatan)", risk: "Sedang", note: "Boncengan lebih dari 2 orang meningkat.", focus: "Teguran visual" },
                 ].map((loc, i) => (
                   <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <div className="flex justify-between items-start mb-2">
