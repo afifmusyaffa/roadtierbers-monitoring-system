@@ -14,7 +14,7 @@ export default function OfficerVehiclePlatePage() {
   useEffect(() => {
     async function fetchData(isSilent = false) {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? `http://${window.location.hostname}:8001` : "http://127.0.0.1:8000");
         const res = await fetch(`${apiUrl}/vehicles/summary`);
         const json = await res.json();
         if (json.status === "success") {
@@ -25,7 +25,7 @@ export default function OfficerVehiclePlatePage() {
         }
       } catch (err) {
         if (!isSilent) {
-          setError("Koneksi ke backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
+          setError("Koneksi ke backend gagal.");
         }
       } finally {
         if (!isSilent) {

@@ -14,7 +14,7 @@ export default function OfficerSmartInsightPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? `http://${window.location.hostname}:8001` : "http://127.0.0.1:8000");
         const res = await fetch(`${apiUrl}/insights/summary`);
         const json = await res.json();
         if (json.status === "success") {
@@ -23,7 +23,7 @@ export default function OfficerSmartInsightPage() {
           setError(json.message || "Gagal mengambil data dari server");
         }
       } catch (err) {
-        setError("Koneksi ke backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
+        setError("Koneksi ke backend gagal.");
       } finally {
         setLoading(false);
       }

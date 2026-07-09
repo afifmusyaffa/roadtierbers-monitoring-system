@@ -14,7 +14,8 @@ export default function OfficerDashboardPage() {
   useEffect(() => {
     async function fetchData(isSilent = false) {
       try {
-        const res = await fetch("http://127.0.0.1:8000/dashboard/summary");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? `http://${window.location.hostname}:8001` : "http://127.0.0.1:8000");
+        const res = await fetch(`${apiUrl}/dashboard/summary`);
         const json = await res.json();
         if (json.status === "success") {
           setData(json.data);
