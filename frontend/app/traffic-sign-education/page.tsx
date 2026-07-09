@@ -4,30 +4,162 @@ import Link from "next/link";
 import { useState, useRef } from "react";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
 
-// Dictionary mapping model class ID to sign info
-const SIGN_INFO: Record<string, { name: string; kategori: string; arti: string; tindakan: string; pentingnya: string }> = {
+const TRAFFIC_SIGN_INFO: Record<string, { name: string; kategori: string; arti: string; fungsi: string; tindakan: string }> = {
+  "0": {
+    "name": "Larangan Berhenti",
+    "kategori": "Larangan",
+    "arti": "Melarang kendaraan berhenti di sepanjang jalan dengan rambu ini.",
+    "fungsi": "Mencegah kemacetan di area padat.",
+    "tindakan": "Dilarang berhenti sama sekali."
+  },
+  "1": {
+    "name": "Larangan Masuk Bagi Kendaraan Bermotor dan Tidak Bermotor",
+    "kategori": "Larangan",
+    "arti": "Melarang semua jenis kendaraan untuk masuk ke jalan tersebut.",
+    "fungsi": "Menjaga keamanan atau khusus pejalan kaki.",
+    "tindakan": "Dilarang melintas/masuk."
+  },
   "2": {
-    name: "Larangan Parkir",
-    kategori: "Rambu Larangan",
-    arti: "Kendaraan tidak diperbolehkan parkir di area ini.",
-    tindakan: "Jangan memarkir kendaraan di area tersebut. Gunakan area parkir resmi yang diperbolehkan.",
-    pentingnya: "Rambu ini biasanya dipasang di area yang harus tetap bebas dari kendaraan berhenti lama."
+    "name": "Peringatan Alat Pemberi Isyarat Lalu Lintas",
+    "kategori": "Peringatan",
+    "arti": "Memberi tahu ada lampu lalu lintas di depan.",
+    "fungsi": "Agar pengemudi bersiap mengurangi kecepatan.",
+    "tindakan": "Waspada lampu lalu lintas."
+  },
+  "3": {
+    "name": "Peringatan Banyak Pejalan Kaki Menggunakan Zebra Cross",
+    "kategori": "Peringatan",
+    "arti": "Banyak pejalan kaki yang menyeberang.",
+    "fungsi": "Melindungi pejalan kaki.",
+    "tindakan": "Kurangi kecepatan, utamakan pejalan kaki."
+  },
+  "4": {
+    "name": "Peringatan Pintu Perlintasan Kereta Api",
+    "kategori": "Peringatan",
+    "arti": "Akan ada perlintasan kereta api.",
+    "fungsi": "Mencegah kecelakaan dengan kereta.",
+    "tindakan": "Berhenti sejenak, tengok kanan-kiri."
+  },
+  "5": {
+    "name": "Peringatan Simpang Tiga Sisi Kiri",
+    "kategori": "Peringatan",
+    "arti": "Ada persimpangan ke kiri di depan.",
+    "fungsi": "Antisipasi kendaraan dari kiri.",
+    "tindakan": "Kurangi kecepatan."
+  },
+  "6": {
+    "name": "Peringatan Penegasan Rambu Tambahan",
+    "kategori": "Peringatan",
+    "arti": "Rambu ini biasanya disertai papan tambahan di bawahnya.",
+    "fungsi": "Memberi peringatan khusus.",
+    "tindakan": "Perhatikan papan tambahan."
+  },
+  "7": {
+    "name": "Perintah Masuk Jalur Kiri",
+    "kategori": "Kewajiban",
+    "arti": "Wajib mengambil lajur kiri.",
+    "fungsi": "Mengatur arus lalu lintas searah.",
+    "tindakan": "Tetap di lajur kiri."
+  },
+  "8": {
+    "name": "Perintah Pilihan Memasuki Salah Satu Jalur",
+    "kategori": "Kewajiban",
+    "arti": "Kendaraan wajib memilih salah satu jalur yang ditunjuk.",
+    "fungsi": "Menghindari separator/pembatas jalan.",
+    "tindakan": "Ikuti salah satu arah panah."
+  },
+  "9": {
+    "name": "Petunjuk Area Parkir",
+    "kategori": "Petunjuk",
+    "arti": "Menandakan area resmi untuk parkir.",
+    "fungsi": "Memberi info lokasi parkir.",
+    "tindakan": "Boleh memarkirkan kendaraan di area ini."
+  },
+  "10": {
+    "name": "Petunjuk Lokasi Pemberhentian Bus",
+    "kategori": "Petunjuk",
+    "arti": "Tempat perhentian bus / halte.",
+    "fungsi": "Fasilitas angkutan umum.",
+    "tindakan": "Selain bus dilarang berhenti di area ini."
+  },
+  "11": {
+    "name": "Petunjuk Lokasi Putar Balik",
+    "kategori": "Petunjuk",
+    "arti": "Lokasi yang diizinkan untuk putar balik (U-turn).",
+    "fungsi": "Fasilitas putar arah.",
+    "tindakan": "Lakukan putar balik dengan aman."
+  },
+  "12": {
+    "name": "Larangan Parkir",
+    "kategori": "Larangan",
+    "arti": "Melarang kendaraan parkir, namun boleh berhenti sejenak untuk turun/naik penumpang.",
+    "fungsi": "Mencegah penyempitan jalan.",
+    "tindakan": "Dilarang parkir."
   },
   "13": {
-    name: "Peringatan Tikungan ke Kanan",
-    kategori: "Peringatan",
-    arti: "Menandakan adanya tikungan tajam ke arah kanan di depan.",
-    tindakan: "Kurangi kecepatan kendaraan Anda dan bersiap untuk berbelok ke kanan dengan aman.",
-    pentingnya: "Mencegah kecelakaan akibat kendaraan keluar jalur karena kecepatan tinggi di tikungan."
+    "name": "Petunjuk Penyeberangan Pejalan Kaki",
+    "kategori": "Petunjuk",
+    "arti": "Lokasi penyeberangan (Zebra Cross).",
+    "fungsi": "Menunjukkan area aman menyeberang.",
+    "tindakan": "Beri jalan pada pejalan kaki."
   },
+  "14": {
+    "name": "Lampu Hijau",
+    "kategori": "Lampu Lalu Lintas",
+    "arti": "Lampu lalu lintas menyala hijau.",
+    "fungsi": "Kendaraan boleh jalan.",
+    "tindakan": "Silakan jalan dengan hati-hati."
+  },
+  "15": {
+    "name": "Lampu Kuning",
+    "kategori": "Lampu Lalu Lintas",
+    "arti": "Lampu lalu lintas menyala kuning.",
+    "fungsi": "Persiapan berhenti atau jalan.",
+    "tindakan": "Hati-hati, kurangi kecepatan."
+  },
+  "16": {
+    "name": "Lampu Merah",
+    "kategori": "Lampu Lalu Lintas",
+    "arti": "Lampu lalu lintas menyala merah.",
+    "fungsi": "Kendaraan wajib berhenti.",
+    "tindakan": "Berhenti di belakang garis."
+  },
+  "17": {
+    "name": "Larangan Belok Kanan",
+    "kategori": "Larangan",
+    "arti": "Dilarang berbelok ke kanan di persimpangan.",
+    "fungsi": "Mengatur arus lalu lintas.",
+    "tindakan": "Terus lurus atau belok kiri (sesuai arah lain)."
+  },
+  "18": {
+    "name": "Larangan Belok Kiri",
+    "kategori": "Larangan",
+    "arti": "Dilarang berbelok ke kiri di persimpangan.",
+    "fungsi": "Mengatur arus lalu lintas.",
+    "tindakan": "Terus lurus atau belok kanan (sesuai arah lain)."
+  },
+  "19": {
+    "name": "Larangan Berjalan Terus Wajib Berhenti Sesaat",
+    "kategori": "Larangan",
+    "arti": "Wajib berhenti sejenak sebelum melanjutkan perjalanan (Rambu STOP).",
+    "fungsi": "Memastikan kondisi aman sebelum melintas.",
+    "tindakan": "Berhenti total sejenak."
+  },
+  "20": {
+    "name": "Larangan Memutar Balik",
+    "kategori": "Larangan",
+    "arti": "Dilarang melakukan manuver putar balik (U-turn).",
+    "fungsi": "Menghindari tabrakan atau kemacetan.",
+    "tindakan": "Dilarang putar balik."
+  }
 };
 
 const DEFAULT_INFO = {
   name: "Rambu belum terdaftar",
   kategori: "Umum",
   arti: "Sistem mendeteksi ID kelas, tetapi informasi nama rambu belum tersedia di frontend.",
-  tindakan: "Ikuti arahan rambu di sekitar Anda dan tetap berhati-hati.",
-  pentingnya: "Rambu membantu menjaga alur jalan tetap aman dan teratur."
+  fungsi: "Fungsi rambu ini belum tersedia dalam sistem.",
+  tindakan: "Ikuti arahan rambu di sekitar Anda dan tetap berhati-hati."
 };
 
 export default function TrafficSignEducationPage() {
@@ -94,10 +226,10 @@ export default function TrafficSignEducationPage() {
   };
 
   // Get info based on detection result or use default
-  const rawDetectionName = detectionResult?.name ?? detectionResult?.class_id ?? detectionResult?.id ?? detectionResult?.label;
+  const rawDetectionName = detectionResult?.name ?? detectionResult?.class_id ?? detectionResult?.id ?? detectionResult?.label ?? detectionResult?.class_name ?? detectionResult?.className;
   const signId = rawDetectionName != null ? String(rawDetectionName) : null;
-  const currentInfo = signId && SIGN_INFO[signId] 
-    ? { ...SIGN_INFO[signId], rawId: signId } 
+  const currentInfo = signId && TRAFFIC_SIGN_INFO[signId] 
+    ? { ...TRAFFIC_SIGN_INFO[signId], rawId: signId } 
     : (signId ? { 
         ...DEFAULT_INFO, 
         arti: `Sistem mendeteksi ID kelas ${signId}, tetapi informasi nama rambu belum tersedia di frontend.`,
@@ -106,7 +238,15 @@ export default function TrafficSignEducationPage() {
 
   const getCategoryMeta = (kategori: string) => {
     const k = kategori.toLowerCase();
-    if (k.includes("peringatan")) {
+    if (k.includes("lampu lalu lintas")) {
+      return {
+        bg: "bg-emerald-50",
+        borderColor: "border-emerald-200",
+        leftBorder: "border-l-emerald-500",
+        text: "text-emerald-700",
+        badge: "bg-emerald-600"
+      };
+    } else if (k.includes("peringatan")) {
       return {
         bg: "bg-amber-50",
         borderColor: "border-amber-200",
@@ -228,7 +368,7 @@ export default function TrafficSignEducationPage() {
             </div>
             
             {/* Right: Result Area */}
-            <div className="lg:w-[55%] p-6 sm:p-8 bg-slate-50 flex flex-col justify-center">
+            <div className="lg:w-[55%] p-6 sm:p-8 bg-slate-50 flex flex-col justify-center relative">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center text-center space-y-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1D4ED8]"></div>
@@ -243,36 +383,57 @@ export default function TrafficSignEducationPage() {
                   </div>
                 </div>
               ) : currentInfo ? (
-                <div className={`w-full flex flex-col justify-center p-6 sm:p-8 bg-white border ${getCategoryMeta(currentInfo.kategori).borderColor} border-l-[6px] ${getCategoryMeta(currentInfo.kategori).leftBorder} rounded-xl shadow-sm`}>
-                  <div className="mb-6">
-                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-3">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest ${getCategoryMeta(currentInfo.kategori).bg} ${getCategoryMeta(currentInfo.kategori).text} border ${getCategoryMeta(currentInfo.kategori).borderColor}`}>
-                          {currentInfo.kategori}
-                        </span>
-                        {currentInfo.rawId && (
-                          <span className="text-[10px] font-medium text-slate-400">ID Kelas: {currentInfo.rawId}</span>
+                <div className="flex flex-col h-full w-full justify-center space-y-6">
+                  {detectionResult?.annotated_image && (
+                    <div className="w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                      <div className="bg-slate-200/50 py-1.5 px-3 border-b border-slate-200 flex items-center">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Hasil Anotasi</span>
+                      </div>
+                      <div className="relative aspect-video w-full bg-slate-800 flex items-center justify-center overflow-hidden">
+                        <img 
+                          src={detectionResult.annotated_image.startsWith('data:image') ? detectionResult.annotated_image : `data:image/jpeg;base64,${detectionResult.annotated_image}`} 
+                          alt="Annotated Result" 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={`w-full flex flex-col p-6 sm:p-8 bg-white border ${getCategoryMeta(currentInfo.kategori).borderColor} border-l-[6px] ${getCategoryMeta(currentInfo.kategori).leftBorder} rounded-xl shadow-sm`}>
+                    <div className="mb-6">
+                      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest ${getCategoryMeta(currentInfo.kategori).bg} ${getCategoryMeta(currentInfo.kategori).text} border ${getCategoryMeta(currentInfo.kategori).borderColor}`}>
+                            {currentInfo.kategori}
+                          </span>
+                          {currentInfo.rawId && (
+                            <span className="text-[10px] font-medium text-slate-400">ID Kelas: {currentInfo.rawId}</span>
+                          )}
+                        </div>
+                        {detectionResult?.confidence && (
+                          <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
+                            Akurasi: {(detectionResult.confidence * 100).toFixed(1)}%
+                          </span>
                         )}
                       </div>
-                      {detectionResult?.confidence && (
-                        <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
-                          Akurasi: {(detectionResult.confidence * 100).toFixed(1)}%
-                        </span>
-                      )}
+                      <h3 className={`text-2xl sm:text-3xl font-extrabold ${getCategoryMeta(currentInfo.kategori).text} leading-tight`}>
+                        {currentInfo.name}
+                      </h3>
                     </div>
-                    <h3 className={`text-2xl sm:text-3xl font-extrabold ${getCategoryMeta(currentInfo.kategori).text} leading-tight`}>
-                      {currentInfo.name}
-                    </h3>
-                  </div>
-                  
-                  <div className="space-y-5 mt-2 pt-5 border-t border-slate-100">
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Arti Rambu</p>
-                      <p className="text-sm font-semibold text-[#0B1F3A] leading-relaxed">{currentInfo.arti}</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Tindakan Pengguna Jalan</p>
-                      <p className="text-sm font-semibold text-[#0B1F3A] leading-relaxed">{currentInfo.tindakan}</p>
+                    
+                    <div className="space-y-5 mt-2 pt-5 border-t border-slate-100">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Arti Rambu</p>
+                        <p className="text-sm font-semibold text-[#0B1F3A] leading-relaxed">{currentInfo.arti}</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Fungsi Rambu</p>
+                        <p className="text-sm font-semibold text-[#0B1F3A] leading-relaxed">{currentInfo.fungsi}</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Tindakan Pengguna Jalan</p>
+                        <p className="text-sm font-semibold text-[#0B1F3A] leading-relaxed">{currentInfo.tindakan}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
