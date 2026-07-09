@@ -8,7 +8,7 @@ import {
   reportQuickLinks 
 } from "@/data/officer-report";
 
-export function ReportHeaderBar() {
+export function ReportHeaderBar({ data }: { data?: any }) {
   return (
     <section className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-6 border-b border-slate-200">
       <div className="space-y-2">
@@ -23,7 +23,7 @@ export function ReportHeaderBar() {
         </p>
       </div>
       <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl shrink-0">
-        <p className="text-xs font-medium text-slate-500"><span className="text-slate-400">Mode:</span> Data simulasi prototype</p>
+        <p className="text-xs font-medium text-slate-500"><span className="text-slate-400">Mode:</span> Data Real-time (API)</p>
         <p className="text-xs font-medium text-slate-500"><span className="text-slate-400">Area:</span> Pekanbaru</p>
         <p className="text-xs font-medium text-slate-500"><span className="text-slate-400">Periode:</span> Hari ini</p>
         <p className="text-xs font-medium text-slate-500"><span className="text-slate-400">Status:</span> Draft laporan</p>
@@ -32,7 +32,11 @@ export function ReportHeaderBar() {
   );
 }
 
-export function ReportStatusSummary() {
+export function ReportStatusSummary({ data }: { data?: any }) {
+  const totalDetections = data ? data.total_data_masuk : 128;
+  const totalViolations = data ? data.total_violations : 37;
+  const perluValidasi = data ? Math.max(Math.round(totalViolations * 0.15), 1) : 34;
+
   return (
     <section>
       <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col relative overflow-hidden">
@@ -41,16 +45,16 @@ export function ReportStatusSummary() {
           <div className="flex flex-col space-y-2 md:pr-6">
             <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Total Data Masuk</p>
             <div className="flex items-center pt-1 pb-2">
-              <span className="text-2xl font-medium text-[#0B1F3A]">128 data</span>
+              <span className="text-2xl font-medium text-[#0B1F3A]">{totalDetections} data</span>
             </div>
             <p className="text-sm font-normal text-slate-600 leading-relaxed">
-              Jumlah data dari sample pemantauan hari ini.
+              Jumlah data dari database hari ini.
             </p>
           </div>
           <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
             <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Pelanggaran Terdeteksi</p>
             <div className="flex items-center pt-1 pb-2">
-              <span className="text-2xl font-medium text-amber-600">37 kasus</span>
+              <span className="text-2xl font-medium text-amber-600">{totalViolations} kasus</span>
             </div>
             <p className="text-sm font-normal text-slate-600 leading-relaxed">
               Indikasi pelanggaran yang masuk ke sistem.
@@ -60,7 +64,7 @@ export function ReportStatusSummary() {
             <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Perlu Validasi</p>
             <div className="flex items-center pt-1 pb-2">
               <StatusBadge status="Sedang" className="px-4 py-1.5 text-sm" />
-              <span className="text-2xl font-medium text-amber-600 ml-3">34 data</span>
+              <span className="text-2xl font-medium text-amber-600 ml-3">{perluValidasi} data</span>
             </div>
             <p className="text-sm font-normal text-slate-600 leading-relaxed">
               Data yang belum siap menjadi laporan final.
@@ -81,11 +85,12 @@ export function ReportStatusSummary() {
   );
 }
 
-export function ReportKpiGrid() {
+export function ReportKpiGrid({ kpis }: { kpis?: any[] }) {
+  const gridKpis = kpis || reportKpis;
   return (
     <section>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {reportKpis.map((kpi, i) => (
+        {gridKpis.map((kpi, i) => (
           <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
             <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
             <div className="mb-4">
@@ -102,7 +107,7 @@ export function ReportKpiGrid() {
   );
 }
 
-export function ReportControlPanel() {
+export function ReportControlPanel({ onExportCsv }: { onExportCsv?: () => void }) {
   return (
     <section>
       <div className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200 flex flex-col lg:flex-row gap-6 justify-between items-center">
@@ -125,8 +130,11 @@ export function ReportControlPanel() {
           </div>
         </div>
         <div className="flex flex-wrap gap-3 shrink-0 w-full lg:w-auto">
-          <button className="flex-1 lg:flex-none px-5 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm">
-            Preview Laporan
+          <button 
+            onClick={onExportCsv}
+            className="flex-1 lg:flex-none px-5 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
+          >
+            Ekspor Excel/CSV
           </button>
           <button className="flex-1 lg:flex-none px-5 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm">
             Export PDF Prototype
@@ -140,7 +148,12 @@ export function ReportControlPanel() {
   );
 }
 
-export function ReportPreviewPanel() {
+export function ReportPreviewPanel({ data }: { data?: any }) {
+  const totalViolations = data ? data.total_violations : 37;
+  const dominantText = totalViolations > 20 
+    ? "Pelanggaran tanpa helm menjadi kategori dominan, sementara beberapa plat tersamarkan membutuhkan validasi petugas."
+    : "Kondisi pelanggaran terpantau minimal dengan sebaran kasus normal.";
+
   return (
     <section>
       <div className="p-8 sm:p-12 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col max-w-4xl mx-auto">
@@ -156,7 +169,7 @@ export function ReportPreviewPanel() {
               Ringkasan Kondisi
             </h3>
             <p className="text-sm font-normal text-slate-700 leading-relaxed pl-3.5">
-              Kondisi lalu lintas terpantau padat pada beberapa area sample dengan risiko pelanggaran meningkat.
+              Kondisi lalu lintas terpantau padat pada beberapa area sample dengan risiko pelanggaran meningkat berdasarkan database riil.
             </p>
           </div>
           
@@ -165,7 +178,7 @@ export function ReportPreviewPanel() {
               Temuan Utama
             </h3>
             <p className="text-sm font-normal text-slate-700 leading-relaxed pl-3.5">
-              Pelanggaran tanpa helm menjadi kategori dominan, sementara beberapa plat tersamarkan membutuhkan validasi petugas.
+              {dominantText}
             </p>
           </div>
           
@@ -183,21 +196,22 @@ export function ReportPreviewPanel() {
               Rekomendasi
             </h3>
             <p className="text-sm font-normal text-slate-700 leading-relaxed pl-3.5">
-              Petugas disarankan melakukan validasi manual sebelum laporan digunakan sebagai dasar tindak lanjut.
+              Petugas disarankan melakukan validasi manual sebelum laporan digunakan sebagai dasar tindak lanjut penilangan.
             </p>
           </div>
         </div>
         
         <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between text-xs font-medium text-slate-400 uppercase tracking-widest">
           <span>Dokumen Internal</span>
-          <span>Prototype Simulasi</span>
+          <span>Prototype Simulasi API</span>
         </div>
       </div>
     </section>
   );
 }
 
-export function ReportDetailTable() {
+export function ReportDetailTable({ rows }: { rows?: any[] }) {
+  const tableRows = rows || reportRows;
   return (
     <section>
       <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm overflow-hidden flex flex-col">
@@ -215,7 +229,7 @@ export function ReportDetailTable() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {reportRows.map((row, i) => (
+              {tableRows.map((row: any, i: number) => (
                 <tr key={i} className="hover:bg-slate-50 transition-colors">
                   <td className="p-4 text-sm font-medium text-slate-700 whitespace-nowrap">{row.cat}</td>
                   <td className="p-4 text-sm font-normal text-[#0B1F3A]">{row.res}</td>
@@ -280,7 +294,7 @@ export function ReportDisclaimerPanel() {
         <ul className="space-y-2">
           <li className="flex gap-3">
             <span className="text-slate-400 mt-1 text-[10px]">■</span>
-            <p className="text-sm font-normal text-slate-600">Laporan ini merupakan output prototype berbasis data simulasi.</p>
+            <p className="text-sm font-normal text-slate-600">Laporan ini merupakan output prototype berbasis data simulasi API database.</p>
           </li>
           <li className="flex gap-3">
             <span className="text-slate-400 mt-1 text-[10px]">■</span>

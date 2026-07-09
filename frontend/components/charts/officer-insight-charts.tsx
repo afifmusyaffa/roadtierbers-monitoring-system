@@ -25,11 +25,12 @@ const actionPriorityData = [
   { name: "Siapkan laporan", count: 4, color: "#60a5fa" },
 ];
 
-export function AreaRiskScoreChart() {
+export function AreaRiskScoreChart({ data }: { data?: any[] }) {
+  const chartData = data && data.length > 0 ? data : riskScoreData;
   return (
     <div className="w-full h-72 mt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={riskScoreData} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
+        <BarChart data={chartData} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
           <XAxis 
             dataKey="area" 
@@ -53,8 +54,8 @@ export function AreaRiskScoreChart() {
             formatter={(value) => [`${value}`, "Skor Risiko"]}
           />
           <Bar dataKey="score" name="Skor Risiko" radius={[6, 6, 0, 0]} isAnimationActive={false} barSize={40}>
-            {riskScoreData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color || "#1d4ed8"} />
             ))}
           </Bar>
         </BarChart>
@@ -63,11 +64,12 @@ export function AreaRiskScoreChart() {
   );
 }
 
-export function ActionPriorityChart() {
+export function ActionPriorityChart({ data }: { data?: any[] }) {
+  const chartData = data && data.length > 0 ? data : actionPriorityData;
   return (
     <div className="w-full h-72 mt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={actionPriorityData} layout="vertical" margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
+        <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
           <XAxis 
             type="number"
@@ -91,8 +93,8 @@ export function ActionPriorityChart() {
             formatter={(value) => [`${value} Kasus`, "Jumlah Prioritas"]}
           />
           <Bar dataKey="count" name="Jumlah Kasus" radius={[0, 6, 6, 0]} isAnimationActive={false} barSize={32}>
-            {actionPriorityData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color || "#1d4ed8"} />
             ))}
           </Bar>
         </BarChart>

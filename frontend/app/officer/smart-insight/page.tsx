@@ -1,9 +1,67 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
 import { StatusBadge } from "@/components/common";
 import { AreaRiskScoreChart, ActionPriorityChart } from "@/components/charts/officer-insight-charts";
 
 export default function OfficerSmartInsightPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${apiUrl}/insights/summary`);
+        const json = await res.json();
+        if (json.status === "success") {
+          setData(json.data);
+        } else {
+          setError(json.message || "Gagal mengambil data dari server");
+        }
+      } catch (err) {
+        setError("Koneksi ke backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <OfficerPageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-slate-500 font-medium animate-pulse">Menghubungkan ke server AI...</p>
+          </div>
+        </div>
+      </OfficerPageShell>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <OfficerPageShell>
+        <div className="flex items-center justify-center min-h-[60vh] text-red-500">
+          <p>{error || "Data kosong"}</p>
+        </div>
+      </OfficerPageShell>
+    );
+  }
+
+  // Tailored text helper
+  const riskLevel = data.risiko_tinggi_count > 1 ? "Tinggi" : "Sedang";
+  const dominantViolationText = data.dominant_violation === "Tanpa Helm" 
+    ? "Pelanggaran tanpa helm" 
+    : data.dominant_violation === "Bonceng >2" 
+    ? "Bonceng lebih dari 2" 
+    : "Tidak terdeteksi pelanggaran dominan";
+
   return (
     <OfficerPageShell>
       <div className="max-w-7xl mx-auto space-y-10 pb-12">
@@ -23,7 +81,7 @@ export default function OfficerSmartInsightPage() {
           </div>
           <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl">
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Mode:</span> Data simulasi prototype
+              <span className="text-slate-400">Mode:</span> Data Real-time (API)
             </p>
             <p className="text-xs font-medium text-slate-500">
               <span className="text-slate-400">Area:</span> Pekanbaru
@@ -50,17 +108,17 @@ export default function OfficerSmartInsightPage() {
                   <span className="text-xl font-medium text-[#0B1F3A]">Kepadatan meningkat</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Volume kendaraan naik menuju periode siang.
+                  Volume kendaraan naik dari database riil hari ini.
                 </p>
               </div>
               
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Risiko Tertinggi</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <span className="text-xl font-medium text-amber-600">Pelanggaran tanpa helm</span>
+                  <span className="text-xl font-medium text-amber-600">{dominantViolationText}</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Kategori ini paling sering muncul pada sample pemantauan.
+                  Kategori ini paling sering muncul dalam database.
                 </p>
               </div>
 
@@ -77,7 +135,7 @@ export default function OfficerSmartInsightPage() {
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:pl-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Rekomendasi Utama</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <StatusBadge status="Tinggi" className="px-4 py-1 text-xs mb-1 mr-2 hidden sm:inline-flex" />
+                  <StatusBadge status={riskLevel} className="px-4 py-1 text-xs mb-1 mr-2 hidden sm:inline-flex" />
                   <span className="text-xl font-medium text-[#1D4ED8]">Tambah pemantauan</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
@@ -93,12 +151,12 @@ export default function OfficerSmartInsightPage() {
         <section>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { label: "Area Prioritas", value: "3", unit: "Area", color: "text-[#0B1F3A]", helper: "Butuh pengawasan lebih." },
-              { label: "Risiko Tinggi", value: "2", unit: "Kategori", color: "text-red-600", helper: "Perlu segera ditangani." },
-              { label: "Pelanggaran Dominan", value: "Tanpa Helm", unit: "", color: "text-amber-600", helper: "Berdasarkan sample AI." },
-              { label: "Prediksi Kemacetan", value: "32", unit: "Menit", color: "text-red-600", helper: "Maksimal antrean diprediksi." },
-              { label: "Kasus Perlu Validasi", value: "14", unit: "Kasus", color: "text-blue-600", helper: "Menunggu verifikasi manual." },
-              { label: "Rekomendasi Aktif", value: "4", unit: "Tindakan", color: "text-teal-600", helper: "Tindak lanjut yang disarankan." },
+              { label: "Area Prioritas", value: data.area_prioritas_count, unit: "Area", color: "text-[#0B1F3A]", helper: "Butuh pengawasan lebih." },
+              { label: "Risiko Tinggi", value: data.risiko_tinggi_count, unit: "Kategori", color: "text-red-600", helper: "Perlu segera ditangani." },
+              { label: "Pelanggaran Dominan", value: data.dominant_violation, unit: "", color: "text-amber-600", helper: "Berdasarkan sample AI database." },
+              { label: "Prediksi Kemacetan", value: data.prediksi_kemacetan_minutes, unit: "Menit", color: "text-red-600", helper: "Maksimal antrean diprediksi." },
+              { label: "Kasus Perlu Validasi", value: data.kasus_perlu_validasi, unit: "Kasus", color: "text-blue-600", helper: "Menunggu verifikasi manual." },
+              { label: "Rekomendasi Utama", value: data.rekomendasi_aktif_count, unit: "Tindakan", color: "text-teal-600", helper: "Tindak lanjut yang disarankan." },
             ].map((kpi, i) => (
               <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
@@ -121,7 +179,7 @@ export default function OfficerSmartInsightPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
               <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Skor Risiko Area</h3>
-              <AreaRiskScoreChart />
+              <AreaRiskScoreChart data={data.risk_score_data} />
               <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <p className="text-sm font-normal text-slate-700 leading-relaxed">
                   Simpang SKA dan Jl. Sudirman menjadi area dengan skor risiko tertinggi. Petugas perlu memprioritaskan pemantauan dan validasi pada dua area tersebut.
@@ -131,7 +189,7 @@ export default function OfficerSmartInsightPage() {
 
             <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
               <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Prioritas Tindakan</h3>
-              <ActionPriorityChart />
+              <ActionPriorityChart data={data.action_priority_data} />
               <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <p className="text-sm font-normal text-slate-700 leading-relaxed">
                   Validasi pelanggaran visual mendominasi prioritas tugas petugas hari ini, diikuti dengan pengaturan kepadatan di area kritis.
@@ -152,13 +210,13 @@ export default function OfficerSmartInsightPage() {
                 <li className="flex gap-3">
                   <span className="text-teal-500 mt-1 text-[10px]">■</span>
                   <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                    Volume kendaraan meningkat secara konstan pada periode siang.
+                    Volume kendaraan meningkat secara konstan pada periode jam padat.
                   </p>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-teal-500 mt-1 text-[10px]">■</span>
                   <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                    Pelanggaran tanpa helm paling sering muncul sebagai akibat sekunder dari kepadatan di jalur pendek.
+                    Pelanggaran {data.dominant_violation} paling sering muncul sebagai akibat sekunder dari kepadatan di jalur pendek.
                   </p>
                 </li>
                 <li className="flex gap-3">
@@ -198,9 +256,9 @@ export default function OfficerSmartInsightPage() {
               <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Prioritas Validasi</h2>
               <div className="space-y-4">
                 {[
-                  { type: "Tanpa Helm", risk: "Tinggi", note: "14 kasus perlu validasi" },
-                  { type: "Plat Perlu Pemeriksaan", risk: "Sedang", note: "7 data perlu dicek" },
-                  { type: "Area Berhenti", risk: "Sedang", note: "4 kasus perlu verifikasi" },
+                  { type: "Tanpa Helm", risk: "Tinggi", note: `${data.kasus_perlu_validasi} kasus perlu validasi` },
+                  { type: "Plat Perlu Pemeriksaan", risk: "Sedang", note: "Beberapa data perlu dicek" },
+                  { type: "Area Berhenti", risk: "Sedang", note: "Kasus perlu verifikasi" },
                 ].map((item, i) => (
                   <div key={i} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <div>
@@ -304,12 +362,7 @@ export default function OfficerSmartInsightPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {[
-                    { cat: "Kepadatan", found: "Volume naik menuju siang", impact: "Potensi kemacetan lebih lama", risk: "Tinggi", action: "Pantau area prioritas" },
-                    { cat: "Pelanggaran", found: "Tanpa helm dominan", impact: "Perlu validasi visual mendalam", risk: "Tinggi", action: "Cek sample deteksi" },
-                    { cat: "Plat", found: "Beberapa data perlu pemeriksaan", impact: "Butuh verifikasi lanjutan petugas", risk: "Sedang", action: "Buka Plate Monitoring" },
-                    { cat: "Laporan", found: "Risiko tetap tinggi", impact: "Perlu dokumentasi operasional khusus", risk: "Sedang", action: "Siapkan laporan" },
-                  ].map((row, i) => (
+                  {data.insight_matrix.map((row: any, i: number) => (
                     <tr key={i} className="hover:bg-slate-50 transition-colors">
                       <td className="p-4 text-sm font-medium text-[#0B1F3A]">{row.cat}</td>
                       <td className="p-4 text-sm font-medium text-slate-700">{row.found}</td>
@@ -362,7 +415,7 @@ export default function OfficerSmartInsightPage() {
                 { title: "Validasi Tanpa Helm", desc: "Prioritaskan pengecekan kasus ini lebih dulu.", link: "/officer/violation-monitoring" },
                 { title: "Fokus Area SKA & Sudirman", desc: "Awasi dua area paling berisiko hari ini." },
                 { title: "Sinkronisasi Forecast", desc: "Cocokkan insight saat ini dengan hasil forecasting.", link: "/officer/forecasting" },
-                { title: "Susun Pelaporan", desc: "Laporan wajib jika risiko tinggi terkonfirmasi.", link: "/officer/report" },
+                { title: "Susun Laporan", desc: "Laporan wajib jika risiko tinggi terkonfirmasi.", link: "/officer/report" },
               ].map((action, i) => (
                 <div key={i} className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between h-full">
                   <div>

@@ -29,11 +29,12 @@ const plateStatusData = [
   { name: "Perlu periksa adm", count: 5, color: "#ef4444" },
 ];
 
-export function VehicleTrendChart() {
+export function VehicleTrendChart({ data }: { data?: any[] }) {
+  const chartData = data && data.length > 0 ? data : trendData;
   return (
     <div className="w-full h-72 mt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={trendData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+        <LineChart data={chartData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
           <XAxis 
             dataKey="time" 
@@ -73,11 +74,12 @@ export function VehicleTrendChart() {
   );
 }
 
-export function PlateStatusChart() {
+export function PlateStatusChart({ data }: { data?: any[] }) {
+  const chartData = data && data.length > 0 ? data : plateStatusData;
   return (
     <div className="w-full h-72 mt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={plateStatusData} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+        <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
           <XAxis 
             type="number"
@@ -101,8 +103,8 @@ export function PlateStatusChart() {
             formatter={(value) => [`${value} Data`, "Jumlah"]}
           />
           <Bar dataKey="count" name="Jumlah Data" radius={[0, 6, 6, 0]} isAnimationActive={false} barSize={32}>
-            {plateStatusData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color || "#1d4ed8"} />
             ))}
           </Bar>
         </BarChart>

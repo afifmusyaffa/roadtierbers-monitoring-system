@@ -1,9 +1,66 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
 import { StatusBadge } from "@/components/common";
 import { ViolationTrendChart, ViolationCompositionChart } from "@/components/charts/officer-violation-charts";
 
 export default function OfficerViolationMonitoringPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${apiUrl}/violations/summary`);
+        const json = await res.json();
+        if (json.status === "success") {
+          setData(json.data);
+        } else {
+          setError(json.message || "Gagal mengambil data dari server");
+        }
+      } catch (err) {
+        setError("Koneksi ke backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <OfficerPageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-slate-500 font-medium animate-pulse">Menghubungkan ke server AI...</p>
+          </div>
+        </div>
+      </OfficerPageShell>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <OfficerPageShell>
+        <div className="flex items-center justify-center min-h-[60vh] text-red-500">
+          <p>{error || "Data kosong"}</p>
+        </div>
+      </OfficerPageShell>
+    );
+  }
+
+  const helmCount = data.composition_data.find((c: any) => c.name === "Tanpa helm")?.count || 0;
+  const boncengCount = data.composition_data.find((c: any) => c.name === "Bonceng >2")?.count || 0;
+  const platPajakCount = data.composition_data.find((c: any) => c.name === "Plat/Pajak")?.count || 0;
+  const areaBerhentiCount = data.composition_data.find((c: any) => c.name === "Area Berhenti")?.count || 0;
+
+  const dominantViolation = helmCount >= boncengCount ? "Tanpa Helm" : "Bonceng >2";
+
   return (
     <OfficerPageShell>
       <div className="max-w-7xl mx-auto space-y-10 pb-12">
@@ -23,7 +80,7 @@ export default function OfficerViolationMonitoringPage() {
           </div>
           <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl">
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Mode:</span> Data simulasi prototype
+              <span className="text-slate-400">Mode:</span> Data Real-time (API)
             </p>
             <p className="text-xs font-medium text-slate-500">
               <span className="text-slate-400">Area:</span> Pekanbaru
@@ -44,17 +101,17 @@ export default function OfficerViolationMonitoringPage() {
               <div className="flex flex-col space-y-2 md:pr-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Total Pelanggaran</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-[#0B1F3A]">37 Kasus</span>
+                  <span className="text-2xl font-medium text-[#0B1F3A]">{data.total_violations_today} Kasus</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Jumlah indikasi pelanggaran dari sample pemantauan hari ini.
+                  Jumlah indikasi pelanggaran dari database hari ini.
                 </p>
               </div>
               
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Risiko Dominan</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <StatusBadge status="Tinggi" className="px-4 py-1.5 text-sm" />
+                  <StatusBadge status={data.total_violations_today > 30 ? "Tinggi" : "Sedang"} className="px-4 py-1.5 text-sm" />
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
                   Beberapa kategori perlu diprioritaskan petugas.
@@ -64,10 +121,10 @@ export default function OfficerViolationMonitoringPage() {
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:pl-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Pelanggaran Terbanyak</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-[#0B1F3A]">Tanpa helm</span>
+                  <span className="text-2xl font-medium text-[#0B1F3A]">{dominantViolation}</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Kategori ini paling sering muncul dalam sample.
+                  Kategori ini paling sering muncul dalam sample database.
                 </p>
               </div>
 
@@ -79,12 +136,12 @@ export default function OfficerViolationMonitoringPage() {
         <section>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { label: "Tanpa Helm", value: "24", unit: "Kasus", color: "text-amber-600", helper: "Mendominasi pelanggaran hari ini." },
-              { label: "Bonceng Lebih Dari 2", value: "8", unit: "Kasus", color: "text-teal-600", helper: "Mulai meningkat siang ini." },
-              { label: "Plat/Pajak Bermasalah", value: "5", unit: "Kasus", color: "text-[#1D4ED8]", helper: "Terdeteksi dari pemindaian ANPR." },
-              { label: "Melanggar Area Berhenti", value: "4", unit: "Kasus", color: "text-red-600", helper: "Terutama di persimpangan utama." },
-              { label: "Kasus Perlu Validasi", value: "14", unit: "Kasus", color: "text-slate-700", helper: "Tunggu konfirmasi petugas." },
-              { label: "Area Risiko Tinggi", value: "3", unit: "Area", color: "text-red-600", helper: "Simpang SKA, Sudirman, Harapan Raya." },
+              { label: "Tanpa Helm", value: helmCount, unit: "Kasus", color: "text-amber-600", helper: "Mendominasi pelanggaran hari ini." },
+              { label: "Bonceng Lebih Dari 2", value: boncengCount, unit: "Kasus", color: "text-teal-600", helper: "Mulai meningkat siang ini." },
+              { label: "Plat/Pajak Bermasalah", value: platPajakCount, unit: "Kasus", color: "text-[#1D4ED8]", helper: "Terdeteksi dari pemindaian ANPR." },
+              { label: "Melanggar Area Berhenti", value: areaBerhentiCount, unit: "Kasus", color: "text-red-600", helper: "Terutama di persimpangan utama." },
+              { label: "Kasus Perlu Validasi", value: data.kasus_perlu_validasi, unit: "Kasus", color: "text-slate-700", helper: "Tunggu konfirmasi petugas." },
+              { label: "Area Risiko Tinggi", value: data.area_risiko_tinggi, unit: "Area", color: "text-red-600", helper: "Simpang SKA, Sudirman, Harapan Raya." },
             ].map((kpi, i) => (
               <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
@@ -113,7 +170,7 @@ export default function OfficerViolationMonitoringPage() {
               <div className="space-y-10">
                 <div>
                   <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Tren Pelanggaran per Jam</h3>
-                  <ViolationTrendChart />
+                  <ViolationTrendChart data={data.trend_data} />
                   <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <p className="text-sm font-normal text-slate-700 leading-relaxed">
                       Indikasi pelanggaran meningkat menuju siang. Petugas perlu memprioritaskan validasi pada jam padat.
@@ -123,7 +180,7 @@ export default function OfficerViolationMonitoringPage() {
 
                 <div className="pt-8 border-t border-slate-200">
                   <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Komposisi Jenis Pelanggaran</h3>
-                  <ViolationCompositionChart />
+                  <ViolationCompositionChart data={data.composition_data} />
                   <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <p className="text-sm font-normal text-slate-700 leading-relaxed">
                       Tanpa helm mendominasi total indikasi pelanggaran. Area rawan seperti Simpang SKA perlu diawasi khusus.
@@ -177,12 +234,7 @@ export default function OfficerViolationMonitoringPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {[
-                    { time: "10:15", loc: "Simpang SKA", type: "Tanpa helm", count: 5, risk: "Tinggi", val: "Perlu validasi", note: "Cek ulang frame sample" },
-                    { time: "10:20", loc: "Panam (UNRI)", type: "Bonceng >2", count: 2, risk: "Sedang", val: "Perlu validasi", note: "Periksa konteks kepadatan" },
-                    { time: "10:25", loc: "Jl. Sudirman", type: "Area berhenti", count: 1, risk: "Sedang", val: "Perlu validasi", note: "Perhatikan rambu sekitar" },
-                    { time: "10:30", loc: "Harapan Raya", type: "Plat/pajak bermasalah", count: 3, risk: "Tinggi", val: "Perlu validasi", note: "Arahkan ke Plate Monitoring" },
-                  ].map((row, i) => (
+                  {data.cases_list.map((row: any, i: number) => (
                     <tr key={i} className="hover:bg-slate-50 transition-colors">
                       <td className="p-4 text-sm font-medium text-slate-500">{row.time}</td>
                       <td className="p-4 text-sm font-medium text-[#0B1F3A]">{row.loc}</td>

@@ -1,9 +1,70 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
 import { StatusBadge } from "@/components/common";
 import { VehicleTrendChart, PlateStatusChart } from "@/components/charts/officer-vehicle-charts";
 
 export default function OfficerVehiclePlatePage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${apiUrl}/vehicles/summary`);
+        const json = await res.json();
+        if (json.status === "success") {
+          setData(json.data);
+        } else {
+          setError(json.message || "Gagal mengambil data dari server");
+        }
+      } catch (err) {
+        setError("Koneksi ke backend gagal. Pastikan FastAPI berjalan di http://127.0.0.1:8000");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <OfficerPageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-slate-500 font-medium animate-pulse">Menghubungkan ke server AI...</p>
+          </div>
+        </div>
+      </OfficerPageShell>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <OfficerPageShell>
+        <div className="flex items-center justify-center min-h-[60vh] text-red-500">
+          <p>{error || "Data kosong"}</p>
+        </div>
+      </OfficerPageShell>
+    );
+  }
+
+  // Breakdowns
+  const platValidCount = data.plate_status_data.find((c: any) => c.name === "Valid")?.count || 0;
+  const platTidakJelasCount = data.plate_status_data.find((c: any) => c.name === "Tidak jelas")?.count || 0;
+  const adminBermasalahCount = data.plate_status_data.find((c: any) => c.name === "Perlu periksa adm")?.count || 0;
+
+  // Latest mock items for visual preview based on actual first rows
+  const latestPlate1 = data.plates_list[0]?.plate || "BM ****";
+  const latestPlateType1 = data.plates_list[0]?.type || "Motor";
+  const latestPlate2 = data.plates_list[1]?.plate || "BM ****";
+  const latestPlateType2 = data.plates_list[1]?.type || "Mobil";
+
   return (
     <OfficerPageShell>
       <div className="max-w-7xl mx-auto space-y-10 pb-12">
@@ -23,7 +84,7 @@ export default function OfficerVehiclePlatePage() {
           </div>
           <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl">
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Mode:</span> Data simulasi prototype
+              <span className="text-slate-400">Mode:</span> Data Real-time (API)
             </p>
             <p className="text-xs font-medium text-slate-500">
               <span className="text-slate-400">Area:</span> Pekanbaru
@@ -47,38 +108,38 @@ export default function OfficerVehiclePlatePage() {
               <div className="flex flex-col space-y-2 md:pr-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Kendaraan Terpantau</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-[#0B1F3A]">86 kendaraan</span>
+                  <span className="text-2xl font-medium text-[#0B1F3A]">{data.total_vehicles} kendaraan</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Jumlah kendaraan dari sample pemantauan hari ini.
+                  Jumlah kendaraan dari database hari ini.
                 </p>
               </div>
               
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Plat Terbaca</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-[#0B1F3A]">74 plat</span>
+                  <span className="text-2xl font-medium text-[#0B1F3A]">{data.total_plates} plat</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Plat yang berhasil terbaca oleh sistem dalam sample.
+                  Plat yang berhasil terbaca oleh sistem dalam sample database.
                 </p>
               </div>
 
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Perlu Validasi</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-amber-600">12 data</span>
+                  <span className="text-2xl font-medium text-amber-600">{data.perlu_validasi} data</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Data yang perlu diperiksa kembali oleh petugas.
+                  Data yang perlu diperiksa kembali oleh petugas secara manual.
                 </p>
               </div>
 
               <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:pl-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Indikasi Bermasalah</p>
                 <div className="flex items-center pt-1 pb-2">
-                  <StatusBadge status="Tinggi" className="px-4 py-1.5 text-sm" />
-                  <span className="text-2xl font-medium text-red-600 ml-3">5 data</span>
+                  <StatusBadge status={adminBermasalahCount > 5 ? "Tinggi" : "Sedang"} className="px-4 py-1.5 text-sm" />
+                  <span className="text-2xl font-medium text-red-600 ml-3">{adminBermasalahCount} data</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
                   Status administrasi simulasi perlu diperhatikan.
@@ -89,16 +150,16 @@ export default function OfficerVehiclePlatePage() {
           </div>
         </section>
 
-        {/* 3. KPI Monitoring Grid */}
+        {/* 3. KPI Grid */}
         <section>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { label: "Motor Terpantau", value: "52", unit: "Kendaraan", color: "text-[#1D4ED8]", helper: "Roda dua melintas hari ini." },
-              { label: "Mobil Terpantau", value: "34", unit: "Kendaraan", color: "text-blue-600", helper: "Roda empat+ melintas hari ini." },
-              { label: "Plat Valid", value: "69", unit: "Data", color: "text-teal-600", helper: "Pembacaan sistem jelas." },
-              { label: "Plat Tidak Jelas", value: "7", unit: "Data", color: "text-amber-600", helper: "Buram atau tertutup objek lain." },
-              { label: "Administrasi Aktif", value: "69", unit: "Data", color: "text-green-600", helper: "Status pajak & plat berlaku." },
-              { label: "Administrasi Perlu Pemeriksaan", value: "5", unit: "Data", color: "text-red-600", helper: "Potensi pajak mati atau plat palsu." },
+              { label: "Motor Terpantau", value: data.motor_count, unit: "Kendaraan", color: "text-[#1D4ED8]", helper: "Roda dua melintas hari ini." },
+              { label: "Mobil Terpantau", value: data.mobil_count, unit: "Kendaraan", color: "text-blue-600", helper: "Roda empat+ melintas hari ini." },
+              { label: "Plat Valid", value: platValidCount, unit: "Data", color: "text-teal-600", helper: "Pembacaan sistem jelas." },
+              { label: "Plat Tidak Jelas", value: platTidakJelasCount, unit: "Data", color: "text-amber-600", helper: "Buram atau tertutup objek lain." },
+              { label: "Administrasi Aktif", value: platValidCount, unit: "Data", color: "text-green-600", helper: "Status pajak & plat berlaku." },
+              { label: "Administrasi Perlu Pemeriksaan", value: adminBermasalahCount, unit: "Data", color: "text-red-600", helper: "Potensi pajak mati atau plat palsu." },
             ].map((kpi, i) => (
               <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
@@ -121,7 +182,7 @@ export default function OfficerVehiclePlatePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
               <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Tren Kendaraan Terpantau</h3>
-              <VehicleTrendChart />
+              <VehicleTrendChart data={data.trend_data} />
               <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <p className="text-sm font-normal text-slate-700 leading-relaxed">
                   Jumlah kendaraan terpantau konsisten meningkat menuju siang. Antisipasi kepadatan di persimpangan utama.
@@ -131,7 +192,7 @@ export default function OfficerVehiclePlatePage() {
 
             <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
               <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Status Pembacaan Plat</h3>
-              <PlateStatusChart />
+              <PlateStatusChart data={data.plate_status_data} />
               <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <p className="text-sm font-normal text-slate-700 leading-relaxed">
                   Petugas perlu memperhatikan data plat yang tidak jelas dan membutuhkan validasi visual secara manual.
@@ -157,11 +218,11 @@ export default function OfficerVehiclePlatePage() {
                 {/* Motor Bbox */}
                 <div className="absolute top-[35%] left-[25%] w-[18%] h-[35%] border-2 border-blue-500 bg-blue-500/10 rounded-sm">
                   <div className="absolute -top-6 left-0 bg-blue-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap">
-                    Motor
+                    {latestPlateType1}
                   </div>
                   {/* Plate Bbox */}
                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 h-1/4 border-2 border-green-500 bg-white/90 rounded flex items-center justify-center">
-                    <span className="text-[10px] font-medium text-slate-800 tracking-wider">BM 1*** AB</span>
+                    <span className="text-[10px] font-medium text-slate-800 tracking-wider">{latestPlate1}</span>
                   </div>
                   <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-green-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap rounded">
                     Plat terbaca
@@ -171,11 +232,11 @@ export default function OfficerVehiclePlatePage() {
                 {/* Mobil Bbox */}
                 <div className="absolute top-[45%] left-[60%] w-[28%] h-[30%] border-2 border-blue-500 bg-blue-500/10 rounded-sm">
                   <div className="absolute -top-6 left-0 bg-blue-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap">
-                    Mobil
+                    {latestPlateType2}
                   </div>
                   {/* Plate Bbox (Needs validation) */}
                   <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1/2 h-1/4 border-2 border-amber-500 bg-white/90 rounded flex items-center justify-center">
-                    <span className="text-[10px] font-medium text-slate-800 tracking-wider">BM 7*** KP</span>
+                    <span className="text-[10px] font-medium text-slate-800 tracking-wider">{latestPlate2}</span>
                   </div>
                   <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap rounded">
                     Perlu validasi
@@ -196,7 +257,7 @@ export default function OfficerVehiclePlatePage() {
                   </div>
                   <div>
                     <p className="text-xs font-medium text-slate-500 uppercase">Waktu Sample</p>
-                    <p className="text-sm font-medium text-[#0B1F3A]">Hari ini, 10:25 WIB</p>
+                    <p className="text-sm font-medium text-[#0B1F3A]">Terbaru dari database</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-slate-500 uppercase">Kualitas Pembacaan</p>
@@ -237,12 +298,7 @@ export default function OfficerVehiclePlatePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {[
-                    { time: "10:15", loc: "Simpang SKA", type: "Motor", plate: "BM 1*** AB", read: "Terbaca", adm: "Aktif", risk: "Rendah", note: "Tidak ada tindakan khusus" },
-                    { time: "10:18", loc: "Panam (UNRI)", type: "Motor", plate: "BM 7*** KP", read: "Terbaca", adm: "Perlu pemeriksaan", risk: "Tinggi", note: "Arahkan untuk validasi administrasi" },
-                    { time: "10:22", loc: "Jl. Sudirman", type: "Mobil", plate: "BM 2*** CD", read: "Tidak jelas", adm: "Belum diverifikasi", risk: "Sedang", note: "Perlu cek ulang frame sample" },
-                    { time: "10:25", loc: "Harapan Raya", type: "Motor", plate: "BM 9*** RS", read: "Terbaca", adm: "Perlu pemeriksaan", risk: "Tinggi", note: "Cocokkan dengan pantauan petugas" },
-                  ].map((row, i) => (
+                  {data.plates_list.map((row: any, i: number) => (
                     <tr key={i} className="hover:bg-slate-50 transition-colors">
                       <td className="p-4 text-sm font-medium text-slate-500">{row.time}</td>
                       <td className="p-4 text-sm font-medium text-[#0B1F3A]">{row.loc}</td>

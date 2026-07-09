@@ -29,11 +29,12 @@ const compositionData = [
   { name: "Area Berhenti", count: 4, color: "#ef4444" },
 ];
 
-export function ViolationTrendChart() {
+export function ViolationTrendChart({ data }: { data?: any[] }) {
+  const chartData = data && data.length > 0 ? data : trendData;
   return (
     <div className="w-full h-72 mt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={trendData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+        <LineChart data={chartData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
           <XAxis 
             dataKey="time" 
@@ -73,11 +74,12 @@ export function ViolationTrendChart() {
   );
 }
 
-export function ViolationCompositionChart() {
+export function ViolationCompositionChart({ data }: { data?: any[] }) {
+  const chartData = data && data.length > 0 ? data : compositionData;
   return (
     <div className="w-full h-72 mt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={compositionData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+        <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
           <XAxis 
             type="number"
@@ -101,8 +103,8 @@ export function ViolationCompositionChart() {
             formatter={(value) => [`${value} Kasus`, "Jumlah"]}
           />
           <Bar dataKey="count" name="Jumlah Kasus" radius={[0, 6, 6, 0]} isAnimationActive={false} barSize={32}>
-            {compositionData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color || "#1d4ed8"} />
             ))}
           </Bar>
         </BarChart>
