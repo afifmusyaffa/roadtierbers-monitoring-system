@@ -6,6 +6,13 @@ import { PublicPageShell } from "@/components/layout/public-page-shell";
 
 // Dictionary mapping model class ID to sign info
 const SIGN_INFO: Record<string, { name: string; kategori: string; arti: string; tindakan: string; pentingnya: string }> = {
+  "2": {
+    name: "Larangan Parkir",
+    kategori: "Rambu Larangan",
+    arti: "Kendaraan tidak diperbolehkan parkir di area ini.",
+    tindakan: "Jangan memarkir kendaraan di area tersebut. Gunakan area parkir resmi yang diperbolehkan.",
+    pentingnya: "Rambu ini biasanya dipasang di area yang harus tetap bebas dari kendaraan berhenti lama."
+  },
   "13": {
     name: "Peringatan Tikungan ke Kanan",
     kategori: "Peringatan",
@@ -16,9 +23,9 @@ const SIGN_INFO: Record<string, { name: string; kategori: string; arti: string; 
 };
 
 const DEFAULT_INFO = {
-  name: "Rambu tidak dikenali",
+  name: "Rambu belum terdaftar",
   kategori: "Umum",
-  arti: "Sistem mendeteksi objek sebagai rambu lalu lintas, tetapi nama rambu ini belum dipetakan di frontend.",
+  arti: "Sistem mendeteksi ID kelas, tetapi informasi nama rambu belum tersedia di frontend.",
   tindakan: "Ikuti arahan rambu di sekitar Anda dan tetap berhati-hati.",
   pentingnya: "Rambu membantu menjaga alur jalan tetap aman dan teratur."
 };
@@ -87,10 +94,15 @@ export default function TrafficSignEducationPage() {
   };
 
   // Get info based on detection result or use default
-  const signId = detectionResult ? String(detectionResult.name) : null;
+  const rawDetectionName = detectionResult?.name ?? detectionResult?.class_id ?? detectionResult?.id ?? detectionResult?.label;
+  const signId = rawDetectionName != null ? String(rawDetectionName) : null;
   const currentInfo = signId && SIGN_INFO[signId] 
     ? { ...SIGN_INFO[signId], rawId: signId } 
-    : (signId ? { ...DEFAULT_INFO, rawId: signId } : null);
+    : (signId ? { 
+        ...DEFAULT_INFO, 
+        arti: `Sistem mendeteksi ID kelas ${signId}, tetapi informasi nama rambu belum tersedia di frontend.`,
+        rawId: signId 
+      } : null);
 
   const getCategoryMeta = (kategori: string) => {
     const k = kategori.toLowerCase();
@@ -216,7 +228,7 @@ export default function TrafficSignEducationPage() {
             </div>
             
             {/* Right: Result Area */}
-            <div className="lg:w-[55%] p-6 sm:p-8 bg-slate-50 flex flex-col justify-center min-h-[350px]">
+            <div className="lg:w-[55%] p-6 sm:p-8 bg-slate-50 flex flex-col justify-center">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center text-center space-y-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1D4ED8]"></div>
