@@ -1116,10 +1116,10 @@ async def get_reports_summary():
         
         # Detailed reports matrix table
         report_rows = [
-            { "cat": "Volume Kendaraan", "val": f"{total_vehicles} unit", "status": "Lancar" if total_vehicles < 150 else "Padat", "progress": "100%", "verif": "Otomatis" },
-            { "cat": "Pelanggaran Helm", "val": f"{helm_count} kasus", "status": "Perlu Tindakan" if helm_count > 10 else "Tinjauan", "progress": "85%", "verif": "Petugas" },
-            { "cat": "Boncengan >2", "val": f"{bonceng_count} kasus", "status": "Perlu Tindakan" if bonceng_count > 5 else "Tinjauan", "progress": "90%", "verif": "Petugas" },
-            { "cat": "Plat/Pajak", "val": f"{plat_pajak_count} kasus", "status": "Pemeriksaan" if plat_pajak_count > 2 else "Aman", "progress": "75%", "verif": "Petugas" },
+            { "cat": "Volume Kendaraan", "res": "Volume kendaraan terpantau", "count": str(total_vehicles), "risk": "Sedang" if total_vehicles > 1000 else "Rendah", "val": f"{total_vehicles} unit", "note": "Volume lalu lintas harian terpantau lancar" },
+            { "cat": "Pelanggaran Helm", "res": "Pengendara tanpa helm", "count": str(helm_count), "risk": "Tinggi" if helm_count > 10 else "Sedang", "val": f"{helm_count} kasus", "note": "Kategori pelanggaran dominan hari ini" },
+            { "cat": "Boncengan >2", "res": "Bonceng lebih dari 2 orang", "count": str(bonceng_count), "risk": "Sedang", "val": f"{bonceng_count} kasus", "note": "Perlu edukasi visual berkala di persimpangan" },
+            { "cat": "Plat/Pajak", "res": "Plat/pajak kendaraan bermasalah", "count": str(plat_pajak_count), "risk": "Tinggi" if plat_pajak_count > 2 else "Aman", "val": f"{plat_pajak_count} kasus", "note": "Indikasi plat mati terdeteksi oleh sistem" },
         ]
 
         # KPIs format
