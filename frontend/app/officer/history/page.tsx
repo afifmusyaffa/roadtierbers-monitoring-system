@@ -21,7 +21,8 @@ export default function OfficerHistoryPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/history/list");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${apiUrl}/history/list`);
         const json = await res.json();
         if (json.status === "success") {
           setData(json.data);
