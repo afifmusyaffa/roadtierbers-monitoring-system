@@ -61,7 +61,6 @@ export default function TrafficOverviewPage() {
         color: "text-red-700",
         bgStatus: "bg-red-50",
         borderColor: "border-red-200",
-        badgeBg: "bg-red-600",
         trend: "Meningkat",
         decision: "Pertimbangkan menunda perjalanan",
         decisionSub: "Kondisi jalan macet. Perjalanan akan memakan waktu lebih lama dari biasanya."
@@ -71,7 +70,6 @@ export default function TrafficOverviewPage() {
         color: "text-amber-700",
         bgStatus: "bg-amber-50",
         borderColor: "border-amber-200",
-        badgeBg: "bg-amber-500",
         trend: "Stabil",
         decision: "Berangkat dengan waktu tambahan",
         decisionSub: "Kepadatan mulai terlihat. Sediakan waktu ekstra agar perjalanan lebih tenang."
@@ -81,7 +79,6 @@ export default function TrafficOverviewPage() {
         color: "text-red-700",
         bgStatus: "bg-red-50",
         borderColor: "border-red-200",
-        badgeBg: "bg-red-600",
         trend: "Meningkat",
         decision: "Pertimbangkan menunda perjalanan",
         decisionSub: "Arus jalan terpantau lambat. Perjalanan Anda berisiko terhambat."
@@ -91,10 +88,9 @@ export default function TrafficOverviewPage() {
         color: "text-[#0f766e]", // teal-700
         bgStatus: "bg-teal-50",
         borderColor: "border-teal-200",
-        badgeBg: "bg-[#0d9488]", // teal-600
         trend: "Menurun",
         decision: "Berangkat sekarang",
-        decisionSub: "Jalan terpantau lancar. Ini adalah kondisi ideal untuk perjalanan Anda."
+        decisionSub: "Jalan terpantau lancar. Kondisi masih aman untuk perjalanan."
       };
     }
     
@@ -102,7 +98,6 @@ export default function TrafficOverviewPage() {
       color: "text-slate-600",
       bgStatus: "bg-slate-50",
       borderColor: "border-slate-200",
-      badgeBg: "bg-slate-400",
       trend: "-",
       decision: "Rekomendasi belum tersedia",
       decisionSub: "Sistem menunggu data monitoring dari hasil deteksi."
@@ -113,211 +108,172 @@ export default function TrafficOverviewPage() {
 
   return (
     <PublicPageShell>
-      <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="min-h-screen bg-white pt-24 pb-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
           
-          {/* 1. Compact Top Section */}
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          {/* 1. Compact Page Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] tracking-tight">Pantauan Lalu Lintas</h1>
-              <p className="text-sm sm:text-base text-slate-500 mt-1">Cek kondisi jalan, estimasi kepadatan, dan rekomendasi perjalanan sebelum berangkat.</p>
+              <h1 className="text-2xl font-bold text-[#0B1F3A] tracking-tight">Pantauan Lalu Lintas</h1>
+              <p className="text-sm text-slate-500 mt-1">Ringkasan kondisi jalan dan rekomendasi perjalanan untuk wilayah Pekanbaru.</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-slate-200 text-[11px] font-semibold text-slate-600">
-                Area: Pekanbaru
-              </span>
-              <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-slate-200 text-[11px] font-semibold text-slate-600">
-                Sumber: Hasil deteksi sistem
-              </span>
-              <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200 text-[11px] font-semibold text-[#1D4ED8]">
-                Mode evaluasi
-              </span>
-            </div>
-          </div>
-
-          {/* 2. Route / Area Selection Panel */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Area pemantauan</span>
-              <span className="text-sm font-bold text-[#0B1F3A]">Pekanbaru</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1.5 rounded-lg bg-[#0B1F3A] text-white text-xs font-semibold shadow-sm">
-                Simpang SKA
-              </span>
-              <span className="px-3 py-1.5 rounded-lg bg-slate-50 text-slate-500 text-xs font-medium border border-slate-200">
-                Panam
-              </span>
-              <span className="px-3 py-1.5 rounded-lg bg-slate-50 text-slate-500 text-xs font-medium border border-slate-200">
-                Jl. Sudirman
-              </span>
-              <span className="px-3 py-1.5 rounded-lg bg-slate-50 text-slate-500 text-xs font-medium border border-slate-200">
-                Harapan Raya
-              </span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 font-medium">
+              <span>Area: Pekanbaru</span>
+              <span className="hidden md:inline text-slate-300">•</span>
+              <span>Sumber: Hasil deteksi sistem</span>
+              <span className="hidden md:inline text-slate-300">•</span>
+              <span>Mode evaluasi</span>
             </div>
           </div>
 
           {/* Main State Handling */}
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1D4ED8]"></div>
-              <p className="text-sm font-medium text-slate-500">Mengambil pantauan lalu lintas...</p>
+            <div className="py-12 flex items-center justify-center space-x-3 text-slate-500 text-sm">
+              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-[#1D4ED8]"></div>
+              <span>Mengambil pantauan lalu lintas...</span>
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-red-50 rounded-2xl border border-red-100 text-center px-4">
-              <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 text-xl">⚠️</div>
-              <h2 className="text-lg font-bold text-red-800 mb-2">{error}</h2>
-              <p className="text-sm text-red-600 max-w-md">Pastikan layanan backend RoadTierbers sedang berjalan.</p>
+            <div className="py-12 px-6 bg-red-50/50 border border-red-100 rounded-xl text-center">
+              <h2 className="text-base font-bold text-red-800 mb-1">Koneksi server terputus</h2>
+              <p className="text-sm text-red-600">Pastikan layanan backend RoadTierbers sedang berjalan.</p>
             </div>
           ) : !hasData ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm text-center px-4">
-              <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4 text-2xl border border-slate-100">📊</div>
-              <h2 className="text-lg font-bold text-[#0B1F3A] mb-2">Belum ada data monitoring</h2>
-              <p className="text-sm text-slate-500 max-w-md mb-6">Jalankan deteksi dari halaman Pusat Deteksi AI agar sistem memiliki data pemantauan.</p>
-              <Link href="/officer/ai-detection" className="px-5 py-2.5 rounded-lg bg-[#1D4ED8] text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm">
-                Ke Pusat Deteksi AI
+            <div className="py-12 px-6 border border-slate-200 rounded-xl text-center">
+              <h2 className="text-base font-bold text-[#0B1F3A] mb-1">Belum ada data monitoring</h2>
+              <p className="text-sm text-slate-500 mb-4">Sistem menunggu data monitoring dari hasil deteksi.</p>
+              <Link href="/officer/ai-detection" className="text-sm font-semibold text-[#1D4ED8] hover:underline">
+                Ke Pusat Deteksi AI →
               </Link>
             </div>
           ) : (
-            <div className="space-y-6">
-              {/* 3. Main Decision Section & 4. Key Metrics Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
-                {/* Left: Recommendation Card */}
-                <div className={`col-span-1 lg:col-span-7 rounded-2xl border ${statusInfo.borderColor} ${statusInfo.bgStatus} p-6 sm:p-8 flex flex-col justify-center`}>
-                  <div className="inline-flex items-center gap-2 mb-4">
-                    <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: statusInfo.color.replace('text-', '') }} />
-                    <span className={`text-xs font-bold uppercase tracking-wider ${statusInfo.color}`}>Rekomendasi Sistem</span>
-                  </div>
-                  <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${statusInfo.color} mb-3`}>
+            <div className="space-y-10">
+              
+              {/* 2. Main Traffic Brief Panel */}
+              <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${statusInfo.bgStatus} ${statusInfo.borderColor} ${statusInfo.color}`}>
+                    {categoryStr}
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">
                     {statusInfo.decision}
                   </h2>
-                  <p className={`text-sm sm:text-base font-medium opacity-90 ${statusInfo.color} max-w-lg`}>
-                    {statusInfo.decisionSub}
-                  </p>
                 </div>
-
-                {/* Right: Key Metrics Grid */}
-                <div className="col-span-1 lg:col-span-5 grid grid-cols-2 gap-4">
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Kondisi Jalan</p>
-                    <p className={`text-lg font-bold capitalize ${statusInfo.color}`}>{categoryStr}</p>
+                <p className="text-sm text-slate-600 mb-6">
+                  {statusInfo.decisionSub}
+                </p>
+                
+                {/* Inline Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 pt-6 border-t border-slate-200">
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">Kepadatan</p>
+                    <p className="text-sm font-semibold text-[#0B1F3A]">
+                      {congestion?.volume_pred !== undefined ? `${congestion.volume_pred} kendaraan` : "Belum tersedia"}
+                    </p>
                   </div>
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Kepadatan</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{congestion?.volume_pred !== undefined ? `${congestion.volume_pred} kend` : "Belum tersedia"}</p>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">Keterlambatan</p>
+                    <p className="text-sm font-semibold text-[#0B1F3A]">
+                      {delayMinutes !== undefined ? `${delayMinutes} menit` : "Belum tersedia"}
+                    </p>
                   </div>
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Keterlambatan</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{delayMinutes !== undefined ? `${delayMinutes} mnt` : "Belum tersedia"}</p>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">Risiko Perjalanan</p>
+                    <p className={`text-sm font-semibold ${statusInfo.trend === "Meningkat" ? "text-red-600" : (statusInfo.trend === "Menurun" ? "text-teal-600" : (statusInfo.trend === "-" ? "text-slate-500" : "text-amber-500"))}`}>
+                      {statusInfo.trend}
+                    </p>
                   </div>
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Risiko Perjalanan</p>
-                    <p className={`text-lg font-bold ${statusInfo.trend === "Meningkat" ? "text-red-600" : (statusInfo.trend === "Menurun" ? "text-teal-600" : (statusInfo.trend === "-" ? "text-slate-500" : "text-amber-500"))}`}>{statusInfo.trend}</p>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">Pembaruan</p>
+                    <p className="text-sm font-semibold text-[#0B1F3A]">
+                      {data?.target_hour ? data.target_hour : "Belum tersedia"}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* 5. Main Content Grid (Area Monitoring & Time Pattern) */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 3. Monitoring Detail Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
-                {/* Area Monitoring */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                  <h3 className="text-sm font-bold text-[#0B1F3A] mb-4">Pantauan Area Terkait</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                {/* Area Pemantauan */}
+                <div>
+                  <h3 className="text-sm font-bold text-[#0B1F3A] mb-4">Area pemantauan</h3>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden text-sm">
+                    <div className="flex justify-between items-center p-3 border-b border-slate-200 bg-white">
                       <div>
-                        <p className="text-sm font-bold text-[#0B1F3A]">Simpang SKA</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Area pantauan utama</p>
+                        <span className="font-medium text-[#0B1F3A]">Simpang SKA</span>
+                        <span className="text-xs text-slate-400 ml-2">— Area utama</span>
                       </div>
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-md capitalize border ${statusInfo.bgStatus} ${statusInfo.borderColor} ${statusInfo.color}`}>{categoryStr}</span>
+                      <span className={`font-semibold capitalize ${statusInfo.color}`}>{categoryStr}</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100">
+                    <div className="flex justify-between items-center p-3 border-b border-slate-100 bg-slate-50/50">
                       <div>
-                        <p className="text-sm font-bold text-slate-700">Jl. Sudirman</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Menunggu sinkronisasi area</p>
+                        <span className="font-medium text-slate-600">Jl. Sudirman</span>
+                        <span className="text-xs text-slate-400 ml-2 hidden sm:inline">— Menunggu sinkronisasi</span>
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-500 px-2.5 py-1 bg-slate-50 rounded-md border border-slate-200">Belum tersedia</span>
+                      <span className="text-slate-400">Belum tersedia</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100">
+                    <div className="flex justify-between items-center p-3 border-b border-slate-100 bg-slate-50/50">
                       <div>
-                        <p className="text-sm font-bold text-slate-700">Panam</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Menunggu sinkronisasi area</p>
+                        <span className="font-medium text-slate-600">Panam</span>
+                        <span className="text-xs text-slate-400 ml-2 hidden sm:inline">— Menunggu sinkronisasi</span>
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-500 px-2.5 py-1 bg-slate-50 rounded-md border border-slate-200">Belum tersedia</span>
+                      <span className="text-slate-400">Belum tersedia</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100">
+                    <div className="flex justify-between items-center p-3 bg-slate-50/50">
                       <div>
-                        <p className="text-sm font-bold text-slate-700">Harapan Raya</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Menunggu sinkronisasi area</p>
+                        <span className="font-medium text-slate-600">Harapan Raya</span>
+                        <span className="text-xs text-slate-400 ml-2 hidden sm:inline">— Menunggu sinkronisasi</span>
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-500 px-2.5 py-1 bg-slate-50 rounded-md border border-slate-200">Belum tersedia</span>
+                      <span className="text-slate-400">Belum tersedia</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Time Pattern */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col">
-                  <h3 className="text-sm font-bold text-[#0B1F3A] mb-8">Estimasi Pola Waktu Ke Depan</h3>
-                  <div className="flex-1 flex flex-col justify-center px-2">
-                    {data?.target_hour ? (
-                      <div className="flex justify-between items-center relative">
-                        <div className="absolute left-0 right-0 h-px bg-slate-200 z-0" />
-                        {[0, 15, 30, 45].map((offset) => {
-                          const isNow = offset === 0;
-                          const timeStr = isNow ? "Sekarang" : `+${offset}m`;
-                          const stateColor = isNow ? statusInfo.badgeBg : "bg-slate-200";
-                          const label = isNow ? categoryStr : "Belum tersedia";
-                          
-                          return (
-                            <div key={offset} className="relative z-10 flex flex-col items-center gap-2 bg-white px-2">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{timeStr}</span>
-                              <div className={`w-3.5 h-3.5 rounded-full ${stateColor} ring-4 ring-white shadow-sm`} />
-                              <span className={`text-[10px] font-bold capitalize ${isNow ? 'text-[#0B1F3A]' : 'text-slate-400'}`}>{label}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-slate-500 text-center">Prediksi waktu belum tersedia</p>
-                    )}
+                {/* Estimasi Waktu */}
+                <div>
+                  <h3 className="text-sm font-bold text-[#0B1F3A] mb-4">Estimasi waktu</h3>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden text-sm">
+                    {[0, 15, 30, 45].map((offset, i, arr) => {
+                      const isNow = offset === 0;
+                      const timeStr = isNow ? "Sekarang" : `+${offset} menit`;
+                      const label = isNow ? categoryStr : "Belum tersedia";
+                      const borderClass = i < arr.length - 1 ? (isNow ? "border-b border-slate-200" : "border-b border-slate-100") : "";
+                      const bgClass = isNow ? "bg-white" : "bg-slate-50/50";
+                      
+                      return (
+                        <div key={offset} className={`flex justify-between items-center p-3 ${borderClass} ${bgClass}`}>
+                          <span className={isNow ? "font-medium text-[#0B1F3A]" : "font-medium text-slate-600"}>{timeStr}</span>
+                          <span className={`capitalize ${isNow ? `font-semibold ${statusInfo.color}` : 'text-slate-400'}`}>{label}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* 6. Public Guidance Section */}
-          <div className="bg-[#0B1F3A] rounded-2xl p-6 sm:p-8 shadow-sm text-white mt-8">
-            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                <span className="text-2xl">🛡️</span>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-bold mb-3">Saran untuk Pengguna Jalan</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm text-white/80 font-medium">
-                  <p className="flex items-start gap-2"><span className="text-[#1D4ED8] font-bold">•</span> Periksa kondisi jalan sebelum berangkat.</p>
-                  <p className="flex items-start gap-2"><span className="text-[#1D4ED8] font-bold">•</span> Siapkan waktu tambahan jika area terpantau padat.</p>
-                  <p className="flex items-start gap-2"><span className="text-[#1D4ED8] font-bold">•</span> Jaga jarak aman dan hindari terburu-buru.</p>
-                  <p className="flex items-start gap-2"><span className="text-[#1D4ED8] font-bold">•</span> Ikuti rambu serta arahan petugas di lapangan.</p>
-                </div>
-              </div>
-            </div>
+          {/* 4. Practical Guidance */}
+          <div className="pt-8 border-t border-slate-100">
+            <h3 className="text-sm font-bold text-[#0B1F3A] mb-3">Catatan perjalanan</h3>
+            <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
+              <li>Periksa kondisi jalan sebelum berangkat.</li>
+              <li>Siapkan waktu tambahan jika area tujuan padat.</li>
+              <li>Ikuti rambu dan arahan petugas di lapangan.</li>
+            </ul>
           </div>
 
-          {/* 7. Supporting Actions */}
-          <div className="pt-6 border-t border-slate-200">
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/departure-recommendation" className="px-5 py-2.5 rounded-lg bg-white border border-slate-200 text-sm font-semibold text-[#0B1F3A] hover:bg-slate-50 transition-colors shadow-sm text-center">
-                Lihat rekomendasi waktu berangkat
-              </Link>
-              <Link href="/congestion-prediction" className="px-5 py-2.5 rounded-lg bg-white border border-slate-200 text-sm font-semibold text-[#0B1F3A] hover:bg-slate-50 transition-colors shadow-sm text-center">
-                Lihat detail prediksi kemacetan
-              </Link>
-              <Link href="/traffic-sign-education" className="px-5 py-2.5 rounded-lg bg-white border border-slate-200 text-sm font-semibold text-[#0B1F3A] hover:bg-slate-50 transition-colors shadow-sm text-center">
-                Pelajari rambu lalu lintas
-              </Link>
-            </div>
+          {/* 5. Supporting Links */}
+          <div className="pt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <Link href="/departure-recommendation" className="text-[#1D4ED8] hover:underline">
+              Rekomendasi waktu berangkat
+            </Link>
+            <Link href="/congestion-prediction" className="text-[#1D4ED8] hover:underline">
+              Detail prediksi kemacetan
+            </Link>
+            <Link href="/traffic-sign-education" className="text-[#1D4ED8] hover:underline">
+              Edukasi rambu
+            </Link>
           </div>
 
         </div>
