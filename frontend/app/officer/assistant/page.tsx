@@ -162,7 +162,7 @@ export default function AssistantPage() {
                       {msg.role === "user" ? "Petugas" : "Asisten AI"}
                     </span>
                     <div
-                      className={`rounded-2xl px-5 py-3.5 shadow-sm whitespace-pre-wrap text-sm leading-relaxed ${
+                      className={`rounded-2xl px-5 py-3.5 shadow-sm text-sm leading-relaxed ${
                         msg.role === "user"
                           ? "bg-[#0B1F3A] text-white rounded-tr-sm"
                           : "bg-white border border-slate-100 text-slate-700 rounded-tl-sm"
@@ -170,11 +170,22 @@ export default function AssistantPage() {
                     >
                       <ReactMarkdown
                         components={{
-                          strong: ({node, ...props}) => <strong className="font-bold text-inherit" {...props} />,
-                          ul: ({node, ...props}) => <ul className="list-disc pl-4 my-2 space-y-1" {...props} />,
-                          ol: ({node, ...props}) => <ol className="list-decimal pl-4 my-2 space-y-1" {...props} />,
-                          li: ({node, ...props}) => <li {...props} />,
-                          p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />
+                          strong: ({node, ...props}) => <strong className="font-semibold text-inherit" {...props} />,
+                          ul: ({node, ...props}) => <ul className="list-disc pl-5 my-3 space-y-1.5" {...props} />,
+                          ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-3 space-y-1.5" {...props} />,
+                          li: ({node, ...props}) => <li className="marker:text-slate-400" {...props} />,
+                          p: ({node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
+                          code: ({node, className, children, ...props}) => {
+                            const isInline = !className || !className.includes('language-');
+                            return (
+                              <code 
+                                className={`${isInline ? 'bg-slate-100 text-cyan-700 px-1.5 py-0.5 rounded text-[13px] font-mono' : 'block bg-slate-800 text-slate-200 p-3 rounded-lg overflow-x-auto text-[13px] font-mono my-2'}`}
+                                {...props}
+                              >
+                                {children}
+                              </code>
+                            );
+                          }
                         }}
                       >
                         {msg.content}
