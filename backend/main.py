@@ -758,7 +758,7 @@ async def get_violations_summary():
             if len(cases_list) >= 15:
                 break
                 
-            time_str = r.timestamp.strftime("%H:%M")
+            time_str = r.timestamp.strftime("%d-%m-%Y %H:%M")
             loc_str = "Simpang SKA"
             
             if helm_len > 0:
@@ -897,7 +897,7 @@ async def get_vehicles_summary():
         plates_list = []
         
         for idx, r in enumerate(all_records):
-            time_str = r.timestamp.strftime("%H:%M")
+            time_str = r.timestamp.strftime("%d-%m-%Y %H:%M")
             loc_str = "Simpang SKA"
             
             # Generate mock plate based on record id to feel real
@@ -1157,7 +1157,7 @@ async def get_history_list(limit: int = 100):
         history_rows = []
         
         for record in records:
-            time_str = record.timestamp.strftime("%H:%M")
+            time_str = record.timestamp.strftime("%d-%m-%Y %H:%M")
             loc_str = "Simpang SKA"
             
             if not record.results: continue

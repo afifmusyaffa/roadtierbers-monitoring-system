@@ -70,6 +70,46 @@ export default function OfficerReportPage() {
     document.body.removeChild(link);
   };
 
+  const handleExportExcel = () => {
+    if (!data || !data.report_rows) return;
+
+    const headers = ["Kategori", "Data Utama", "Jumlah", "Risiko", "Status Validasi", "Catatan Laporan"];
+    const rows = data.report_rows.map((row: any) => [
+      row.cat || "",
+      row.res || "",
+      row.count || "0",
+      row.risk || "Rendah",
+      row.val || "",
+      row.note || ""
+    ]);
+
+    // Construct simple HTML Table which Excel parses beautifully
+    let html = '<html><head><meta charset="utf-8"/></head><body><table border="1">';
+    html += '<thead><tr style="background-color: #0b1f3a; color: white;">';
+    headers.forEach(h => {
+      html += `<th style="padding: 8px; font-weight: bold;">${h}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+    rows.forEach((r: any) => {
+      html += '<tr>';
+      r.forEach((val: any) => {
+        html += `<td style="padding: 6px;">${val}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></body></html>';
+
+    const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `roadtierbers_laporan_harian_${new Date().toISOString().split('T')[0]}.xls`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleExportPdf = () => {
     // Get the element to print
     const element = document.getElementById("laporan-pdf-content");
@@ -161,7 +201,7 @@ export default function OfficerReportPage() {
         <ReportHeaderBar data={data} />
         <ReportStatusSummary data={data} />
         <ReportKpiGrid kpis={data.kpi_list} />
-        <ReportControlPanel onExportCsv={handleExportCsv} onExportPdf={handleExportPdf} />
+        <ReportControlPanel onExportCsv={handleExportCsv} onExportExcel={handleExportExcel} onExportPdf={handleExportPdf} />
         <div id="laporan-pdf-content" className="space-y-10">
           <ReportPreviewPanel data={data} />
           <ReportDetailTable rows={data.report_rows} />

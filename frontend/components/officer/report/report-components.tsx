@@ -107,7 +107,15 @@ export function ReportKpiGrid({ kpis }: { kpis?: any[] }) {
   );
 }
 
-export function ReportControlPanel({ onExportCsv, onExportPdf }: { onExportCsv?: () => void; onExportPdf?: () => void }) {
+export function ReportControlPanel({ 
+  onExportCsv, 
+  onExportExcel, 
+  onExportPdf 
+}: { 
+  onExportCsv?: () => void; 
+  onExportExcel?: () => void; 
+  onExportPdf?: () => void; 
+}) {
   return (
     <section>
       <div className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200 flex flex-col lg:flex-row gap-6 justify-between items-center">
@@ -134,7 +142,13 @@ export function ReportControlPanel({ onExportCsv, onExportPdf }: { onExportCsv?:
             onClick={onExportCsv}
             className="flex-1 lg:flex-none px-5 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
           >
-            Ekspor Excel/CSV
+            Export CSV
+          </button>
+          <button 
+            onClick={onExportExcel}
+            className="flex-1 lg:flex-none px-5 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-medium border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
+          >
+            Export Excel
           </button>
           <button 
             onClick={onExportPdf}
