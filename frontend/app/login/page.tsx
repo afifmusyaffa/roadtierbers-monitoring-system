@@ -1,107 +1,92 @@
 import Link from "next/link";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 
 export default function LoginPage() {
   return (
-    <div className="rt-bright-stage relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-12">
-      {/* Soft background radial glows */}
-      <div className="absolute top-1/4 -left-1/4 w-[600px] h-[600px] bg-[#1D4ED8]/5 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-1/4 w-[600px] h-[600px] bg-[#06B6D4]/5 blur-[120px] rounded-full pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0B1F3A] to-[#102A4C] p-4 relative overflow-hidden">
+      
+      {/* Background Decorative Glow */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Main Login Container */}
-      <div className="w-full max-w-5xl z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      {/* Main Container */}
+      <div className="w-full max-w-[420px] relative z-10">
         
-        {/* Left Information Panel */}
-        <div className="flex flex-col gap-6">
-          <span className="inline-flex items-center w-fit gap-2.5 rounded-full border border-blue-200 bg-blue-50/80 px-4 py-1.5 text-[12px] font-bold uppercase tracking-[0.2em] text-[#1D4ED8] backdrop-blur-md shadow-sm">
-            Area Petugas
+        {/* Brand Text */}
+        <div className="text-center mb-8">
+          <span className="text-xl font-semibold tracking-tight text-white drop-shadow-sm">
+            RoadTierbers
           </span>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0B1F3A] leading-[1.2]">
-            Selamat Datang di Command Center
-          </h1>
-          <p className="text-base font-medium text-slate-600 leading-relaxed">
-            Halaman ini khusus digunakan untuk masuk ke area monitoring petugas lalu lintas.
-          </p>
-          
-          <div className="mt-4 space-y-4">
-            <h3 className="text-sm font-bold text-[#0B1F3A] uppercase tracking-wider">Fasilitas Command Center:</h3>
-            <ul className="space-y-3">
-              {[
-                "Pemantauan kondisi lalu lintas terkini secara real-time.",
-                "Deteksi otomatis berbagai jenis pelanggaran kendaraan.",
-                "Prediksi kemacetan dan kepadatan jalan.",
-                "Laporan dan insight operasional untuk pengambilan keputusan."
-              ].map((item, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-teal-700 font-bold text-sm">✓</span>
-                  </span>
-                  <span className="text-sm font-medium text-slate-700 leading-relaxed">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
-        {/* Right Login Form */}
-        <div className="p-8 sm:p-10 rounded-[2.5rem] border border-white/80 shadow-xl relative overflow-hidden bg-white/80 backdrop-blur-xl">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#14B8A6]/5 blur-[60px] rounded-full pointer-events-none" />
-          
-          <form className="relative z-10 flex flex-col gap-8">
+        {/* Login Card */}
+        <div className="bg-white rounded-[2rem] shadow-2xl p-8 sm:p-10 border border-slate-100">
+          <div className="mb-8">
+            <h1 className="text-2xl font-extrabold text-[#0B1F3A] mb-2 tracking-tight">
+              Masuk Petugas
+            </h1>
+            <p className="text-sm font-medium text-slate-500 leading-relaxed">
+              Gunakan akun petugas untuk mengakses area monitoring.
+            </p>
+          </div>
+
+          <form className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Email atau username
+              </label>
+              <input 
+                type="text" 
+                placeholder="petugas@roadtierbers.go.id" 
+                className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-[#0B1F3A] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 focus:bg-white transition-all"
+                defaultValue="demo_petugas"
+              />
+            </div>
             
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-[#0B1F3A] uppercase tracking-wide px-1">
-                  Email atau Username Petugas
-                </label>
-                <input 
-                  type="text" 
-                  placeholder="Contoh: petugas@roadtierbers.go.id" 
-                  className="w-full h-14 px-4 rounded-xl bg-white border border-slate-200 text-base font-medium text-[#0B1F3A] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]/50 transition-all shadow-inner"
-                  defaultValue="demo_petugas"
-                />
-                <p className="text-xs text-slate-500 px-1 font-medium">Gunakan kredensial resmi dari instansi Anda.</p>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-[#0B1F3A] uppercase tracking-wide px-1">
-                  Password
-                </label>
-                <input 
-                  type="password" 
-                  placeholder="••••••••" 
-                  className="w-full h-14 px-4 rounded-xl bg-white border border-slate-200 text-base font-medium text-[#0B1F3A] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]/50 transition-all shadow-inner"
-                  defaultValue="password"
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Kata sandi
+              </label>
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-[#0B1F3A] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 focus:bg-white transition-all"
+                defaultValue="password"
+              />
             </div>
 
             <div className="pt-2">
               <Link
                 href="/officer/dashboard"
-                className="w-full inline-flex items-center justify-center h-14 px-6 rounded-xl bg-[#0B1F3A] text-white text-base font-bold hover:bg-[#142d52] transition-colors shadow-lg shadow-[#0B1F3A]/20"
+                className="w-full inline-flex items-center justify-center h-12 px-6 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-600/20"
               >
-                Masuk ke Dashboard Petugas
+                Masuk
               </Link>
             </div>
-
-            <div className="mt-2 p-4 rounded-xl bg-blue-50 border border-blue-100 flex items-start gap-3">
-              <div className="w-7 h-7 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
-                <span className="text-[#1D4ED8] font-bold text-sm">i</span>
-              </div>
-              <p className="text-xs font-bold text-[#1D4ED8] leading-relaxed pt-1">
-                Data simulasi prototype: autentikasi masih disimulasikan untuk kebutuhan demo. Klik tombol masuk untuk melanjutkan.
-              </p>
-            </div>
           </form>
+
+          {/* Evaluation Note */}
+          <div className="mt-8 pt-6 border-t border-slate-100">
+            <div className="flex items-center justify-center gap-2 text-amber-600 bg-amber-50 rounded-lg py-2 px-3">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-bold uppercase tracking-wide">
+                Mode evaluasi akademik
+              </span>
+            </div>
+          </div>
         </div>
 
-      </div>
-      
-      {/* Back to Home */}
-      <div className="absolute bottom-6 left-0 right-0 text-center z-20">
-        <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest hover:text-[#0B1F3A] transition-colors bg-white/50 px-4 py-2 rounded-full backdrop-blur-sm border border-slate-200">
-          ← Kembali ke Halaman Utama
-        </Link>
+        {/* Back Link */}
+        <div className="mt-8 text-center">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-200 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Kembali ke Beranda
+          </Link>
+        </div>
+
       </div>
     </div>
   );
