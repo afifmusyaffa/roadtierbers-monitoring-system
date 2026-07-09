@@ -161,8 +161,8 @@ export default function CongestionPredictionPage() {
               </div>
               <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
               <div className="flex flex-col">
-                <span className="text-[10px] text-slate-400 uppercase tracking-widest">Evaluasi</span>
-                <span className="text-[#1D4ED8] font-bold">Mode aktif</span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-widest">Status</span>
+                <span className="text-[#1D4ED8] font-bold">Mode evaluasi</span>
               </div>
             </div>
           </div>
@@ -200,7 +200,7 @@ export default function CongestionPredictionPage() {
 
                 <div className="flex flex-col sm:flex-row gap-5">
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Cuaca</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Cuaca <span className="text-slate-400 font-normal normal-case tracking-normal">(opsional jika tidak diketahui)</span></label>
                     <select value={weather} onChange={(e) => setWeather(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50">
                       <option value="Tidak diketahui">Tidak diketahui</option>
                       <option value="Cerah">Cerah</option>
@@ -211,7 +211,7 @@ export default function CongestionPredictionPage() {
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Suhu (°C) <span className="text-slate-400 font-normal lowercase">(opsional)</span></label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Suhu (°C) <span className="text-slate-400 font-normal normal-case tracking-normal">(opsional jika tidak diketahui)</span></label>
                     <input type="number" placeholder="Contoh: 30" value={temp} onChange={(e) => setTemp(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50" />
                   </div>
                 </div>
@@ -237,7 +237,10 @@ export default function CongestionPredictionPage() {
             </div>
             
             <div className="lg:w-1/3 p-6 sm:p-8 bg-slate-50 border-t lg:border-t-0 lg:border-l border-slate-100 flex flex-col justify-center">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Konteks Prediksi Saat Ini</h4>
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Konteks Prediksi Saat Ini</h4>
+              <p className="text-[11px] text-slate-500 mb-6 leading-relaxed">
+                Parameter ini menjadi konteks permintaan prediksi. Konteks prediksi mengikuti data yang tersedia dari sistem.
+              </p>
               <ul className="space-y-4">
                 <li className="flex justify-between items-center pb-3 border-b border-slate-200/60">
                   <span className="text-sm font-medium text-slate-500">Rute</span>
@@ -245,7 +248,7 @@ export default function CongestionPredictionPage() {
                 </li>
                 <li className="flex justify-between items-center pb-3 border-b border-slate-200/60">
                   <span className="text-sm font-medium text-slate-500">Jadwal</span>
-                  <span className="text-sm font-bold text-[#0B1F3A]">{day}, {time}</span>
+                  <span className="text-sm font-bold text-[#0B1F3A]">{day}, {time.replace(':', '.')} WIB</span>
                 </li>
                 <li className="flex justify-between items-center pb-3 border-b border-slate-200/60">
                   <span className="text-sm font-medium text-slate-500">Cuaca</span>
@@ -261,10 +264,9 @@ export default function CongestionPredictionPage() {
 
           {/* 3. Prediction Result Area */}
           {!hasRunPrediction ? (
-            <div className="py-16 px-6 bg-white border border-slate-200 border-dashed rounded-2xl text-center shadow-sm">
-              <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4 text-2xl border border-slate-100 mx-auto">⚙️</div>
-              <h2 className="text-lg font-bold text-[#0B1F3A] mb-2">Prediksi belum dijalankan</h2>
-              <p className="text-sm text-slate-500">Isi parameter prediksi lalu tekan tombol Prediksi Kemacetan.</p>
+            <div className="py-12 px-6 bg-white border border-slate-200 border-dashed rounded-2xl text-center shadow-sm">
+              <h2 className="text-base font-bold text-[#0B1F3A] mb-1">Prediksi belum dijalankan</h2>
+              <p className="text-sm text-slate-500">Isi parameter prediksi, lalu tekan tombol Prediksi Kemacetan.</p>
             </div>
           ) : isLoading ? (
             <div className="py-20 flex flex-col items-center justify-center space-y-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
