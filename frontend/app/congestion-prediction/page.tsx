@@ -79,10 +79,20 @@ function ScrollReveal({
 }
 
 export default function CongestionPredictionPage() {
+  const [routeIdx, setRouteIdx] = useState(1);
   const [day, setDay] = useState("Hari ini");
   const [time, setTime] = useState("07:00");
   const [weather, setWeather] = useState("Tidak diketahui");
   const [temp, setTemp] = useState("");
+  
+  const routesData = [
+    { label: "Pandau ➔ Simpang Tiga", origin: "Pandau", dest: "Simpang Tiga" },
+    { label: "Simpang SKA ➔ Bandara SSK II", origin: "Simpang SKA", dest: "Bandara SSK II" },
+    { label: "Panam (UNRI) ➔ Simpang SKA", origin: "Panam (UNRI)", dest: "Simpang SKA" },
+    { label: "Pasar Pusat ➔ Rumbai", origin: "Pasar Pusat", dest: "Rumbai" },
+    { label: "Jl. Sudirman (MTQ) ➔ Kantor Gubernur", origin: "Jl. Sudirman (MTQ)", dest: "Kantor Gubernur" },
+    { label: "Harapan Raya ➔ Sudirman", origin: "Harapan Raya", dest: "Sudirman" },
+  ];
   
   const [data, setData] = useState<ForecastData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,9 +106,10 @@ export default function CongestionPredictionPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       
+      const selectedRoute = routesData[routeIdx];
       const queryParams = new URLSearchParams({
-        origin: "Simpang SKA",
-        destination: "Bandara SSK II",
+        origin: selectedRoute.origin,
+        destination: selectedRoute.dest,
         time_mode: "berangkat",
         target_time: time
       });
@@ -269,12 +280,15 @@ export default function CongestionPredictionPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Rute</label>
-                      <input 
-                        type="text" 
-                        value="Simpang SKA" 
-                        disabled 
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-500 text-sm rounded-xl px-4 py-3 cursor-not-allowed font-medium"
-                      />
+                      <select 
+                        value={routeIdx} 
+                        onChange={(e) => setRouteIdx(Number(e.target.value))}
+                        className="w-full bg-white border border-slate-200 text-[#0B1F3A] text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+                      >
+                        {routesData.map((route, idx) => (
+                          <option key={idx} value={idx}>{route.label}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Hari Prediksi</label>
@@ -360,7 +374,7 @@ export default function CongestionPredictionPage() {
                 <div className="space-y-4 text-sm">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500 font-medium">Rute</span>
-                    <span className="font-bold text-[#0B1F3A]">Simpang SKA</span>
+                    <span className="font-bold text-[#0B1F3A] text-right ml-4">{routesData[routeIdx].label}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500 font-medium">Hari</span>

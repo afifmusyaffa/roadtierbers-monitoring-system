@@ -492,7 +492,7 @@ export default function TrafficSignEducationPage() {
   };
 
   // True class mapping preserved securely
-  const rawDetectionName = detectionResult?.class ?? detectionResult?.class_id ?? detectionResult?.name ?? detectionResult?.id ?? detectionResult?.label ?? detectionResult?.class_name ?? detectionResult?.className;
+  const rawDetectionName = detectionResult?.name ?? detectionResult?.class ?? detectionResult?.class_id ?? detectionResult?.id ?? detectionResult?.label ?? detectionResult?.class_name ?? detectionResult?.className;
   const signId = rawDetectionName != null ? String(rawDetectionName) : null;
   const currentInfo = signId 
     ? TRAFFIC_SIGN_DIRECTORY.find(s => String(s.yolo_index) === signId) 
@@ -617,7 +617,7 @@ export default function TrafficSignEducationPage() {
                           </div>
                         ) : (
                           <div className="flex-1 flex flex-col">
-                            <div className="relative w-full aspect-square md:aspect-video lg:aspect-square bg-slate-900 rounded-2xl overflow-hidden shadow-inner mb-4 flex items-center justify-center">
+                            <div className="relative w-full aspect-square md:aspect-video lg:aspect-square bg-slate-100 rounded-2xl overflow-hidden shadow-inner mb-4 flex items-center justify-center">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={previewUrl} alt="Preview" className="max-w-full max-h-full object-contain" />
                               <button 
@@ -636,7 +636,7 @@ export default function TrafficSignEducationPage() {
                                 Pilih foto lain
                               </button>
                               <button 
-                                onClick={handleUpload}
+                                onClick={() => handleUpload()}
                                 disabled={isLoading}
                                 className="flex-1 py-3 text-sm font-bold text-white bg-[#0B1F3A] rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-md shadow-blue-900/20"
                               >
@@ -694,7 +694,7 @@ export default function TrafficSignEducationPage() {
                                   </button>
                                 </div>
                                 <button 
-                                  onClick={handleUpload}
+                                  onClick={() => handleUpload()}
                                   disabled={isLoading}
                                   className="w-full py-3 text-sm font-bold text-white bg-[#0B1F3A] rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-md shadow-blue-900/20"
                                 >
@@ -722,7 +722,7 @@ export default function TrafficSignEducationPage() {
                           </div>
                         ) : (
                           <div className="flex-1 flex flex-col">
-                            <div className="relative w-full aspect-square md:aspect-video lg:aspect-square bg-slate-900 rounded-2xl overflow-hidden shadow-inner mb-4 flex items-center justify-center">
+                            <div className="relative w-full aspect-square md:aspect-video lg:aspect-square bg-slate-100 rounded-2xl overflow-hidden shadow-inner mb-4 flex items-center justify-center">
                               <video 
                                 ref={videoRef} 
                                 src={previewUrl} 

@@ -73,9 +73,8 @@ def _run_model(name, frame):
 
     try:
         model = loaded_models[name]
-        # Gunakan conf threshold lebih rendah khusus untuk edukasi atau secara general
-        # agar lebih sensitif terhadap gambar yang mungkin kurang sempurna/digital
-        conf_threshold = 0.15 if name == "edukasi" else 0.25
+        # Gunakan conf threshold standar (0.25)
+        conf_threshold = 0.25
         results = model(frame, verbose=False, conf=conf_threshold)
 
         detections = []
