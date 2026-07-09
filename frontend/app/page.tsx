@@ -1,418 +1,326 @@
+﻿"use client";
+
 import Link from "next/link";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
-import {
-  InteractiveGlassCard,
-  ScrollRevealRow,
-  MouseSpotlight,
-  MotionSection,
-} from "@/components/common";
+import { 
+  ArrowRight, 
+  Map, 
+  TrendingUp, 
+  AlertTriangle, 
+  ShieldAlert, 
+  Car, 
+  Cpu, 
+  Database, 
+  MonitorPlay,
+  Users,
+  Eye,
+  CheckCircle2,
+  Video,
+  Search,
+  Activity,
+  BarChart
+} from "lucide-react";
 
-/* ─── Local Helpers ────────────────────────────────────────────────── */
-function MetricWidget({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "neutral" | "warn" | "danger" }) {
-  const dot = tone === "danger" ? "bg-red-500" : tone === "warn" ? "bg-amber-400" : "bg-[#06B6D4]";
-  return (
-    <div className="flex flex-col items-start gap-1.5 px-5 py-4 rounded-2xl bg-white/60 border border-white/80 backdrop-blur-md hover:bg-white/80 transition-colors shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className={`w-1.5 h-1.5 rounded-full ${dot} shadow-[0_0_8px_currentColor]`} />
-        <span className="text-[11px] font-bold uppercase tracking-widest text-[#0B1F3A]/60">{label}</span>
-      </div>
-      <span className="text-2xl font-bold tracking-tight text-[#0B1F3A] leading-none">{value}</span>
-    </div>
-  );
-}
-
-function CapPill({ title, sub }: { title: string; sub: string }) {
-  return (
-    <InteractiveGlassCard intensity="dark" glow className="flex flex-col gap-1 px-6 py-6 h-full cursor-default border-t border-white/80">
-      <span className="text-base font-bold text-[#0B1F3A] tracking-tight">{title}</span>
-      <span className="text-xs text-[#0B1F3A]/60 leading-relaxed font-medium">{sub}</span>
-    </InteractiveGlassCard>
-  );
-}
-
-export default function Home() {
+export default function HomePage() {
   return (
     <PublicPageShell>
-      {/* =====================================================================
-          1. BRIGHT STAGE 
-          ================================================================= */}
-      <div className="rt-bright-stage relative overflow-hidden pb-16">
-        <MouseSpotlight />
+      <div className="bg-white min-h-screen font-sans text-slate-800 selection:bg-blue-100 selection:text-blue-900">
         
-        {/* Soft radial blooms are handled in rt-bright-stage CSS, 
-            but we can add an extra subtle cyan glow here if needed */}
-        <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-[#06B6D4]/5 blur-[120px] rounded-full pointer-events-none" />
+        {/* 1. Hero Section With Gradient Fallback */}
+        {/* Hero background currently uses gradient fallback because /images/roadtierbers-hero.jpg was not found. */}
+        <section className="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-hidden bg-[#0B1F3A]">
+          {/* Elegant Gradient Background (Fallback for missing image) */}
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0B1F3A] via-[#102A4C] to-[#0B1F3A]" />
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4" />
+          </div>
 
-        {/* HERO */}
-        <section className="relative pt-32 pb-12 lg:pt-36 lg:pb-20 flex flex-col items-center justify-center z-10 min-h-[80vh]">
-          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center gap-8">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+              
+              {/* Left Side: Copy & CTA */}
+              <div className="text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-900/50 border border-blue-700/50 text-blue-200 font-bold text-xs uppercase tracking-widest mb-6">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                  </span>
+                  Mode Evaluasi Akademik
+                </div>
+                
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight mb-6 leading-[1.1]">
+                  RoadTierbers — Sistem Cerdas untuk Pantauan Lalu Lintas
+                </h1>
+                
+                <p className="text-lg text-blue-100/80 font-medium leading-relaxed max-w-xl mx-auto lg:mx-0 mb-10">
+                  RoadTierbers menggabungkan deteksi visual, prediksi kemacetan, edukasi rambu, dan monitoring petugas dalam satu platform berbasis deep learning.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                  <Link
+                    href="/traffic-overview"
+                    className="flex items-center justify-center gap-2 h-14 px-8 rounded-full bg-white text-[#0B1F3A] font-bold text-sm hover:bg-blue-50 transition-colors shadow-lg"
+                  >
+                    Lihat Pantauan Lalu Lintas <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="flex items-center justify-center h-14 px-8 rounded-full border border-blue-800 bg-[#0B1F3A]/50 backdrop-blur-sm text-blue-100 font-bold text-sm hover:bg-blue-900/50 hover:border-blue-700 transition-colors"
+                  >
+                    Masuk Area Petugas
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Side: Floating System Preview Panel */}
+              <div className="relative mx-auto w-full max-w-md lg:max-w-none lg:ml-auto">
+                <div className="relative bg-[#102A4C]/80 backdrop-blur-xl border border-blue-800/50 rounded-3xl p-6 shadow-2xl overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-400" />
+                  
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center border border-blue-800">
+                        <Activity className="w-4 h-4 text-cyan-400" />
+                      </div>
+                      <span className="text-sm font-bold text-white">Live System Preview</span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300/60 bg-blue-900/30 px-2 py-1 rounded">Data Simulasi</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Status Item */}
+                    <div className="bg-[#0B1F3A]/60 p-4 rounded-2xl border border-blue-900/50 flex items-center justify-between hover:bg-[#0B1F3A] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Map className="w-5 h-5 text-blue-400" />
+                        <div>
+                          <p className="text-xs font-medium text-blue-200/70">Status Jalan Utama</p>
+                          <p className="text-sm font-bold text-white">Lancar / Terpantau</p>
+                        </div>
+                      </div>
+                      <div className="w-2 h-2 rounded-full bg-teal-400 shadow-[0_0_8px_#2dd4bf]" />
+                    </div>
+
+                    {/* Status Item */}
+                    <div className="bg-[#0B1F3A]/60 p-4 rounded-2xl border border-blue-900/50 flex items-center justify-between hover:bg-[#0B1F3A] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className="w-5 h-5 text-amber-400" />
+                        <div>
+                          <p className="text-xs font-medium text-blue-200/70">Prediksi Kemacetan</p>
+                          <p className="text-sm font-bold text-white">Potensi Kepadatan 17:00</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status Item */}
+                    <div className="bg-[#0B1F3A]/60 p-4 rounded-2xl border border-blue-900/50 flex items-center justify-between hover:bg-[#0B1F3A] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="w-5 h-5 text-red-400" />
+                        <div>
+                          <p className="text-xs font-medium text-blue-200/70">Deteksi Rambu</p>
+                          <p className="text-sm font-bold text-white">Dilarang Berhenti</p>
+                        </div>
+                      </div>
+                      <div className="px-2 py-0.5 rounded bg-blue-900/50 text-[10px] font-bold text-blue-300 border border-blue-800">
+                        AI Aktif
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Decorative Elements */}
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-cyan-500/20 rounded-full blur-2xl -z-10" />
+                <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl -z-10" />
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* 2. Quick Value Section */}
+        <section className="py-24 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl lg:text-4xl font-extrabold text-[#0B1F3A] mb-4">Satu sistem untuk dua kebutuhan</h2>
+              <p className="text-slate-500 font-medium max-w-2xl mx-auto">Platform terintegrasi yang memisahkan area akses informasi publik dan area operasional tertutup bagi petugas berwenang.</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Masyarakat Panel */}
+              <div className="bg-white p-8 lg:p-10 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
+                <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-8 border border-blue-100 group-hover:bg-blue-600 transition-colors duration-300">
+                  <Users className="w-7 h-7 text-blue-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <h3 className="text-2xl font-extrabold text-[#0B1F3A] mb-6">Untuk Masyarakat</h3>
+                <ul className="space-y-4">
+                  {[
+                    "Pantauan kondisi jalan secara visual",
+                    "Prediksi tingkat kemacetan harian",
+                    "Rekomendasi waktu berangkat optimal",
+                    "Edukasi pengenalan rambu lalu lintas"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
+                      <span className="text-slate-600 font-medium">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Petugas Panel */}
+              <div className="bg-white p-8 lg:p-10 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
+                <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mb-8 border border-slate-100 group-hover:bg-[#0B1F3A] transition-colors duration-300">
+                  <ShieldAlert className="w-7 h-7 text-slate-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <h3 className="text-2xl font-extrabold text-[#0B1F3A] mb-6">Untuk Petugas</h3>
+                <ul className="space-y-4">
+                  {[
+                    "Pusat deteksi AI terpadu (Helm, Boncengan, Plat)",
+                    "Monitoring pelanggaran lapangan",
+                    "Analisis & forecasting prediktif",
+                    "Riwayat, laporan lengkap, dan asisten AI"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                      <span className="text-slate-600 font-medium">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Feature Highlights Section */}
+        <section className="py-24 bg-white border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <h2 className="text-3xl font-extrabold text-[#0B1F3A] mb-12">Fitur Utama</h2>
             
-            <MotionSection direction="up" delay={0.1}>
-              <span className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-5 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#0B1F3A] backdrop-blur-md shadow-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#06B6D4] shadow-[0_0_8px_#06B6D4]" />
-                Smart Traffic Intelligence
-              </span>
-            </MotionSection>
-
-            <MotionSection direction="up" delay={0.15} className="space-y-6 max-w-3xl">
-              <h1 className="text-5xl sm:text-7xl lg:text-[6rem] font-extrabold tracking-[-0.03em] text-[#0B1F3A] leading-[1.05]">
-                RoadTierbers
-              </h1>
-              <p className="text-lg sm:text-2xl text-[#0B1F3A]/70 font-medium tracking-tight max-w-2xl mx-auto leading-relaxed">
-                Traffic command center untuk jalan yang lebih aman.
-              </p>
-              <p className="text-sm text-[#0B1F3A]/60 font-medium max-w-xl mx-auto">
-                Pantau lalu lintas, prediksi kemacetan, dan dukung keputusan petugas dalam satu sistem terpadu.
-              </p>
-            </MotionSection>
-
-            <MotionSection direction="up" delay={0.2} className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link href="/traffic-overview" className="inline-flex items-center justify-center h-14 px-8 rounded-full bg-[#0B1F3A] text-white text-sm font-semibold hover:bg-[#142d52] transition-colors shadow-lg">
-                Lihat Lalu Lintas
-              </Link>
-              <Link href="/login" className="inline-flex items-center justify-center h-14 px-8 rounded-full border border-white bg-white/70 text-[#0B1F3A] text-sm font-semibold hover:bg-white transition-colors backdrop-blur-lg shadow-sm">
-                Masuk Command Center
-              </Link>
-            </MotionSection>
-
-            {/* HERO VISUAL */}
-            <MotionSection direction="up" delay={0.3} className="w-full mt-12">
-              <InteractiveGlassCard intensity="dark" glow className="w-full p-4 sm:p-5 flex flex-col md:flex-row gap-4">
-                <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <MetricWidget label="Kondisi" value="Padat" tone="danger" />
-                  <MetricWidget label="Estimasi" value="32 mnt" tone="warn" />
-                  <MetricWidget label="Volume" value="8.4K" tone="neutral" />
-                </div>
-                <div className="flex-1 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 border border-white/80 p-5 flex flex-col justify-center relative overflow-hidden shadow-sm">
-                   <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/40 to-transparent pointer-events-none" />
-                   <p className="text-sm font-bold text-[#0B1F3A]">Live Monitoring Active</p>
-                   <p className="text-xs text-[#0B1F3A]/60 mt-1 font-medium">Sistem deteksi AI berjalan di 42 titik persimpangan utama.</p>
-                   <div className="flex items-center gap-2 mt-4">
-                     <span className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                       <span className="block h-full w-[65%] bg-[#06B6D4] rounded-full" />
-                     </span>
-                     <span className="text-[10px] text-[#0B1F3A]/60 font-bold">65%</span>
-                   </div>
-                </div>
-              </InteractiveGlassCard>
-            </MotionSection>
-          </div>
-        </section>
-
-        {/* CAPABILITY BAND */}
-        <section className="relative z-20 pb-32">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <ScrollRevealRow direction="up" delay={0.1}>
-                <CapPill title="Overview" sub="Kondisi terkini jalan" />
-              </ScrollRevealRow>
-              <ScrollRevealRow direction="up" delay={0.15}>
-                <CapPill title="Prediction" sub="Estimasi perjalanan" />
-              </ScrollRevealRow>
-              <ScrollRevealRow direction="up" delay={0.2}>
-                <CapPill title="Detection" sub="Analisis visual AI" />
-              </ScrollRevealRow>
-              <ScrollRevealRow direction="up" delay={0.25}>
-                <CapPill title="Insight" sub="Dukungan keputusan" />
-              </ScrollRevealRow>
-            </div>
-          </div>
-        </section>
-
-        {/* PUBLIC EXPERIENCE */}
-        <section className="relative z-10 pb-32 pt-10">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6">
-            <ScrollRevealRow direction="up" delay={0} className="mb-16 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div className="space-y-2">
-                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0B1F3A]">Untuk publik.</h2>
-                <p className="text-sm sm:text-base text-[#0B1F3A]/60 font-medium">Akses ringkas sebelum memulai perjalanan.</p>
-              </div>
-              <Link href="/traffic-overview" className="text-[13px] text-[#1D4ED8] hover:text-[#0B1F3A] transition-colors font-bold flex items-center gap-1">
-                Jelajahi fitur <span aria-hidden>→</span>
-              </Link>
-            </ScrollRevealRow>
-
-            <div className="grid sm:grid-cols-2 gap-5">
-              <ScrollRevealRow direction="right" delay={0.1} className="h-full">
-                <Link href="/traffic-overview" className="block h-full">
-                  <InteractiveGlassCard intensity="dark" glow className="p-8 h-full flex flex-col justify-between group border-white/80">
-                    <div className="w-12 h-12 rounded-2xl bg-white/80 flex items-center justify-center mb-10 group-hover:bg-white transition-colors shadow-sm">
-                      <span className="w-3.5 h-3.5 rounded-full bg-[#0B1F3A]" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-[#0B1F3A] mb-2">Ringkasan Lalu Lintas</h3>
-                      <p className="text-sm text-[#0B1F3A]/70 leading-relaxed font-medium">Pantau visualisasi kepadatan di berbagai titik utama kota secara real-time.</p>
-                    </div>
-                  </InteractiveGlassCard>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: "Pantauan Lalu Lintas", desc: "Lihat kondisi jalan real-time dari kamera.", icon: Map, href: "/traffic-overview", color: "text-blue-600", bg: "bg-blue-50" },
+                { title: "Prediksi Kemacetan", desc: "Forecasting kepadatan berdasarkan waktu.", icon: TrendingUp, href: "/congestion-prediction", color: "text-amber-600", bg: "bg-amber-50" },
+                { title: "Edukasi Rambu", desc: "Klasifikasi dan makna rambu jalan.", icon: AlertTriangle, href: "/traffic-sign-education", color: "text-teal-600", bg: "bg-teal-50" },
+                { title: "Command Center Petugas", desc: "Akses tertutup deteksi pelanggaran.", icon: ShieldAlert, href: "/login", color: "text-slate-700", bg: "bg-slate-100" }
+              ].map((feature, i) => (
+                <Link key={i} href={feature.href} className="group block p-6 rounded-3xl border border-slate-100 bg-white hover:border-blue-200 hover:shadow-lg transition-all duration-300">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ${feature.bg} group-hover:scale-110 transition-transform duration-300`}>
+                    <feature.icon className={`w-6 h-6 ${feature.color}`} />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#0B1F3A] mb-2 group-hover:text-blue-600 transition-colors">{feature.title}</h3>
+                  <p className="text-sm text-slate-500 font-medium mb-4">{feature.desc}</p>
+                  <div className="flex items-center text-xs font-bold text-blue-600">
+                    Masuk Fitur <ArrowRight className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </Link>
-              </ScrollRevealRow>
-              
-              <div className="flex flex-col gap-5">
-                <ScrollRevealRow direction="left" delay={0.15}>
-                  <Link href="/congestion-prediction" className="block">
-                    <InteractiveGlassCard intensity="dark" glow className="p-7 group flex items-center justify-between border-white/80">
-                      <div>
-                        <h3 className="text-lg font-bold text-[#0B1F3A] mb-1">Prediksi Kemacetan</h3>
-                        <p className="text-sm text-[#0B1F3A]/60 font-medium">Estimasi durasi hambatan.</p>
-                      </div>
-                      <span className="text-[#06B6D4] opacity-0 group-hover:opacity-100 transition-opacity font-bold">→</span>
-                    </InteractiveGlassCard>
-                  </Link>
-                </ScrollRevealRow>
-
-                <ScrollRevealRow direction="left" delay={0.2}>
-                  <Link href="/departure-recommendation" className="block">
-                    <InteractiveGlassCard intensity="dark" glow className="p-7 group flex items-center justify-between border-white/80">
-                      <div>
-                        <h3 className="text-lg font-bold text-[#0B1F3A] mb-1">Rekomendasi Berangkat</h3>
-                        <p className="text-sm text-[#0B1F3A]/60 font-medium">Saran waktu perjalanan.</p>
-                      </div>
-                      <span className="text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity font-bold">→</span>
-                    </InteractiveGlassCard>
-                  </Link>
-                </ScrollRevealRow>
-
-                <ScrollRevealRow direction="left" delay={0.25}>
-                  <Link href="/traffic-sign-education" className="block">
-                    <InteractiveGlassCard intensity="dark" glow className="p-7 group flex items-center justify-between border-white/80">
-                      <div>
-                        <h3 className="text-lg font-bold text-[#0B1F3A] mb-1">Edukasi Rambu</h3>
-                        <p className="text-sm text-[#0B1F3A]/60 font-medium">Pahami rambu interaktif.</p>
-                      </div>
-                      <span className="text-[#0B1F3A]/40 opacity-0 group-hover:opacity-100 transition-opacity font-bold">→</span>
-                    </InteractiveGlassCard>
-                  </Link>
-                </ScrollRevealRow>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
-      </div>
+        {/* 4. System Flow Section */}
+        <section className="py-24 bg-[#0B1F3A] relative overflow-hidden">
+          {/* Subtle background element */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[300px] bg-blue-600/10 blur-[100px] pointer-events-none" />
+          
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <h2 className="text-3xl font-extrabold text-white text-center mb-16">Bagaimana Sistem Bekerja</h2>
 
-      {/* =====================================================================
-          2. LIGHT & MIXED STAGE
-          ================================================================= */}
+            <div className="relative">
+              {/* Desktop Horizontal Line */}
+              <div className="hidden lg:block absolute top-8 left-12 right-12 h-0.5 bg-blue-800/50" />
+              {/* Mobile Vertical Line */}
+              <div className="lg:hidden absolute top-8 bottom-8 left-8 w-0.5 bg-blue-800/50" />
 
-      {/* OFFICER COMMAND */}
-      <section className="bg-[#F5F7FA] pb-32 overflow-hidden relative pt-10">
-        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
-          <ScrollRevealRow direction="up" delay={0} className="mb-16 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div className="space-y-2">
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0B1F3A]">Untuk petugas.</h2>
-              <p className="text-sm sm:text-base text-slate-500 font-medium">Command center untuk monitoring dan keputusan presisi.</p>
-            </div>
-            <Link href="/login" className="text-[13px] text-[#1D4ED8] hover:text-[#0B1F3A] transition-colors font-bold flex items-center gap-1">
-              Buka Command Center <span aria-hidden>→</span>
-            </Link>
-          </ScrollRevealRow>
-
-          <ScrollRevealRow direction="left" delay={0.1}>
-            <InteractiveGlassCard intensity="strong" glow className="p-8 sm:p-10 !bg-white/90 !backdrop-blur-3xl shadow-xl border-white/80 relative overflow-hidden rounded-[2.5rem]">
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#1D4ED8]/5 blur-[100px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3" />
-              
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
+              <div className="flex flex-col lg:flex-row justify-between gap-8 lg:gap-4 relative">
                 {[
-                  { title: "Dashboard Utama", sub: "Ringkasan titik pantau.", icon: "bg-[#0B1F3A]", iconBg: "bg-[#0B1F3A]/10" },
-                  { title: "Deteksi AI", sub: "Analisis CCTV real-time.", icon: "bg-[#06B6D4] shadow-[0_0_8px_rgba(6,182,212,0.4)]", iconBg: "bg-[#06B6D4]/10" },
-                  { title: "Forecasting", sub: "Proyeksi tren volume.", icon: "bg-[#14B8A6]", iconBg: "bg-[#14B8A6]/10" },
-                  { title: "Smart Insight", sub: "Rekomendasi taktis.", icon: "bg-[#1D4ED8]", iconBg: "bg-[#1D4ED8]/10" },
-                  { title: "Report & Export", sub: "Unduh data pelaporan.", icon: "bg-amber-400 rotate-45", iconBg: "bg-amber-400/10" },
-                  { title: "AI Assistant", sub: "Tanya jawab sistem.", icon: "bg-[#0B1F3A] animate-pulse", iconBg: "bg-[#0B1F3A]/10" },
-                ].map((item) => (
-                  <div key={item.title} className="flex gap-4 p-6 rounded-[1.5rem] bg-slate-50/50 border border-slate-200/60 hover:bg-white hover:shadow-sm transition-all h-full">
-                    <div className={`w-12 h-12 rounded-xl shrink-0 ${item.iconBg} flex items-center justify-center`}>
-                      <span className={`w-3.5 h-3.5 rounded-sm ${item.icon}`} />
+                  { step: "1", title: "Data Masuk", desc: "Kamera & sensor mengumpulkan data lapangan", icon: Eye },
+                  { step: "2", title: "Model Deep Learning", desc: "AI melakukan deteksi visual & prediksi", icon: Cpu },
+                  { step: "3", title: "Backend API", desc: "Agregasi data menjadi insight terstruktur", icon: Database },
+                  { step: "4", title: "Frontend Sistem", desc: "Distribusi ke layar publik & petugas", icon: MonitorPlay },
+                  { step: "5", title: "Monitoring", desc: "Rekomendasi tindakan & pantauan langsung", icon: Activity }
+                ].map((item, i) => (
+                  <div key={i} className="flex lg:flex-col items-center lg:text-center gap-6 lg:gap-4 group relative z-10">
+                    <div className="w-16 h-16 rounded-full bg-[#0B1F3A] border-4 border-blue-900/50 flex items-center justify-center shrink-0 group-hover:border-cyan-500 transition-colors duration-300 shadow-xl">
+                      <item.icon className="w-6 h-6 text-blue-300 group-hover:text-cyan-400 transition-colors" />
                     </div>
                     <div>
-                      <p className="text-base font-bold text-[#0B1F3A] tracking-tight">{item.title}</p>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">{item.sub}</p>
+                      <h3 className="text-base font-bold text-white mb-1">{item.title}</h3>
+                      <p className="text-xs text-blue-200/70 font-medium max-w-[180px]">{item.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </InteractiveGlassCard>
-          </ScrollRevealRow>
-        </div>
-      </section>
-
-      {/* DETECTION FLOW */}
-      <section className="bg-white py-32 border-y border-slate-100 relative">
-        {/* Soft background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-[#F5F7FA]/30 to-white pointer-events-none" />
-
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 relative z-10">
-          <ScrollRevealRow direction="up" delay={0} className="text-center mb-24 space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0B1F3A]">Alur cerdas otomatis.</h2>
-            <p className="text-sm sm:text-base text-slate-500 font-medium">Dari input visual hingga insight terukur dalam hitungan detik.</p>
-          </ScrollRevealRow>
-
-          <div className="flex flex-col sm:flex-row items-stretch justify-between gap-4 relative">
-            {/* Connecting line for desktop */}
-            <div className="hidden sm:block absolute top-1/2 left-[10%] right-[10%] h-[1px] bg-gradient-to-r from-slate-200 via-slate-300 to-[#1D4ED8]/30 -translate-y-1/2 z-0" />
-
-            <ScrollRevealRow direction="right" delay={0.1} className="flex-1 w-full relative z-10">
-              <InteractiveGlassCard intensity="medium" className="flex flex-col items-center gap-5 p-10 bg-white/80 border border-white text-center shadow-[0_8px_32px_rgba(11,31,58,0.03)] hover:shadow-lg transition-shadow rounded-[2rem]">
-                <div className="w-12 h-12 rounded-2xl bg-slate-50 shadow-inner flex items-center justify-center text-sm font-bold text-slate-400">1</div>
-                <div>
-                  <p className="text-lg font-bold text-[#0B1F3A] tracking-tight">Input Visual</p>
-                  <p className="text-sm text-slate-500 font-medium mt-2 leading-relaxed">Kamera CCTV mengirimkan frame real-time.</p>
-                </div>
-              </InteractiveGlassCard>
-            </ScrollRevealRow>
-
-            <ScrollRevealRow direction="up" delay={0.2} className="flex-1 w-full relative z-10">
-              <InteractiveGlassCard intensity="medium" className="flex flex-col items-center gap-5 p-10 bg-white/80 border border-white text-center shadow-[0_8px_32px_rgba(11,31,58,0.03)] hover:shadow-lg transition-shadow rounded-[2rem]">
-                <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] shadow-inner flex items-center justify-center text-sm font-bold text-[#1D4ED8]">2</div>
-                <div>
-                  <p className="text-lg font-bold text-[#0B1F3A] tracking-tight">Analisis AI</p>
-                  <p className="text-sm text-slate-500 font-medium mt-2 leading-relaxed">Model mendeteksi volume & jenis kendaraan.</p>
-                </div>
-              </InteractiveGlassCard>
-            </ScrollRevealRow>
-
-            <ScrollRevealRow direction="right" delay={0.3} className="flex-1 w-full relative z-10">
-              <InteractiveGlassCard intensity="strong" glow className="flex flex-col items-center gap-5 p-10 bg-white/95 border-white text-center shadow-xl rounded-[2rem]">
-                <div className="w-12 h-12 rounded-2xl bg-[#1D4ED8]/10 flex items-center justify-center text-sm font-bold text-[#1D4ED8] shadow-inner">3</div>
-                <div>
-                  <p className="text-lg font-bold text-[#0B1F3A] tracking-tight">Insight Terukur</p>
-                  <p className="text-sm text-slate-500 font-medium mt-2 leading-relaxed">Keputusan langsung disajikan di layar.</p>
-                </div>
-              </InteractiveGlassCard>
-            </ScrollRevealRow>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FORECASTING */}
-      <section className="bg-[#F5F7FA] py-32">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <ScrollRevealRow direction="up" delay={0} className="mb-16 space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0B1F3A]">Lihat melampaui saat ini.</h2>
-            <p className="text-sm sm:text-base text-slate-500 font-medium">Persiapkan tindakan sebelum kepadatan memuncak.</p>
-          </ScrollRevealRow>
-
-          <div className="grid sm:grid-cols-3 gap-6">
-            <ScrollRevealRow direction="up" delay={0.1}>
-              <InteractiveGlassCard intensity="medium" className="bg-white/80 p-8 shadow-sm space-y-8 h-full rounded-[2rem] border border-white">
-                <p className="text-lg font-bold text-[#0B1F3A] tracking-tight">Tren Volume</p>
-                <div className="flex items-end gap-3 h-24">
-                  {[40, 55, 90, 65, 30].map((h, i) => (
-                    <div key={i} className="w-full relative group" style={{ height: '100%' }}>
-                      <div className={`absolute bottom-0 w-full rounded-md transition-all duration-500 ${h === 90 ? 'bg-[#1D4ED8] shadow-[0_4px_12px_rgba(29,78,216,0.2)]' : 'bg-slate-200'}`} style={{ height: `${h}%` }} />
-                    </div>
-                  ))}
-                </div>
-              </InteractiveGlassCard>
-            </ScrollRevealRow>
-
-            <ScrollRevealRow direction="up" delay={0.15}>
-              <InteractiveGlassCard intensity="medium" className="bg-white/80 p-8 shadow-sm space-y-8 h-full rounded-[2rem] border border-white">
-                <p className="text-lg font-bold text-[#0B1F3A] tracking-tight">Durasi Hambatan</p>
-                <div className="flex flex-col justify-center gap-5 h-24">
-                  <div className="w-[60%] h-4 rounded-full bg-slate-200" />
-                  <div className="w-[90%] h-4 rounded-full bg-[#06B6D4] shadow-[0_4px_12px_rgba(6,182,212,0.2)] relative">
-                    <span className="absolute right-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white" />
-                  </div>
-                  <div className="w-[45%] h-4 rounded-full bg-slate-200" />
-                </div>
-              </InteractiveGlassCard>
-            </ScrollRevealRow>
-
-            <ScrollRevealRow direction="up" delay={0.2}>
-              <InteractiveGlassCard intensity="medium" className="bg-white/80 p-8 shadow-sm space-y-8 h-full rounded-[2rem] border border-white flex flex-col justify-between">
-                <p className="text-lg font-bold text-[#0B1F3A] tracking-tight">Status Area</p>
-                <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                   <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]" />
-                   <div>
-                     <p className="text-sm font-bold text-[#0B1F3A]">Perhatian Khusus</p>
-                     <p className="text-xs text-slate-500 font-medium">Lonjakan diprediksi pkl 17:00</p>
-                   </div>
-                </div>
-              </InteractiveGlassCard>
-            </ScrollRevealRow>
-          </div>
-        </div>
-      </section>
-
-      {/* SMART INSIGHT */}
-      <section className="bg-white py-32 overflow-hidden relative">
-        <div className="absolute top-1/2 right-0 w-[600px] h-[600px] bg-[#06B6D4]/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
-
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 relative z-10 flex flex-col lg:flex-row items-center gap-16">
-          <div className="flex-1 space-y-6">
-            <ScrollRevealRow direction="right" delay={0.1}>
-              <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#0B1F3A] leading-[1.1]">
-                Keputusan taktis<br />dalam detik.
-              </h2>
-            </ScrollRevealRow>
-            <ScrollRevealRow direction="right" delay={0.2}>
-              <p className="text-base text-slate-500 font-medium leading-relaxed max-w-md">
-                Bukan sekadar data mentah. Smart Insight menerjemahkan kondisi jalan menjadi rekomendasi tindakan langsung untuk menekan angka kemacetan.
-              </p>
-            </ScrollRevealRow>
-          </div>
-
-          <div className="flex-1 w-full">
-            <ScrollRevealRow direction="left" delay={0.3} className="relative">
-              <div className="absolute -top-6 -right-6 -left-6 bottom-10 bg-slate-50 rounded-[2.5rem] -rotate-3 z-0 border border-slate-100" />
-              <div className="absolute -top-3 -right-3 -left-3 bottom-5 bg-slate-100/50 rounded-[2.5rem] rotate-1 z-0 backdrop-blur-sm" />
-              
-              <InteractiveGlassCard intensity="strong" className="p-10 rounded-[2rem] bg-white/95 backdrop-blur-3xl shadow-xl relative z-10 border-white">
-                <div className="flex items-start gap-5">
-                  <div className="w-3 h-3 rounded-full bg-[#1D4ED8] mt-1.5 shrink-0 animate-pulse shadow-[0_0_12px_rgba(29,78,216,0.4)]" />
-                  <div className="space-y-5 w-full">
-                    <p className="text-lg font-bold text-[#0B1F3A] tracking-tight">Rekomendasi Tindakan</p>
-                    <div className="space-y-3">
-                      <div className="p-4 rounded-xl bg-white border border-slate-100 shadow-sm flex items-start gap-3">
-                        <span className="text-[#1D4ED8] font-bold mt-0.5">1</span>
-                        <p className="text-sm text-slate-600 font-medium">Alihkan rute simpang utara karena penumpukan eksponensial.</p>
-                      </div>
-                      <div className="p-4 rounded-xl bg-white border border-slate-100 shadow-sm flex items-start gap-3">
-                        <span className="text-[#1D4ED8] font-bold mt-0.5">2</span>
-                        <p className="text-sm text-slate-600 font-medium">Sesuaikan durasi lampu hijau koridor timur ke 45 detik.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </InteractiveGlassCard>
-            </ScrollRevealRow>
-          </div>
-        </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="bg-[#F5F7FA] py-32 px-4 sm:px-6">
-        <ScrollRevealRow direction="up" delay={0} className="max-w-4xl mx-auto">
-          <InteractiveGlassCard intensity="strong" className="bg-white/90 rounded-[3rem] p-12 sm:p-20 text-center shadow-xl border border-white relative overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-[#1D4ED8]/5 blur-[80px] pointer-events-none rounded-full" />
+        {/* 5. Deep Learning Showcase Section */}
+        <section className="py-24 bg-white">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+            <h2 className="text-3xl font-extrabold text-[#0B1F3A] mb-4">Dibangun dengan Integrasi Model Deep Learning</h2>
+            <p className="text-slate-500 font-medium mb-12 max-w-2xl mx-auto">Sistem ini menggabungkan berbagai model deteksi dan klasifikasi ke dalam satu layanan terpadu.</p>
             
-            <div className="relative z-10 space-y-8">
-              <h2 className="text-4xl sm:text-5xl font-extrabold tracking-[-0.03em] text-[#0B1F3A] leading-[1.1]">
-                Satu sistem.<br />Dua pengalaman.
-              </h2>
-              <p className="text-base sm:text-lg text-slate-500 font-medium max-w-lg mx-auto">
-                Eksplorasi kondisi jalan sebagai publik, atau kendalikan sistem secara penuh sebagai petugas.
+            <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto mb-12">
+              {[
+                { name: "Deteksi Rambu Lalu Lintas", icon: AlertTriangle },
+                { name: "Prediksi Kemacetan", icon: BarChart },
+                { name: "Deteksi Pelanggaran Helm", icon: ShieldAlert },
+                { name: "Deteksi Boncengan", icon: Users },
+                { name: "Deteksi & OCR Plat Nomor", icon: Search },
+                { name: "Verifikasi Pajak Kendaraan", icon: Activity },
+                { name: "Deteksi Jumlah Kendaraan", icon: Car },
+                { name: "Prediksi Pelanggaran Harian", icon: Video }
+              ].map((model, i) => (
+                <div key={i} className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-default">
+                  <model.icon className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm font-bold text-slate-700">{model.name}</span>
+                </div>
+              ))}
+            </div>
+
+            <Link href="/about" className="inline-flex items-center justify-center gap-2 text-blue-600 font-bold hover:text-blue-800 transition-colors group">
+              Lihat detail arsitektur sistem <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </section>
+
+        {/* 6. Final CTA Section */}
+        <section className="py-24 bg-slate-50 border-t border-slate-200">
+          <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
+            <div className="bg-white p-10 lg:p-16 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50">
+              <h2 className="text-3xl lg:text-4xl font-extrabold text-[#0B1F3A] mb-4">Mulai dari pantauan jalan terdekat</h2>
+              <p className="text-slate-500 font-medium mb-10 max-w-xl mx-auto text-lg">
+                Cek kondisi lalu lintas, baca risiko kepadatan, dan gunakan hasil sistem sebagai bahan pertimbangan sebelum berangkat.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
                   href="/traffic-overview"
-                  className="inline-flex items-center justify-center h-14 px-10 rounded-full bg-[#0B1F3A] text-white text-[14px] font-semibold hover:bg-[#142d52] transition-colors shadow-lg"
+                  className="flex items-center justify-center h-14 px-8 rounded-full bg-[#0B1F3A] text-white font-bold text-sm hover:bg-blue-900 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
-                  Cek Lalu Lintas
+                  Buka Pantauan Lalu Lintas
                 </Link>
                 <Link
-                  href="/login"
-                  className="inline-flex items-center justify-center h-14 px-10 rounded-full border border-slate-200 bg-white text-[#0B1F3A] text-[14px] font-semibold hover:bg-slate-50 transition-colors shadow-sm"
+                  href="/about"
+                  className="flex items-center justify-center h-14 px-8 rounded-full bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 transition-colors"
                 >
-                  Masuk Command Center
+                  Pelajari Sistem
                 </Link>
               </div>
             </div>
-          </InteractiveGlassCard>
-        </ScrollRevealRow>
-      </section>
+          </div>
+        </section>
 
+        {/* 7. Evaluation Note */}
+        <section className="py-8 bg-white border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+            <p className="text-xs text-slate-400 font-medium max-w-3xl mx-auto leading-relaxed">
+              RoadTierbers berjalan dalam mode evaluasi akademik. Hasil deteksi dan prediksi digunakan untuk pembelajaran dan demonstrasi sistem, bukan sebagai keputusan lalu lintas resmi.
+            </p>
+          </div>
+        </section>
+
+      </div>
     </PublicPageShell>
   );
 }
