@@ -44,16 +44,19 @@ def load_all_models():
     for name, path in MODEL_PATHS.items():
         if os.path.exists(path):
             try:
-                loaded_models[name] = YOLO(path)
+                if name == "kendaraan" and path.endswith('.onnx'):
+                    loaded_models[name] = YOLO(path, task="detect")
+                else:
+                    loaded_models[name] = YOLO(path)
                 print(f"Successfully loaded model: {name}")
-            except Exception as e:
+            except BaseException as e:
                 print(f"Failed to load model {name}: {e}")
         elif name == "kendaraan" and _ALLOW_DOWNLOAD:
             print(f"Custom model for {name} not found. Falling back to pre-trained yolov8n.pt...")
             try:
                 loaded_models[name] = YOLO("yolov8n.pt")
                 print(f"Successfully loaded model: {name} (yolov8n.pt)")
-            except Exception as e:
+            except BaseException as e:
                 print(f"Failed to load fallback model {name}: {e}")
         else:
             print(f"Model file not found for {name}: {path}")
@@ -70,7 +73,10 @@ def _run_model(name, frame):
 
     try:
         model = loaded_models[name]
-        results = model(frame, verbose=False)
+        # Gunakan conf threshold lebih rendah khusus untuk edukasi atau secara general
+        # agar lebih sensitif terhadap gambar yang mungkin kurang sempurna/digital
+        conf_threshold = 0.15 if name == "edukasi" else 0.25
+        results = model(frame, verbose=False, conf=conf_threshold)
 
         detections = []
         for r in results:

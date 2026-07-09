@@ -4,7 +4,7 @@ import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
 import { StatusBadge } from "@/components/common";
-import { UploadCloud, Loader2, AlertTriangle, CheckCircle, Image as ImageIcon } from "lucide-react";
+import { UploadCloud, Loader2, AlertTriangle, CheckCircle, Image as ImageIcon, Play } from "lucide-react";
 
 // Types for YOLO Response
 interface BoundingBox {
@@ -48,6 +48,11 @@ export default function OfficerAIDetectionPage() {
   const [isDetecting, setIsDetecting] = useState(false);
   const [results, setResults] = useState<AnalyzeResponse | null>(globalAIDetectionState.results);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isContinuousMode, setIsContinuousMode] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [syncedFrameUrl, setSyncedFrameUrl] = useState<string | null>(null);
 
   React.useEffect(() => {
     globalAIDetectionState.selectedFile = selectedFile;
@@ -65,11 +70,19 @@ export default function OfficerAIDetectionPage() {
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
 
-      const img = new Image();
-      img.onload = () => {
-        setImgSize({ width: img.width, height: img.height });
-      };
-      img.src = url;
+      if (file.type.startsWith("video/")) {
+        const video = document.createElement("video");
+        video.onloadedmetadata = () => {
+          setImgSize({ width: video.videoWidth, height: video.videoHeight });
+        };
+        video.src = url;
+      } else {
+        const img = new Image();
+        img.onload = () => {
+          setImgSize({ width: img.width, height: img.height });
+        };
+        img.src = url;
+      }
     }
   };
 
@@ -77,13 +90,93 @@ export default function OfficerAIDetectionPage() {
     fileInputRef.current?.click();
   };
 
+  const fetchDetection = async (blob: Blob) => {
+    const formData = new FormData();
+    formData.append("file", new File([blob], "video_frame.jpg", { type: "image/jpeg" }));
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    const res = await fetch(`${apiUrl}/detection/analyze-all`, {
+      method: "POST",
+      body: formData,
+    });
+    return await res.json();
+  };
+
+  React.useEffect(() => {
+    let isActive = true;
+
+    const runContinuousLoop = async () => {
+      while (isActive && isPlaying && isContinuousMode && selectedFile?.type.startsWith('video/')) {
+        if (videoRef.current && canvasRef.current) {
+          const video = videoRef.current;
+          const canvas = canvasRef.current;
+          
+          if (video.currentTime >= video.duration) {
+             setIsPlaying(false);
+             break;
+          }
+          
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.6));
+            if (blob && isActive) {
+              try {
+                const data = await fetchDetection(blob);
+                if (isActive) {
+                   const url = URL.createObjectURL(blob);
+                   setSyncedFrameUrl(url);
+                   setResults(data);
+                   // Step the video forward 
+                   video.currentTime += 0.25;
+                }
+              } catch (e) {
+                // If API fails, wait a bit before retrying
+                await new Promise(r => setTimeout(r, 500));
+              }
+            }
+          }
+        }
+        // Small delay to prevent locking the browser thread
+        await new Promise(r => setTimeout(r, 10));
+      }
+    };
+
+    if (isPlaying && isContinuousMode) {
+      runContinuousLoop();
+    }
+
+    return () => { isActive = false; };
+  }, [isPlaying, isContinuousMode, selectedFile]);
+
   const runDetection = async () => {
     if (!selectedFile) return;
     setIsDetecting(true);
-    setResults(null);
+    if (!isContinuousMode) setResults(null);
 
     const formData = new FormData();
-    formData.append("file", selectedFile);
+    if (selectedFile.type.startsWith('video/')) {
+      if (videoRef.current && canvasRef.current) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+          if (blob) {
+            formData.append("file", new File([blob], "video_frame.jpg", { type: "image/jpeg" }));
+          } else {
+            setIsDetecting(false);
+            return;
+          }
+        }
+      }
+    } else {
+      formData.append("file", selectedFile);
+    }
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -253,8 +346,8 @@ export default function OfficerAIDetectionPage() {
             <section>
               <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div className="space-y-3">
-                  <h2 className="text-lg font-medium text-[#0B1F3A]">Uji Gambar Deteksi</h2>
-                  <p className="text-sm text-slate-500 max-w-md">Silakan upload gambar lalu klik "Deteksi API" untuk menjalankan kelima model AI YOLO secara paralel di backend FastAPI.</p>
+                  <h2 className="text-lg font-medium text-[#0B1F3A]">Uji Deteksi</h2>
+                  <p className="text-sm text-slate-500 max-w-md">Silakan upload gambar/video lalu klik "Deteksi API" untuk menjalankan kelima model AI YOLO secara paralel di backend FastAPI.</p>
                   {results && (
                      <div className="flex items-center gap-2 mt-2">
                        <span className="text-sm font-medium text-slate-400 w-24">Status DB:</span>
@@ -265,13 +358,13 @@ export default function OfficerAIDetectionPage() {
                 </div>
 
                 <div className="shrink-0 flex flex-col gap-3 min-w-[200px]">
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,video/*" className="hidden" />
                   <button 
                     onClick={handleUploadClick}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#0B1F3A] border border-slate-300 rounded-lg text-sm font-medium transition-colors"
                   >
                     <UploadCloud className="w-4 h-4" />
-                    Pilih Gambar
+                    Pilih File (Gambar/Video)
                   </button>
                   <button 
                     onClick={runDetection}
@@ -284,6 +377,20 @@ export default function OfficerAIDetectionPage() {
                       "Deteksi API"
                     )}
                   </button>
+                  {selectedFile?.type.startsWith('video/') && (
+                    <label className="flex items-center gap-2 mt-1 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                        checked={isContinuousMode}
+                        onChange={(e) => {
+                          setIsContinuousMode(e.target.checked);
+                          if (!e.target.checked) setSyncedFrameUrl(null);
+                        }}
+                      />
+                      <span className="text-sm font-medium text-slate-600">Mode AI (Sinkronisasi Frame)</span>
+                    </label>
+                  )}
                 </div>
               </div>
             </section>
@@ -297,12 +404,53 @@ export default function OfficerAIDetectionPage() {
                 
                 {previewUrl ? (
                   <div className="relative w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
-                    {/* The image itself */}
-                    <img 
-                      src={previewUrl} 
-                      alt="Uploaded preview" 
-                      className="w-full h-auto object-contain block" 
-                    />
+                    {/* The image/video itself */}
+                    {selectedFile?.type.startsWith('video/') ? (
+                      <>
+                        <video 
+                          ref={videoRef}
+                          src={previewUrl} 
+                          controls={!isContinuousMode}
+                          className={`w-full h-auto object-contain block ${isContinuousMode && isPlaying ? 'hidden' : ''}`} 
+                          onPlay={() => {
+                             if (isContinuousMode && videoRef.current) {
+                               videoRef.current.pause(); // we control playback manually in this mode
+                               setIsPlaying(true);
+                             }
+                          }}
+                        />
+                        {isContinuousMode && isPlaying && (
+                           <div className="relative w-full">
+                              <img src={syncedFrameUrl || previewUrl} className="w-full h-auto object-contain block" />
+                              <button 
+                                 onClick={() => setIsPlaying(false)}
+                                 className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium z-30 shadow-lg backdrop-blur-sm transition-all"
+                              >
+                                Hentikan Proses AI
+                              </button>
+                           </div>
+                        )}
+                        {isContinuousMode && !isPlaying && (
+                           <button 
+                              onClick={() => {
+                                setIsPlaying(true);
+                                setResults(null);
+                                setSyncedFrameUrl(null);
+                              }}
+                              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-600/90 hover:bg-blue-600 text-white px-6 py-3 rounded-xl text-md font-semibold shadow-xl backdrop-blur-sm flex items-center gap-2 transition-all"
+                           >
+                              <Play className="w-5 h-5 fill-current" /> Jalankan Tracking AI
+                           </button>
+                        )}
+                        <canvas ref={canvasRef} className="hidden" />
+                      </>
+                    ) : (
+                      <img 
+                        src={previewUrl} 
+                        alt="Uploaded preview" 
+                        className="w-full h-auto object-contain block" 
+                      />
+                    )}
                     {/* Bounding Boxes Container absolutely positioned over the image */}
                     <div className="absolute inset-0 pointer-events-none">
                       {renderBoundingBoxes()}
@@ -311,8 +459,8 @@ export default function OfficerAIDetectionPage() {
                 ) : (
                   <div className="relative w-full aspect-video bg-slate-100 rounded-xl border border-slate-200 border-dashed flex flex-col items-center justify-center text-slate-400 mb-4">
                      <ImageIcon className="w-10 h-10 mb-2 opacity-50" />
-                     <p className="text-sm font-medium">Belum ada gambar</p>
-                     <p className="text-xs">Upload gambar untuk melihat hasil deteksi</p>
+                     <p className="text-sm font-medium">Belum ada file</p>
+                     <p className="text-xs">Upload gambar/video untuk melihat hasil deteksi</p>
                   </div>
                 )}
               </div>

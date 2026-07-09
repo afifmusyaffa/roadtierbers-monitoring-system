@@ -304,6 +304,7 @@ export default function TrafficSignEducationPage() {
   const [detectionResult, setDetectionResult] = useState<any | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -372,6 +373,34 @@ export default function TrafficSignEducationPage() {
     }
   };
 
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+      setDetectionResult(null);
+      setErrorMessage(null);
+    }
+  };
+
+  const analyzeVideoFrame = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            handleUpload(blob);
+          }
+        }, "image/jpeg", 0.9);
+      }
+    }
+  };
+
   const takePhoto = () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
@@ -408,6 +437,7 @@ export default function TrafficSignEducationPage() {
     setDetectionResult(null);
     setErrorMessage(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (videoInputRef.current) videoInputRef.current.value = "";
     if (mode === "camera") {
       setIsPhotoTaken(false);
       if (!cameraActive && activeSection === "deteksi") startCamera();
@@ -418,15 +448,16 @@ export default function TrafficSignEducationPage() {
     fileInputRef.current?.click();
   };
 
-  const handleUpload = async () => {
-    if (!file) return;
+  const handleUpload = async (overrideFile?: Blob) => {
+    const fileToUpload = overrideFile || file;
+    if (!fileToUpload) return;
 
     setIsLoading(true);
     setErrorMessage(null);
     setDetectionResult(null);
 
     const formData = new FormData();
-    const fileObj = file instanceof File ? file : new File([file], "camera_capture.jpg", { type: "image/jpeg" });
+    const fileObj = fileToUpload instanceof File ? fileToUpload : new File([fileToUpload], "camera_capture.jpg", { type: "image/jpeg" });
     formData.append("file", fileObj);
 
     try {
@@ -563,13 +594,10 @@ export default function TrafficSignEducationPage() {
                       <Camera className="w-4 h-4" /> Kamera
                     </button>
                     <button 
-                      disabled 
-                      className="flex-1 py-4 text-sm font-bold flex flex-col items-center justify-center text-slate-300 cursor-not-allowed group relative"
+                      onClick={() => { setMode("video"); clearSelection(); }} 
+                      className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === "video" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50" : "text-slate-500 hover:text-slate-800"}`}
                     >
-                      <div className="flex items-center gap-2">
-                        <Video className="w-4 h-4" /> Video
-                      </div>
-                      <span className="text-[9px] uppercase tracking-wider text-slate-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-10 whitespace-nowrap bg-slate-800 text-white px-2 py-1 rounded z-50">Menunggu dukungan backend</span>
+                      <Video className="w-4 h-4" /> Video
                     </button>
                   </div>
 
@@ -674,6 +702,59 @@ export default function TrafficSignEducationPage() {
                                 </button>
                               </div>
                             )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* VIDEO MODE */}
+                    {mode === "video" && (
+                      <div className="w-full h-full flex flex-col">
+                        <input type="file" accept="video/*" className="hidden" ref={videoInputRef} onChange={handleVideoChange} />
+                        {!previewUrl ? (
+                          <div 
+                            onClick={() => videoInputRef.current?.click()}
+                            className="flex-1 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer p-6"
+                          >
+                            <UploadCloud className="w-12 h-12 mb-4 text-slate-400" />
+                            <p className="font-bold mb-1">Klik untuk mengunggah video</p>
+                            <p className="text-sm font-medium opacity-75 text-center">Format didukung: MP4, WebM.</p>
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex flex-col">
+                            <div className="relative w-full aspect-square md:aspect-video lg:aspect-square bg-slate-900 rounded-2xl overflow-hidden shadow-inner mb-4 flex items-center justify-center">
+                              <video 
+                                ref={videoRef} 
+                                src={previewUrl} 
+                                controls 
+                                onPlay={() => setDetectionResult(null)}
+                                className="max-w-full max-h-full" 
+                              />
+                              <canvas ref={canvasRef} className="hidden" />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex gap-2">
+                                <button 
+                                  onClick={() => videoInputRef.current?.click()}
+                                  className="flex-1 py-3 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+                                >
+                                  Pilih video lain
+                                </button>
+                                <button 
+                                  onClick={clearSelection}
+                                  className="py-3 px-4 text-sm font-bold text-red-600 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-colors"
+                                >
+                                  Hapus
+                                </button>
+                              </div>
+                              <button 
+                                onClick={() => analyzeVideoFrame()}
+                                disabled={isLoading}
+                                className="w-full py-3 text-sm font-bold text-white bg-[#0B1F3A] rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-md shadow-blue-900/20 flex items-center justify-center gap-2"
+                              >
+                                {isLoading ? "Memproses..." : "Analisis Frame Ini"}
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
