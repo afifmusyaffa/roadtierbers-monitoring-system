@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -50,17 +50,12 @@ export function PublicNavbar() {
         <header className="w-full max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-900/20 group-hover:shadow-blue-900/40 transition-all">
-              <span className="text-white font-extrabold text-lg leading-none">R</span>
-            </div>
-            <div className="flex flex-col">
-              <span className={cn(
-                "text-lg font-extrabold tracking-tight transition-colors",
-                isScrolled ? "text-[#0B1F3A]" : "text-white drop-shadow-md"
-              )}>
-                RoadTierbers
-              </span>
-            </div>
+            <span className={cn(
+              "text-lg font-semibold tracking-tight transition-colors",
+              isScrolled ? "text-[#0B1F3A]" : "text-white drop-shadow-md"
+            )}>
+              RoadTierbers
+            </span>
           </Link>
 
           {/* Desktop Nav */}
@@ -97,7 +92,7 @@ export function PublicNavbar() {
                   : "bg-white text-[#0B1F3A] hover:bg-blue-50 shadow-black/10"
               )}
             >
-              Masuk Sistem
+              Masuk Petugas
             </Link>
 
             {/* Mobile Menu Toggle */}
@@ -150,7 +145,7 @@ export function PublicNavbar() {
             href="/login"
             className="w-full inline-flex items-center justify-center h-14 rounded-2xl text-base font-extrabold bg-cyan-500 text-[#0B1F3A] hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20"
           >
-            Masuk ke Area Petugas
+            Masuk Petugas
           </Link>
         </div>
       </div>

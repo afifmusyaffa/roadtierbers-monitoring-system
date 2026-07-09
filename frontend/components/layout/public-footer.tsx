@@ -13,11 +13,8 @@ export function PublicFooter() {
           
           {/* Brand Block */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-900/20">
-                <span className="text-white font-extrabold text-lg leading-none">R</span>
-              </div>
-              <span className="text-xl font-extrabold tracking-tight text-white">
+            <Link href="/" className="inline-flex items-center group">
+              <span className="text-xl font-semibold tracking-tight text-white">
                 RoadTierbers
               </span>
             </Link>
@@ -76,7 +73,7 @@ export function PublicFooter() {
               <li>
                 <Link href="/login" className="text-sm font-medium hover:text-cyan-400 transition-colors flex items-center gap-2 group">
                   <ArrowRight className="w-3 h-3 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all text-cyan-400" />
-                  Masuk Sistem
+                  Masuk Petugas
                 </Link>
               </li>
               <li>

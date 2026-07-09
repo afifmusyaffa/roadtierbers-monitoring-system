@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
@@ -81,12 +81,6 @@ export default function AboutPage() {
                   className="flex items-center justify-center gap-2 h-14 px-8 rounded-full bg-[#0B1F3A] text-white font-bold text-sm hover:bg-blue-900 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
                   Lihat Pantauan <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/login"
-                  className="flex items-center justify-center h-14 px-8 rounded-full bg-white border border-slate-200 text-slate-700 font-bold text-sm hover:border-blue-200 hover:bg-blue-50 transition-colors shadow-sm"
-                >
-                  Masuk Area Petugas
                 </Link>
               </div>
             </div>

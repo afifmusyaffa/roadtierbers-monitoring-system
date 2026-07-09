@@ -135,12 +135,6 @@ export default function HomePage() {
                     >
                       Lihat Pantauan Lalu Lintas <ArrowRight className="w-4 h-4" />
                     </Link>
-                    <Link
-                      href="/login"
-                      className="flex items-center justify-center h-14 px-8 w-full sm:w-auto rounded-full border border-blue-800 bg-[#0B1F3A]/50 backdrop-blur-sm text-blue-100 font-bold text-sm hover:bg-blue-900/50 hover:border-blue-700 active:scale-95 transition-all"
-                    >
-                      Masuk Area Petugas
-                    </Link>
                   </div>
                 </ScrollReveal>
               </div>
