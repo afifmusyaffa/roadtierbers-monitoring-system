@@ -126,23 +126,27 @@ export default function OfficerReportPage() {
     style.id = "print-style-override";
     style.innerHTML = `
       @media print {
-        /* Hide everything */
-        body * {
-          visibility: hidden !important;
-          background: none !important;
+        html, body {
+          background: white !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          height: auto !important;
+          overflow: visible !important;
         }
-        /* Except the print area wrapper and its children */
-        #print-area-wrapper, #print-area-wrapper * {
-          visibility: visible !important;
+        /* Hide all root body elements except our print wrapper to prevent layout allocation */
+        body > *:not(#print-area-wrapper) {
+          display: none !important;
         }
         #print-area-wrapper {
+          display: block !important;
           position: absolute;
           left: 0;
           top: 0;
           width: 100%;
-          display: block !important;
           background: white !important;
+          color: black !important;
           padding: 20px !important;
+          margin: 0 !important;
         }
         /* Layout adjustments for print format */
         .rounded-2xl {
