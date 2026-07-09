@@ -110,7 +110,7 @@ export default function OfficerViolationMonitoringPage() {
                   <span className="text-2xl font-medium text-[#0B1F3A]">{data.total_violations_today} Kasus</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Jumlah indikasi pelanggaran dari database hari ini.
+                  Jumlah indikasi pelanggaran dari data pemantauan hari ini.
                 </p>
               </div>
               
@@ -130,7 +130,7 @@ export default function OfficerViolationMonitoringPage() {
                   <span className="text-2xl font-medium text-[#0B1F3A]">{dominantViolation}</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Kategori ini paling sering muncul dalam sample database.
+                  Kategori ini paling sering muncul dalam pemantauan sistem.
                 </p>
               </div>
 
@@ -145,8 +145,6 @@ export default function OfficerViolationMonitoringPage() {
               { label: "Tanpa Helm", value: helmCount, unit: "Kasus", color: "text-amber-600", helper: "Mendominasi pelanggaran hari ini." },
               { label: "Bonceng Lebih Dari 2", value: boncengCount, unit: "Kasus", color: "text-teal-600", helper: "Mulai meningkat siang ini." },
               { label: "Plat/Pajak Mati", value: platPajakCount, unit: "Kasus", color: "text-[#1D4ED8]", helper: "Terdeteksi dari pemindaian ANPR." },
-              { label: "Kasus Perlu Validasi", value: data.kasus_perlu_validasi, unit: "Kasus", color: "text-slate-700", helper: "Tunggu konfirmasi petugas." },
-              { label: "Area Risiko Tinggi", value: data.area_risiko_tinggi, unit: "Area", color: "text-red-600", helper: "Titik pantau Simpang SKA." },
             ].map((kpi, i) => (
               <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>

@@ -1140,8 +1140,7 @@ async def get_reports_summary():
         kpis = [
             { "label": "Total Volume", "value": str(total_vehicles), "unit": "Kendaraan", "color": "text-[#1d4ed8]", "helper": "Arus kumulatif hari ini." },
             { "label": "Total Pelanggaran", "value": str(total_violations), "unit": "Kasus", "color": "text-red-600", "helper": "Semua jenis pelanggaran." },
-            { "label": "Validasi Selesai", "value": "85", "unit": "%", "color": "text-[#14b8a6]", "helper": "Tingkat verifikasi petugas." },
-            { "label": "Kasus Tersisa", "value": str(int(total_violations * 0.15)), "unit": "Kasus", "color": "text-amber-600", "helper": "Perlu validasi manual." }
+            { "label": "Volume Kasus Pajak", "value": str(plat_pajak_count), "unit": "Kasus", "color": "text-amber-600", "helper": "Pelanggaran pajak kendaraan terpantau hari ini." }
         ]
 
         return ApiResponse(

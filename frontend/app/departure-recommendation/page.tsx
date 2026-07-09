@@ -1,48 +1,109 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
-import {
-  InteractiveGlassCard,
-  ScrollRevealRow,
-  MouseSpotlight,
-  MotionSection,
-} from "@/components/common";
-import { MapPin, Clock, CloudRain, Navigation } from "lucide-react";
+import { ArrowRight, AlertTriangle, CheckCircle2, TrendingUp, TrendingDown, Clock, Map, MapPin, Database, Activity, CalendarClock, ShieldCheck } from "lucide-react";
+import { TrafficModuleNav } from "@/components/traffic/traffic-module-nav";
+
+interface ForecastData {
+  data_available?: boolean;
+  message?: string;
+  target_arrival?: string;
+  departure_time?: string;
+  delay_minutes?: number;
+  total_travel_time?: number;
+  risk_level?: string;
+  congestion_category?: string;
+}
+
+// Minimal Scroll Reveal Component for tasteful animations
+function ScrollReveal({ 
+  children, 
+  delay = 0, 
+  direction = "up",
+  className
+}: { 
+  children: ReactNode, 
+  delay?: number,
+  direction?: "up" | "left" | "right" | "none",
+  className?: string
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const domRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          if (domRef.current) observer.unobserve(domRef.current);
+        }
+      });
+    }, { rootMargin: "0px 0px -20px 0px", threshold: 0.1 });
+
+    const currentRef = domRef.current;
+    if (currentRef) observer.observe(currentRef);
+
+    return () => {
+      if (currentRef) observer.unobserve(currentRef);
+    };
+  }, []);
+
+  const getTransform = () => {
+    if (direction === "up") return "translateY(20px)";
+    if (direction === "left") return "translateX(20px)";
+    if (direction === "right") return "translateX(-20px)";
+    return "none";
+  };
+
+  return (
+    <div
+      ref={domRef}
+      className={className}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "none" : getTransform(),
+        transition: `opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function DepartureRecommendationPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ForecastData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Form states
-  const [origin, setOrigin] = useState("Simpang SKA");
-  const [destination, setDestination] = useState("Bandara SSK II");
-  const [timeMode, setTimeMode] = useState("berangkat");
-  const [targetTime, setTargetTime] = useState("08:00");
-  const [weather, setWeather] = useState("Cerah");
 
   const fetchPlan = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-      const response = await fetch(`${apiUrl}/forecasting/plan?origin=${origin}&destination=${destination}&time_mode=${timeMode}&target_time=${targetTime}&weather=${weather}`);
+      // Keep defaults to preserve API compatibility
+      const response = await fetch(`${apiUrl}/forecasting/plan?origin=Simpang SKA&destination=Bandara SSK II&time_mode=berangkat&target_time=08:00&weather=Cerah`);
       
       if (!response.ok) {
         throw new Error("Gagal mengambil data");
       }
       
       const res = await response.json();
-      if (res.status === "success" && res.data) {
+      if (res.status === "success") {
         setData(res.data);
       } else {
         throw new Error(res.message || "Data tidak valid");
       }
     } catch (err) {
       console.error(err);
-      setError("Gagal memuat rekomendasi.");
+      setError("Koneksi server terputus");
     } finally {
       setIsLoading(false);
     }
@@ -52,399 +113,349 @@ export default function DepartureRecommendationPage() {
     fetchPlan();
   }, []);
 
-  const getStatusInfo = (data: any) => {
+  const getStatusInfo = (data: ForecastData | null) => {
     const cat = data?.congestion_category?.toLowerCase() || "";
-    const delay = data?.delay_minutes || 0;
-    const hour = data?.target_arrival || data?.departure_time || targetTime;
-    const risk = data?.risk_level || "Sedang";
+    const risk = data?.risk_level || "Belum tersedia";
 
     if (cat.includes("macet total") || cat.includes("macet")) {
       return {
-        color: "text-red-600",
+        color: "text-red-700",
         bgStatus: "bg-red-50",
-        borderColor: "border-red-100",
+        borderColor: "border-red-200",
+        badgeBg: "bg-red-600",
         statusText: "Macet",
-        rekomendasiUtama: "Tunda Perjalanan",
-        alasanSingkat: `Antrean kendaraan terpantau panjang. Perjalanan Anda berpotensi tertunda hingga ${delay} menit.`,
-        polaWaktu: [
-          { time: "Sekarang", label: "Macet", color: "bg-red-600", ring: "ring-red-600/20" },
-          { time: "+15 menit", label: "Padat", color: "bg-red-500", ring: "ring-red-500/20" },
-          { time: "+30 menit", label: "Mulai terurai", color: "bg-amber-400", ring: "ring-amber-400/20" },
-          { time: "+45 menit", label: "Lancar", color: "bg-[#14B8A6]", ring: "ring-teal-500/20" },
-        ],
-        decisions: [
-          { title: "Berangkat sekarang", status: "TIDAK DISARANKAN", helper: `Menyebabkan delay ${delay} menit. Hindari berangkat sekarang.`, delay: 0.1, statusColor: "text-red-500", bgStatus: "bg-red-50", borderColor: "border-red-100" },
-          { title: "Waktu Tunggu", status: "TUNDA 30-45 MNT", helper: `Tunggu hingga kemacetan terurai melewati jam puncak (pukul ${hour}).`, delay: 0.15, statusColor: "text-[#1D4ED8]", bgStatus: "bg-blue-50", borderColor: "border-blue-100" },
-          { title: "Analisis Risiko", status: `RISIKO ${risk.toUpperCase()}`, helper: `Kondisi jalan macet dengan cuaca ${weather} meningkatkan risiko perjalanan.`, delay: 0.2, statusColor: "text-amber-600", bgStatus: "bg-amber-50", borderColor: "border-amber-100" }
-        ]
+        rekomendasiUtama: "Tunda perjalanan sementara",
+        alasanSingkat: "Kondisi jalan macet. Sebaiknya hindari keberangkatan saat ini untuk menghindari penundaan yang signifikan.",
+        riskLevel: risk,
       };
-    } else if (cat.includes("agak padat")) {
+    } else if (cat.includes("agak padat") || cat.includes("sedang")) {
       return {
-        color: "text-amber-500",
+        color: "text-amber-700",
         bgStatus: "bg-amber-50",
-        borderColor: "border-amber-100",
-        statusText: "Mulai Padat",
-        rekomendasiUtama: "Cari Rute Alternatif",
-        alasanSingkat: `Arus lalu lintas mulai melambat. Terdapat potensi delay perjalanan sekitar ${delay} menit.`,
-        polaWaktu: [
-          { time: "Sekarang", label: "Agak Padat", color: "bg-amber-500", ring: "ring-amber-500/20" },
-          { time: "+15 menit", label: "Menurun", color: "bg-amber-400", ring: "ring-amber-400/20" },
-          { time: "+30 menit", label: "Stabil", color: "bg-[#14B8A6]", ring: "ring-teal-500/20" },
-          { time: "+45 menit", label: "Lancar", color: "bg-[#14B8A6]", ring: "ring-teal-500/20" },
-        ],
-        decisions: [
-          { title: "Berangkat sekarang", status: "BISA DILAKUKAN", helper: `Lalu lintas melambat (estimasi delay ${delay} menit), namun masih bisa dilewati.`, delay: 0.1, statusColor: "text-amber-500", bgStatus: "bg-amber-50", borderColor: "border-amber-100" },
-          { title: "Rekomendasi Rute", status: "CARI ALTERNATIF", helper: `Gunakan rute alternatif jika memungkinkan untuk menghindari kepadatan.`, delay: 0.15, statusColor: "text-[#1D4ED8]", bgStatus: "bg-blue-50", borderColor: "border-blue-100" },
-          { title: "Analisis Risiko", status: `RISIKO ${risk.toUpperCase()}`, helper: `Kecepatan kendaraan perlu diturunkan. Cuaca ${weather} saat ini.`, delay: 0.2, statusColor: "text-[#14B8A6]", bgStatus: "bg-teal-50", borderColor: "border-teal-100" }
-        ]
+        borderColor: "border-amber-200",
+        badgeBg: "bg-amber-500",
+        statusText: "Sedang",
+        rekomendasiUtama: "Berangkat dengan waktu tambahan",
+        alasanSingkat: "Kepadatan mulai terlihat. Siapkan waktu ekstra agar perjalanan lebih aman dan tenang.",
+        riskLevel: risk,
       };
     } else if (cat.includes("padat")) {
       return {
-        color: "text-red-500",
+        color: "text-red-700",
         bgStatus: "bg-red-50",
-        borderColor: "border-red-100",
+        borderColor: "border-red-200",
+        badgeBg: "bg-red-600",
         statusText: "Padat",
-        rekomendasiUtama: "Tunda 20–30 menit",
-        alasanSingkat: `Kepadatan cukup tinggi. Perjalanan Anda akan tertunda kira-kira ${delay} menit.`,
-        polaWaktu: [
-          { time: "Sekarang", label: "Padat", color: "bg-red-500", ring: "ring-red-500/20" },
-          { time: "+15 menit", label: "Masih padat", color: "bg-red-400", ring: "ring-red-400/20" },
-          { time: "+30 menit", label: "Mulai menurun", color: "bg-amber-400", ring: "ring-amber-400/20" },
-          { time: "+45 menit", label: "Lebih stabil", color: "bg-[#14B8A6]", ring: "ring-teal-500/20" },
-        ],
-        decisions: [
-          { title: "Berangkat sekarang", status: "TIDAK DISARANKAN", helper: `Tundaan hingga ${delay} menit. Perjalanan akan memakan waktu lebih lambat dari biasanya.`, delay: 0.1, statusColor: "text-red-500", bgStatus: "bg-red-50", borderColor: "border-red-100" },
-          { title: "Waktu Tunggu", status: "TUNDA 20-30 MNT", helper: `Tunggu antrean sedikit mereda sebelum berangkat.`, delay: 0.15, statusColor: "text-[#1D4ED8]", bgStatus: "bg-blue-50", borderColor: "border-blue-100" },
-          { title: "Analisis Risiko", status: `RISIKO ${risk.toUpperCase()}`, helper: `Patuhi jarak aman kendaraan di jam ${hour} ini dengan cuaca ${weather}.`, delay: 0.2, statusColor: "text-amber-600", bgStatus: "bg-amber-50", borderColor: "border-amber-100" }
-        ]
+        rekomendasiUtama: "Tunda perjalanan sementara",
+        alasanSingkat: "Arus jalan terpantau lambat. Perjalanan Anda berisiko terhambat.",
+        riskLevel: risk,
+      };
+    } else if (cat.includes("lancar")) {
+      return {
+        color: "text-teal-800",
+        bgStatus: "bg-teal-50",
+        borderColor: "border-teal-200",
+        badgeBg: "bg-teal-600",
+        statusText: "Lancar",
+        rekomendasiUtama: "Berangkat sekarang",
+        alasanSingkat: "Kondisi sangat ideal. Tidak ada antrean yang berarti, aman untuk memulai perjalanan.",
+        riskLevel: risk,
       };
     }
-    // Lancar
+    
     return {
-      color: "text-[#14B8A6]",
-      bgStatus: "bg-teal-50",
-      borderColor: "border-teal-100",
-      statusText: "Lancar",
-      rekomendasiUtama: "Jalan Terus",
-      alasanSingkat: `Kondisi sangat ideal. Tidak ada antrean yang berarti.`,
-      polaWaktu: [
-        { time: "Sekarang", label: "Lancar", color: "bg-[#14B8A6]", ring: "ring-teal-500/20" },
-        { time: "+15 menit", label: "Tetap stabil", color: "bg-[#14B8A6]", ring: "ring-teal-500/20" },
-        { time: "+30 menit", label: "Lancar", color: "bg-[#14B8A6]", ring: "ring-teal-500/20" },
-        { time: "+45 menit", label: "Lancar", color: "bg-[#14B8A6]", ring: "ring-teal-500/20" },
-      ],
-      decisions: [
-        { title: "Berangkat sekarang", status: "SANGAT DISARANKAN", helper: `Estimasi delay hanya ${delay} menit pada pukul ${hour}. Waktu ideal untuk perjalanan.`, delay: 0.1, statusColor: "text-[#14B8A6]", bgStatus: "bg-teal-50", borderColor: "border-teal-100" },
-        { title: "Prediksi Volume", status: "TERKENDALI", helper: `Arus lalu lintas mengalir lancar.`, delay: 0.15, statusColor: "text-[#1D4ED8]", bgStatus: "bg-blue-50", borderColor: "border-blue-100" },
-        { title: "Analisis Risiko", status: `RISIKO ${risk.toUpperCase()}`, helper: `Cuaca ${weather} dan jalan lengang. Tetap kendalikan batas kecepatan Anda.`, delay: 0.2, statusColor: "text-[#0B1F3A]", bgStatus: "bg-slate-100", borderColor: "border-slate-200" }
-      ]
+      color: "text-slate-700",
+      bgStatus: "bg-slate-50",
+      borderColor: "border-slate-200",
+      badgeBg: "bg-slate-400",
+      statusText: "Belum tersedia",
+      rekomendasiUtama: "Rekomendasi belum tersedia",
+      alasanSingkat: "Sistem menunggu data monitoring dari hasil deteksi.",
+      riskLevel: "Belum tersedia",
     };
   };
 
   const statusInfo = getStatusInfo(data);
-  const delayMinutes = data?.delay_minutes ?? 0;
-  const totalTravelTime = data?.total_travel_time ?? 0;
-  const recommendedTime = data?.recommended_departure || data?.estimated_arrival || "--:--";
+  const delayMinutes = data?.delay_minutes;
+  const hasData = data?.data_available === true;
+
+  // Simple current time string logic for table display
+  const getDisplayTime = (offsetMinutes: number) => {
+    if (!hasData) return "Belum tersedia";
+    if (offsetMinutes === 0) return data?.departure_time || "Sekarang";
+    // Usually API returns full predictions. If not, we just write the offset.
+    return `+${offsetMinutes} menit`;
+  };
 
   return (
     <PublicPageShell>
-      <div className="rt-bright-stage relative overflow-hidden pb-32 min-h-screen pt-12">
-        <MouseSpotlight />
+      <div className="bg-[#F8FAFC] min-h-screen font-sans text-slate-800 selection:bg-blue-100 selection:text-blue-900 pb-24">
         
-        {/* Soft background radial glows */}
-        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-[#06B6D4]/5 blur-[120px] rounded-full pointer-events-none" />
+        {/* 1. Compact Feature Header */}
+        <section className="relative pt-24 pb-12 overflow-hidden bg-gradient-to-br from-[#0B1F3A] to-[#102A4C]">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none translate-x-1/3 -translate-y-1/3" />
+          
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+              
+              <div className="max-w-2xl">
+                <ScrollReveal delay={0}>
+                  <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight mb-3">
+                    Rekomendasi Waktu Berangkat
+                  </h1>
+                </ScrollReveal>
+                <ScrollReveal delay={0.1}>
+                  <p className="text-blue-100/80 font-medium text-base lg:text-lg">
+                    Lihat saran waktu perjalanan berdasarkan kondisi lalu lintas dan estimasi keterlambatan terkini.
+                  </p>
+                </ScrollReveal>
+              </div>
 
-        {/* 1. Page Hero */}
-        <section className="relative pt-32 pb-6 lg:pt-36 lg:pb-8 flex flex-col items-center justify-center z-10">
-          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center gap-6">
-            <MotionSection direction="up" delay={0.1}>
-              <span className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[#0B1F3A] backdrop-blur-md shadow-sm">
-                Rekomendasi Publik
-              </span>
-            </MotionSection>
-
-            <MotionSection direction="up" delay={0.15} className="space-y-4 max-w-2xl">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0B1F3A] leading-[1.1]">
-                Pilih waktu berangkat<br />dengan lebih tenang.
-              </h1>
-              <p className="text-base sm:text-lg text-[#0B1F3A]/70 font-medium leading-relaxed max-w-xl mx-auto">
-                Gunakan estimasi kemacetan AI untuk menentukan waktu perjalanan yang lebih nyaman dan aman.
-              </p>
-            </MotionSection>
+              <ScrollReveal delay={0.2} direction="left">
+                <div className="flex flex-wrap items-center gap-4 text-xs font-medium bg-[#0B1F3A]/40 backdrop-blur-md border border-blue-800/50 p-4 rounded-2xl shadow-lg">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-blue-400" />
+                    <div>
+                      <p className="text-blue-300/60 uppercase tracking-wider text-[10px] font-bold">Area</p>
+                      <p className="text-white font-bold">Pekanbaru</p>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-blue-800/50 hidden sm:block"></div>
+                  <div className="flex items-center gap-2">
+                    <Database className="w-4 h-4 text-cyan-400" />
+                    <div>
+                      <p className="text-blue-300/60 uppercase tracking-wider text-[10px] font-bold">Sumber</p>
+                      <p className="text-white font-bold">Hasil deteksi sistem</p>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-blue-800/50 hidden sm:block"></div>
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <p className="text-blue-300/60 uppercase tracking-wider text-[10px] font-bold">Status</p>
+                      <p className="text-white font-bold">Mode evaluasi</p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
           </div>
         </section>
 
-        {/* 1.5. Trip Planner Form */}
-        <section className="relative z-20 pb-8">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6">
-             <InteractiveGlassCard intensity="strong" glow className="w-full p-6 md:p-8 bg-white/80 backdrop-blur-xl border border-white/80 shadow-md rounded-[2rem]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Lokasi Asal</label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <select 
-                            value={origin} 
-                            onChange={e => setOrigin(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none text-sm font-medium"
-                          >
-                             <option value="Simpang SKA">Simpang SKA</option>
-                             <option value="Pasar Pagi">Pasar Pagi</option>
-                             <option value="Bandara SSK II">Bandara SSK II</option>
-                             <option value="Panam">Panam</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tujuan</label>
-                        <div className="relative">
-                          <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <select 
-                            value={destination} 
-                            onChange={e => setDestination(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none text-sm font-medium"
-                          >
-                             <option value="Bandara SSK II">Bandara SSK II</option>
-                             <option value="Simpang SKA">Simpang SKA</option>
-                             <option value="Pasar Pagi">Pasar Pagi</option>
-                             <option value="Panam">Panam</option>
-                          </select>
-                        </div>
-                      </div>
-                   </div>
-                   
-                   <div className="space-y-4">
-                      <div>
-                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mode Waktu</label>
-                         <div className="flex bg-slate-100 p-1 rounded-xl">
-                            <button 
-                              onClick={() => setTimeMode("berangkat")}
-                              className={`flex-1 text-xs font-bold py-2 rounded-lg transition-colors ${timeMode === "berangkat" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                            >
-                               Berangkat Pukul
-                            </button>
-                            <button 
-                              onClick={() => setTimeMode("tiba")}
-                              className={`flex-1 text-xs font-bold py-2 rounded-lg transition-colors ${timeMode === "tiba" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                            >
-                               Harus Tiba Pukul
-                            </button>
-                         </div>
-                      </div>
-                      
-                      <div className="flex gap-4">
-                        <div className="flex-1">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jam</label>
-                          <div className="relative">
-                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input 
-                              type="time" 
-                              value={targetTime}
-                              onChange={e => setTargetTime(e.target.value)}
-                              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Cuaca</label>
-                          <div className="relative">
-                            <CloudRain className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <select 
-                              value={weather}
-                              onChange={e => setWeather(e.target.value)}
-                              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none text-sm font-medium"
-                            >
-                               <option value="Cerah">Cerah</option>
-                               <option value="Hujan">Hujan Ringan</option>
-                               <option value="Hujan Lebat">Hujan Lebat</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                   </div>
-                </div>
-                
-                <div className="mt-6 flex justify-end">
-                  <button 
-                    onClick={fetchPlan}
-                    disabled={isLoading}
-                    className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {isLoading ? (
-                      <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Kalkulasi...</>
-                    ) : (
-                      "Rencanakan Perjalanan"
-                    )}
-                  </button>
-                </div>
-             </InteractiveGlassCard>
-          </div>
-        </section>
+        <TrafficModuleNav />
 
-        {isLoading ? (
-          <section className="relative z-20 pb-16 min-h-[20vh] flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-              <p className="text-slate-500 font-medium animate-pulse">Menyiapkan rekomendasi rute...</p>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8 relative z-20 space-y-8">
+          
+          {/* Status Loading/Error */}
+          {isLoading && (
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl flex items-center gap-4 text-slate-600">
+              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <span className="font-bold">Mengambil rekomendasi waktu berangkat...</span>
             </div>
-          </section>
-        ) : error ? (
-          <section className="relative z-20 pb-16 min-h-[20vh] flex items-center justify-center">
-            <div className="p-6 rounded-2xl bg-red-50 border border-red-200 text-center">
-              <p className="text-red-500 font-medium">{error}</p>
+          )}
+
+          {error && !isLoading && (
+            <div className="bg-red-50 p-8 rounded-3xl border border-red-200 shadow-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+                <h3 className="font-bold text-red-900 text-lg">{error}</h3>
+              </div>
+              <p className="text-red-700 font-medium">Pastikan layanan backend RoadTierbers sedang berjalan.</p>
             </div>
-          </section>
-        ) : data ? (
-          <>
-            {/* 2. Main Recommendation Panel */}
-            <section className="relative z-20 pb-16">
-              <div className="mx-auto max-w-4xl px-4 sm:px-6">
-                <MotionSection direction="up" delay={0.3}>
-                  <InteractiveGlassCard intensity="strong" glow className="w-full p-8 sm:p-12 flex flex-col md:flex-row items-center gap-10 justify-between border-white rounded-[2.5rem] shadow-lg relative overflow-hidden">
-                    <div className="absolute bottom-0 right-0 w-80 h-80 bg-[#14B8A6]/5 blur-[80px] rounded-full pointer-events-none" />
+          )}
+
+          {!isLoading && !error && !hasData && (
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl text-center">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-bold text-[#0B1F3A] mb-2">Belum ada data monitoring</h3>
+              <p className="text-slate-500 font-medium">Sistem menunggu data dari hasil deteksi.</p>
+            </div>
+          )}
+
+          {/* 2. Main Departure Recommendation Panel */}
+          {!isLoading && !error && hasData && (
+            <ScrollReveal delay={0.1}>
+              <div className={`bg-white rounded-3xl border ${statusInfo.borderColor} shadow-xl shadow-slate-200/50 overflow-hidden`}>
+                <div className={`p-8 lg:p-10 ${statusInfo.bgStatus}`}>
+                  <div className="flex flex-col lg:flex-row justify-between gap-8 lg:gap-12">
                     
-                    <div className="flex-1 space-y-8 relative z-10 w-full">
-                      <div>
-                        <p className="text-sm font-bold text-[#0B1F3A]/60 uppercase tracking-widest mb-3">Rekomendasi Utama</p>
-                        <h2 className="text-4xl sm:text-5xl font-extrabold text-[#1D4ED8] tracking-tight">{statusInfo.rekomendasiUtama}</h2>
+                    {/* Recommendation Focus Area */}
+                    <div className="flex-1">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm mb-6">
+                        <div className={`w-2 h-2 rounded-full ${statusInfo.badgeBg} animate-pulse`} />
+                        <span className={`text-xs font-bold uppercase tracking-wider ${statusInfo.color}`}>{statusInfo.statusText}</span>
                       </div>
-                      
-                      <div className="p-5 rounded-2xl bg-blue-50/50 border border-blue-100 shadow-sm backdrop-blur-md flex items-start gap-4">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
-                          <span className="text-[#1D4ED8] font-bold text-sm">i</span>
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Alasan Singkat</p>
-                          <p className="text-sm font-medium text-slate-600 leading-relaxed">
-                            {statusInfo.alasanSingkat}
-                          </p>
-                        </div>
-                      </div>
+                      <h2 className={`text-3xl lg:text-4xl font-extrabold mb-4 tracking-tight ${statusInfo.color}`}>
+                        {statusInfo.rekomendasiUtama}
+                      </h2>
+                      <p className="text-slate-600 font-medium text-lg leading-relaxed max-w-2xl">
+                        {statusInfo.alasanSingkat}
+                      </p>
                     </div>
 
-                    <div className="flex flex-col gap-4 relative z-10 w-full md:w-auto min-w-[280px]">
-                      <div className="p-5 rounded-2xl bg-blue-600 text-white shadow-lg flex justify-between items-center">
-                        <p className="text-xs font-bold text-blue-200 uppercase tracking-widest">
-                          {timeMode === "tiba" ? "Jam Keberangkatan" : "Estimasi Tiba"}
+                    {/* Quick Metrics Grid */}
+                    <div className="lg:w-[400px] shrink-0 grid grid-cols-2 gap-4">
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Kondisi Jalan</p>
+                        <p className="text-xl font-extrabold text-[#0B1F3A] capitalize">
+                          {data?.congestion_category || "Belum tersedia"}
                         </p>
-                        <span className="text-2xl font-extrabold">{recommendedTime}</span>
                       </div>
-                      <div className="p-5 rounded-2xl bg-white/80 border border-white/80 shadow-sm backdrop-blur-md flex justify-between items-center">
-                        <p className="text-xs font-bold text-[#0B1F3A]/60 uppercase tracking-widest">Total Waktu Tempuh</p>
-                        <span className="text-sm font-extrabold text-[#0B1F3A]">{totalTravelTime} menit</span>
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Keterlambatan</p>
+                        <p className="text-xl font-extrabold text-[#0B1F3A]">
+                          {delayMinutes !== undefined ? `${delayMinutes} menit` : "Belum tersedia"}
+                        </p>
                       </div>
-                      <div className="p-5 rounded-2xl bg-white/80 border border-white/80 shadow-sm backdrop-blur-md flex justify-between items-center">
-                        <p className="text-xs font-bold text-[#0B1F3A]/60 uppercase tracking-widest">Estimasi Kemacetan</p>
-                        <span className="text-sm font-extrabold text-[#0B1F3A]">{delayMinutes} menit</span>
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Risiko</p>
+                        <p className={`text-lg font-extrabold ${statusInfo.color}`}>
+                          {statusInfo.riskLevel}
+                        </p>
                       </div>
-                      <div className="p-5 rounded-2xl bg-white/80 border border-white/80 shadow-sm backdrop-blur-md flex justify-between items-center">
-                        <p className="text-xs font-bold text-[#0B1F3A]/60 uppercase tracking-widest">Status Perjalanan</p>
-                        <span className={`text-sm font-bold px-3 py-1 rounded-full border ${statusInfo.color} ${statusInfo.bgStatus} ${statusInfo.borderColor}`}>{statusInfo.statusText}</span>
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Pembaruan</p>
+                        <p className="text-lg font-extrabold text-[#0B1F3A] truncate">
+                          {data?.departure_time || "Belum tersedia"}
+                        </p>
                       </div>
                     </div>
-                  </InteractiveGlassCard>
-                </MotionSection>
-              </div>
-            </section>
 
-            {/* 3. Decision Cards */}
-            <section className="relative z-10 pb-20">
-              <div className="mx-auto max-w-4xl px-4 sm:px-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  {statusInfo.decisions.map((item, i) => (
-                    <ScrollRevealRow key={i} direction="up" delay={item.delay} className="h-full">
-                      <InteractiveGlassCard intensity="medium" className="p-6 h-full border-white shadow-sm flex flex-col">
-                        <div className="flex-1">
-                          <p className="text-[11px] font-bold text-[#0B1F3A]/50 uppercase tracking-widest mb-3">{item.title}</p>
-                          <div className={`inline-flex items-center px-2.5 py-1 rounded-md border ${item.bgStatus} ${item.borderColor} mb-4`}>
-                            <span className={`text-[11px] font-bold uppercase tracking-widest ${item.statusColor}`}>{item.status}</span>
-                          </div>
-                        </div>
-                        <p className="text-sm font-medium text-slate-500 leading-relaxed mt-2">{item.helper}</p>
-                      </InteractiveGlassCard>
-                    </ScrollRevealRow>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* 4. Simple Time Option Flow */}
-            <section className="relative z-10 pb-20">
-              <div className="mx-auto max-w-4xl px-4 sm:px-6">
-                <ScrollRevealRow direction="up" delay={0.1}>
-                  <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white/80 p-8 shadow-sm">
-                    <h3 className="text-sm font-bold text-[#0B1F3A] mb-8 text-center sm:text-left">Pola Waktu Kedepan (Simulasi AI)</h3>
-                    
-                    <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-6 relative">
-                      {/* Connecting Line (Desktop) */}
-                      <div className="hidden sm:block absolute top-1/2 left-6 right-6 h-[2px] bg-slate-100 rounded-full -translate-y-1/2 z-0" />
-                      
-                      {/* Connecting Line (Mobile) */}
-                      <div className="sm:hidden absolute top-6 bottom-6 left-[22px] w-[2px] bg-slate-100 rounded-full z-0" />
-                      
-                      {statusInfo.polaWaktu.map((node, i) => (
-                        <div key={i} className="flex flex-row sm:flex-col items-center gap-4 sm:gap-3 relative z-10 bg-white/70 sm:bg-white/60 p-3 sm:px-4 sm:py-5 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-white/50 w-full sm:max-w-[140px] shadow-sm sm:shadow-none hover:shadow-md transition-shadow">
-                          <div className={`w-3.5 h-3.5 rounded-full ${node.color} ring-4 ${node.ring} shadow-sm shrink-0`} />
-                          <div className="flex flex-col sm:items-center w-full">
-                            <span className="text-xs font-bold text-[#0B1F3A]/60 sm:mb-1">{node.time}</span>
-                            <span className="text-sm sm:text-[11px] font-bold text-[#0B1F3A] sm:uppercase sm:tracking-widest">{node.label}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </ScrollRevealRow>
-              </div>
-            </section>
-          </>
-        ) : null}
-
-        {/* 5. Safety Guidance Section */}
-        <section className="relative z-10 pb-20">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6">
-            <ScrollRevealRow direction="left" delay={0.1}>
-              <div className="flex flex-col sm:flex-row gap-5 p-6 sm:p-8 rounded-3xl bg-[#F8FAFC] border border-slate-200 backdrop-blur-sm">
-                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                  <span className="text-slate-600 font-bold text-lg">!</span>
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-base font-bold text-[#0B1F3A]">Imbauan Keselamatan</h3>
-                  <div className="space-y-2 text-sm font-medium text-slate-600 leading-relaxed max-w-2xl">
-                    <p>Jika tetap harus berangkat, siapkan waktu tambahan dan hindari mengambil keputusan mendadak.</p>
-                    <p>Tetap patuhi rambu, jaga jarak aman, dan perhatikan kondisi sekitar.</p>
                   </div>
                 </div>
               </div>
-            </ScrollRevealRow>
-          </div>
-        </section>
+            </ScrollReveal>
+          )}
 
-        {/* 6. CTA Section */}
-        <section className="relative z-10 pb-12">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center space-y-8">
-            <ScrollRevealRow direction="up" delay={0.1}>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0B1F3A]">
-                Ingin memahami kondisi jalan lebih lengkap?
-              </h2>
-            </ScrollRevealRow>
-            
-            <ScrollRevealRow direction="up" delay={0.2} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/traffic-overview"
-                className="inline-flex items-center justify-center h-12 px-6 rounded-full bg-[#0B1F3A] text-white text-sm font-semibold hover:bg-[#142d52] transition-colors shadow-md"
-              >
-                Ringkasan Lalu Lintas
-              </Link>
-              <Link
-                href="/congestion-prediction"
-                className="inline-flex items-center justify-center h-12 px-6 rounded-full border border-slate-200 bg-white/80 backdrop-blur-md text-[#0B1F3A] text-sm font-semibold hover:bg-white transition-colors shadow-sm"
-              >
-                Prediksi Kemacetan
-              </Link>
-            </ScrollRevealRow>
+          {/* 3. Departure Options Section */}
+          {!isLoading && !error && hasData && (
+            <ScrollReveal delay={0.2}>
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 lg:p-8">
+                <h3 className="text-lg font-extrabold text-[#0B1F3A] mb-6 flex items-center gap-2">
+                  <CalendarClock className="w-5 h-5 text-blue-600" /> Pilihan waktu perjalanan
+                </h3>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[600px]">
+                    <thead>
+                      <tr className="border-b-2 border-slate-100">
+                        <th className="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider w-[20%]">Waktu</th>
+                        <th className="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider w-[25%]">Status</th>
+                        <th className="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider w-[20%]">Est. Keterlambatan</th>
+                        <th className="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider w-[35%]">Rekomendasi Singkat</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {[0, 15, 30, 45].map((offset, i) => {
+                        const isNow = offset === 0;
+                        const timeStr = getDisplayTime(offset);
+                        // If current offset, use real status. Otherwise show "Belum tersedia" to avoid faking data.
+                        const rowCat = isNow ? (data?.congestion_category || "Belum tersedia") : "Belum tersedia";
+                        const rowDelay = isNow ? (delayMinutes !== undefined ? `${delayMinutes} menit` : "Belum tersedia") : "Belum tersedia";
+                        const rowRec = isNow ? statusInfo.rekomendasiUtama : "Belum tersedia";
+                        const rowStyle = isNow ? statusInfo : getStatusInfo(null);
+                        
+                        return (
+                          <tr key={offset} className={`hover:bg-slate-50 transition-colors ${isNow ? 'bg-blue-50/30' : ''}`}>
+                            <td className="py-5 px-4">
+                              <span className={`font-bold ${isNow ? 'text-blue-700' : 'text-slate-700'}`}>{timeStr}</span>
+                            </td>
+                            <td className="py-5 px-4">
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold capitalize bg-slate-50 border border-slate-200 ${rowStyle.color}`}>
+                                {rowCat}
+                              </span>
+                            </td>
+                            <td className="py-5 px-4 font-bold text-[#0B1F3A] text-sm">
+                              {rowDelay}
+                            </td>
+                            <td className="py-5 px-4 text-sm font-medium text-slate-600">
+                              {rowRec}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </ScrollReveal>
+          )}
+
+          {/* 4 & 5. Info Sections */}
+          <div className="grid lg:grid-cols-2 gap-6 mt-8">
+            <ScrollReveal delay={0.3} className="h-full">
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-full">
+                <h3 className="text-sm font-extrabold text-[#0B1F3A] uppercase tracking-wider mb-6 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-blue-600" /> Konteks perjalanan
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm pb-4 border-b border-slate-100">
+                    <span className="font-medium text-slate-500">Area & Rute</span>
+                    <span className="font-bold text-[#0B1F3A]">Pekanbaru (Simpang SKA)</span>
+                  </div>
+                  <div className="flex justify-between text-sm pb-4 border-b border-slate-100">
+                    <span className="font-medium text-slate-500">Sumber data</span>
+                    <span className="font-bold text-[#0B1F3A]">Backend Prediksi AI</span>
+                  </div>
+                  <div className="flex justify-between text-sm pb-4 border-b border-slate-100">
+                    <span className="font-medium text-slate-500">Status sistem</span>
+                    <span className="font-bold text-teal-600">Online</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium text-slate-500">Pembaruan terakhir</span>
+                    <span className="font-bold text-[#0B1F3A]">{hasData && data?.departure_time ? data.departure_time : "Belum tersedia"}</span>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.4} className="h-full">
+              <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 shadow-sm h-full">
+                <h3 className="text-sm font-extrabold text-[#0B1F3A] uppercase tracking-wider mb-6 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-blue-600" /> Catatan Sebelum Berangkat
+                </h3>
+                <ul className="space-y-4 text-sm font-medium text-slate-700 leading-relaxed">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                    <span>Periksa kondisi jalan beberapa menit sebelum berangkat.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                    <span>Siapkan waktu tambahan jika melewati area padat.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                    <span>Tetap ikuti rambu dan arahan petugas di lapangan.</span>
+                  </li>
+                </ul>
+              </div>
+            </ScrollReveal>
           </div>
-        </section>
+
+          {/* 6. Supporting Links */}
+          <ScrollReveal delay={0.5}>
+            <div className="pt-10">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Lanjutkan dengan fitur terkait</p>
+              <div className="flex flex-wrap gap-4">
+                <Link href="/traffic-overview" className="group flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+                  <span className="text-sm font-bold text-[#0B1F3A] group-hover:text-blue-600 transition-colors">Pantauan lalu lintas</span>
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                </Link>
+                <Link href="/congestion-prediction" className="group flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+                  <span className="text-sm font-bold text-[#0B1F3A] group-hover:text-blue-600 transition-colors">Prediksi kemacetan</span>
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                </Link>
+                <Link href="/traffic-sign-education" className="group flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+                  <span className="text-sm font-bold text-[#0B1F3A] group-hover:text-blue-600 transition-colors">Edukasi rambu</span>
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                </Link>
+              </div>
+            </div>
+          </ScrollReveal>
+
+        </div>
       </div>
     </PublicPageShell>
   );

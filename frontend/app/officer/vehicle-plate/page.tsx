@@ -66,11 +66,7 @@ export default function OfficerVehiclePlatePage() {
   const platTidakJelasCount = data.plate_status_data.find((c: any) => c.name === "Tidak jelas")?.count || 0;
   const adminBermasalahCount = data.plate_status_data.find((c: any) => c.name === "Perlu periksa adm")?.count || 0;
 
-  // Latest mock items for visual preview based on actual first rows
-  const latestPlate1 = data.plates_list[0]?.plate || "BM ****";
-  const latestPlateType1 = data.plates_list[0]?.type || "Motor";
-  const latestPlate2 = data.plates_list[1]?.plate || "BM ****";
-  const latestPlateType2 = data.plates_list[1]?.type || "Mobil";
+
 
   return (
     <OfficerPageShell>
@@ -118,7 +114,7 @@ export default function OfficerVehiclePlatePage() {
                   <span className="text-2xl font-medium text-[#0B1F3A]">{data.total_vehicles} kendaraan</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Jumlah kendaraan dari database hari ini.
+                  Jumlah kendaraan dari data pemantauan hari ini.
                 </p>
               </div>
               
@@ -128,7 +124,7 @@ export default function OfficerVehiclePlatePage() {
                   <span className="text-2xl font-medium text-[#0B1F3A]">{data.total_plates} plat</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Plat yang berhasil terbaca oleh sistem dalam sample database.
+                  Plat yang berhasil terbaca oleh sistem dalam pemantauan.
                 </p>
               </div>
 
@@ -209,82 +205,7 @@ export default function OfficerVehiclePlatePage() {
           </div>
         </section>
 
-        {/* 5. Plate Reading Workspace */}
-        <section>
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col lg:flex-row gap-8">
-            
-            {/* Visual Plate Preview (CSS) */}
-            <div className="w-full lg:w-2/3">
-              <h2 className="text-base font-medium text-[#0B1F3A] mb-4">Preview Pembacaan (Tersamarkan)</h2>
-              <div className="relative w-full aspect-video bg-slate-100 rounded-xl border border-slate-200 overflow-hidden">
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,#e2e8f0_0%,#cbd5e1_100%)] opacity-30" />
-                
-                {/* Simulated Road */}
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-full border-x-2 border-dashed border-white/80 transform perspective-[800px] rotateX-[65deg]" />
-                
-                {/* Motor Bbox */}
-                <div className="absolute top-[35%] left-[25%] w-[18%] h-[35%] border-2 border-blue-500 bg-blue-500/10 rounded-sm">
-                  <div className="absolute -top-6 left-0 bg-blue-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap">
-                    {latestPlateType1}
-                  </div>
-                  {/* Plate Bbox */}
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-4/5 h-1/4 border-2 border-green-500 bg-white/90 rounded flex items-center justify-center">
-                    <span className="text-[10px] font-medium text-slate-800 tracking-wider">{latestPlate1}</span>
-                  </div>
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-green-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap rounded">
-                    Plat terbaca
-                  </div>
-                </div>
 
-                {/* Mobil Bbox */}
-                <div className="absolute top-[45%] left-[60%] w-[28%] h-[30%] border-2 border-blue-500 bg-blue-500/10 rounded-sm">
-                  <div className="absolute -top-6 left-0 bg-blue-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap">
-                    {latestPlateType2}
-                  </div>
-                  {/* Plate Bbox (Needs validation) */}
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1/2 h-1/4 border-2 border-amber-500 bg-white/90 rounded flex items-center justify-center">
-                    <span className="text-[10px] font-medium text-slate-800 tracking-wider">{latestPlate2}</span>
-                  </div>
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-medium px-1.5 py-0.5 whitespace-nowrap rounded">
-                    Perlu validasi
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Current Reading Summary */}
-            <div className="w-full lg:w-1/3 flex flex-col justify-center">
-              <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 h-full flex flex-col justify-center space-y-4">
-                <h3 className="text-base font-medium text-[#0B1F3A] mb-2 border-b border-slate-200 pb-2">Rangkuman Kamera</h3>
-                
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 uppercase">Sumber</p>
-                    <p className="text-sm font-medium text-[#0B1F3A]">Kamera Simpang SKA</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 uppercase">Waktu Sample</p>
-                    <p className="text-sm font-medium text-[#0B1F3A]">Terbaru dari database</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 uppercase">Kualitas Pembacaan</p>
-                    <p className="text-sm font-medium text-amber-600">Cukup jelas</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 uppercase">Status Validasi</p>
-                    <p className="text-sm font-medium text-amber-600">Perlu pemeriksaan petugas</p>
-                  </div>
-                  <div className="pt-2 border-t border-slate-200">
-                    <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                      Catatan: Beberapa plat masih perlu dicek ulang secara visual karena terpengaruh sudut kamera dan kondisi jalan.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </section>
 
         {/* 6. Plate Monitoring Table */}
         <section>
@@ -353,39 +274,7 @@ export default function OfficerVehiclePlatePage() {
           {/* Validation Notice & 9. Recommended Actions */}
           <div className="space-y-8 flex flex-col">
             
-            {/* Validation Notice */}
-            <div className="p-6 rounded-2xl bg-blue-50 border border-blue-200 shadow-sm flex flex-col">
-              <h2 className="text-base font-medium text-[#0B1F3A] mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">!</span>
-                Validasi Petugas Tetap Diperlukan
-              </h2>
-              <ul className="space-y-3 mt-2">
-                <li className="flex gap-3">
-                  <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                  <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                    Sistem membantu membaca plat dari sample pemantauan.
-                  </p>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                  <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                    Plat ditampilkan dalam bentuk <strong>tersamarkan</strong> untuk menjaga keamanan data.
-                  </p>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                  <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                    Status administrasi pada halaman ini merupakan simulasi prototype.
-                  </p>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                  <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                    Petugas tetap perlu melakukan verifikasi sebelum tindak lanjut resmi.
-                  </p>
-                </li>
-              </ul>
-            </div>
+
 
             {/* Recommended Officer Actions */}
             <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col flex-1">

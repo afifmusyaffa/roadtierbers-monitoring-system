@@ -1,7 +1,7 @@
 export const reportKpis = [
-  { label: "Kendaraan Terpantau", value: "86", unit: "Kendaraan", color: "text-[#1D4ED8]", helper: "Total dari sample pemantauan." },
+  { label: "Kendaraan Terpantau", value: "86", unit: "Kendaraan", color: "text-[#1D4ED8]", helper: "Total dari data pemantauan." },
   { label: "Plat Tersamarkan", value: "74", unit: "Data", color: "text-teal-600", helper: "Data plat yang disensor." },
-  { label: "Pelanggaran Dominan", value: "Tanpa helm", unit: "", color: "text-amber-600", helper: "Kategori tertinggi pada sample." },
+  { label: "Pelanggaran Dominan", value: "Tanpa helm", unit: "", color: "text-amber-600", helper: "Kategori tertinggi pada sistem." },
   { label: "Area Risiko Tinggi", value: "3", unit: "Area", color: "text-red-600", helper: "Perlu prioritas tindak lanjut." },
   { label: "Prediksi Kemacetan", value: "32", unit: "Menit", color: "text-blue-600", helper: "Estimasi di Simpang SKA." },
   { label: "Rekomendasi Aktif", value: "4", unit: "Tindakan", color: "text-[#0B1F3A]", helper: "Tindakan operasional petugas." },
@@ -9,9 +9,9 @@ export const reportKpis = [
 
 export const reportRows = [
   { cat: "Kendaraan", res: "Kendaraan terpantau", count: "86", risk: "Sedang", val: "Ditinjau", note: "Volume meningkat menuju siang" },
-  { cat: "Pelanggaran", res: "Tanpa helm", count: "24", risk: "Tinggi", val: "Perlu validasi", note: "Kategori dominan pada sample" },
-  { cat: "Pelanggaran", res: "Bonceng >2", count: "8", risk: "Sedang", val: "Perlu validasi", note: "Periksa konteks visual" },
-  { cat: "Plat", res: "Plat tersamarkan perlu pemeriksaan", count: "5", risk: "Tinggi", val: "Perlu validasi", note: "Tidak menampilkan data asli" },
+  { cat: "Pelanggaran", res: "Tanpa helm", count: "24", risk: "Tinggi", val: "Ditinjau", note: "Kategori dominan sistem" },
+  { cat: "Pelanggaran", res: "Bonceng >2", count: "8", risk: "Sedang", val: "Ditinjau", note: "Periksa konteks visual" },
+  { cat: "Plat", res: "Plat tersamarkan perlu pemeriksaan", count: "5", risk: "Tinggi", val: "Ditinjau", note: "Tidak menampilkan data asli" },
   { cat: "Forecasting", res: "Kemacetan 32 menit", count: "1", risk: "Tinggi", val: "Ditinjau", note: "Antisipasi periode siang" },
   { cat: "Area", res: "Simpang SKA", count: "1", risk: "Tinggi", val: "Ditinjau", note: "Area prioritas petugas" },
 ];

@@ -108,7 +108,7 @@ export default function OfficerSmartInsightPage() {
                   <span className="text-xl font-medium text-[#0B1F3A]">Kepadatan meningkat</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Volume kendaraan naik dari database riil hari ini.
+                  Volume kendaraan naik dari data pemantauan hari ini.
                 </p>
               </div>
               
@@ -118,7 +118,7 @@ export default function OfficerSmartInsightPage() {
                   <span className="text-xl font-medium text-amber-600">{dominantViolationText}</span>
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Kategori ini paling sering muncul dalam database.
+                  Kategori ini paling sering muncul dalam pemantauan sistem.
                 </p>
               </div>
 
@@ -153,9 +153,8 @@ export default function OfficerSmartInsightPage() {
             {[
               { label: "Area Prioritas", value: data.area_prioritas_count, unit: "Area", color: "text-[#0B1F3A]", helper: "Butuh pengawasan lebih." },
               { label: "Risiko Tinggi", value: data.risiko_tinggi_count, unit: "Kategori", color: "text-red-600", helper: "Perlu segera ditangani." },
-              { label: "Pelanggaran Dominan", value: data.dominant_violation, unit: "", color: "text-amber-600", helper: "Berdasarkan sample AI database." },
+              { label: "Pelanggaran Dominan", value: data.dominant_violation, unit: "", color: "text-amber-600", helper: "Berdasarkan data deteksi sistem AI." },
               { label: "Prediksi Kemacetan", value: data.prediksi_kemacetan_minutes, unit: "Menit", color: "text-red-600", helper: "Maksimal antrean diprediksi." },
-              { label: "Kasus Perlu Validasi", value: data.kasus_perlu_validasi, unit: "Kasus", color: "text-blue-600", helper: "Menunggu verifikasi manual." },
               { label: "Rekomendasi Utama", value: data.rekomendasi_aktif_count, unit: "Tindakan", color: "text-teal-600", helper: "Tindak lanjut yang disarankan." },
             ].map((kpi, i) => (
               <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
