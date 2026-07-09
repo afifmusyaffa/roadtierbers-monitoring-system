@@ -70,6 +70,68 @@ export default function OfficerReportPage() {
     document.body.removeChild(link);
   };
 
+  const handleExportPdf = () => {
+    // Get the element to print
+    const element = document.getElementById("laporan-pdf-content");
+    if (!element) return;
+
+    // Create a wrapper for printing
+    const printWrapper = document.createElement("div");
+    printWrapper.id = "print-area-wrapper";
+    printWrapper.innerHTML = element.innerHTML;
+    document.body.appendChild(printWrapper);
+
+    // Create style tag to override print display
+    const style = document.createElement("style");
+    style.id = "print-style-override";
+    style.innerHTML = `
+      @media print {
+        /* Hide everything */
+        body * {
+          visibility: hidden !important;
+          background: none !important;
+        }
+        /* Except the print area wrapper and its children */
+        #print-area-wrapper, #print-area-wrapper * {
+          visibility: visible !important;
+        }
+        #print-area-wrapper {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          display: block !important;
+          background: white !important;
+          padding: 20px !important;
+        }
+        /* Layout adjustments for print format */
+        .rounded-2xl {
+          border-radius: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+        table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+        }
+        th, td {
+          border-bottom: 1px solid #cbd5e1 !important;
+          padding: 12px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Run window print
+    window.print();
+
+    // Clean up print elements after printing starts
+    setTimeout(() => {
+      printWrapper.remove();
+      style.remove();
+    }, 1000);
+  };
+
   if (loading) {
     return (
       <OfficerPageShell>
@@ -99,9 +161,11 @@ export default function OfficerReportPage() {
         <ReportHeaderBar data={data} />
         <ReportStatusSummary data={data} />
         <ReportKpiGrid kpis={data.kpi_list} />
-        <ReportControlPanel onExportCsv={handleExportCsv} />
-        <ReportPreviewPanel data={data} />
-        <ReportDetailTable rows={data.report_rows} />
+        <ReportControlPanel onExportCsv={handleExportCsv} onExportPdf={handleExportPdf} />
+        <div id="laporan-pdf-content" className="space-y-10">
+          <ReportPreviewPanel data={data} />
+          <ReportDetailTable rows={data.report_rows} />
+        </div>
         <ValidationChecklistPanel />
         <ReportDisclaimerPanel />
         <ReportQuickNavigation />
