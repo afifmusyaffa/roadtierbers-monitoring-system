@@ -15,6 +15,7 @@ interface ForecastData {
   total_travel_time?: number;
   risk_level?: string;
   congestion_category?: string;
+  estimated_arrival?: string | null;
   busiest_hour_summary?: {
     jam_terpadat: string;
     tundaan_puncak: number;

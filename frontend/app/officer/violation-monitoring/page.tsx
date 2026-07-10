@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
+import { OfficerDisclaimer } from "@/components/officer/officer-disclaimer";
 import { StatusBadge } from "@/components/common";
 import { ViolationTrendChart, ViolationCompositionChart } from "@/components/charts/officer-violation-charts";
+import { apiUrl } from "@/lib/api";
 
 export default function OfficerViolationMonitoringPage() {
   const [data, setData] = useState<any>(null);
@@ -14,8 +15,7 @@ export default function OfficerViolationMonitoringPage() {
   useEffect(() => {
     async function fetchData(isSilent = false) {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? (window.location.protocol === "https:" ? `https://${window.location.host}/api` : `http://${window.location.hostname}:8001`) : "http://127.0.0.1:8000");
-        const res = await fetch(`${apiUrl}/violations/summary`);
+        const res = await fetch(apiUrl("/violations/summary"));
         const json = await res.json();
         if (json.status === "success") {
           setData(json.data);
@@ -223,7 +223,7 @@ export default function OfficerViolationMonitoringPage() {
           <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm overflow-hidden flex flex-col">
             <h2 className="text-lg font-medium text-[#0B1F3A] mb-6">Daftar Indikasi Kasus</h2>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[800px]">
+              <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-200">
                     <th className="p-4 text-sm font-medium text-slate-600 uppercase tracking-wider">Waktu</th>
@@ -255,88 +255,7 @@ export default function OfficerViolationMonitoringPage() {
           </div>
         </section>
 
-        {/* 7 & 8. Validation Notice and Recommended Actions */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Validation Notice */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-blue-50 border border-blue-200 shadow-sm flex flex-col">
-            <h2 className="text-base font-medium text-[#0B1F3A] mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">!</span>
-              Validasi Petugas Tetap Diperlukan
-            </h2>
-            <ul className="space-y-3 mt-2">
-              <li className="flex gap-3">
-                <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                  Sistem membantu mengelompokkan indikasi pelanggaran dari sample pemantauan.
-                </p>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                  Petugas perlu memeriksa ulang konteks visual untuk konfirmasi akhir.
-                </p>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-blue-500 mt-1 text-[10px]">■</span>
-                <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                  Hasil belum menjadi keputusan resmi tanpa verifikasi petugas.
-                </p>
-              </li>
-            </ul>
-          </div>
-
-          {/* Recommended Actions */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-            <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Rekomendasi Tindakan</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { title: "Validasi Kasus Tanpa Helm", desc: "Prioritaskan kategori dominan hari ini." },
-                { title: "Pantau Simpang SKA", desc: "Area dengan indikasi risiko tertinggi saat ini." },
-                { title: "Cek Plate Monitoring", desc: "Arahkan pelanggaran plat/pajak ke modul spesifik.", link: "/officer/vehicle-plate" },
-                { title: "Siapkan Laporan", desc: "Rekap data pelanggaran yang sudah tervalidasi.", link: "/officer/report" },
-              ].map((action, i) => (
-                <div key={i} className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-[#0B1F3A] mb-1">{action.title}</p>
-                    <p className="text-sm font-normal text-slate-600 mb-3">{action.desc}</p>
-                  </div>
-                  {action.link && (
-                    <Link href={action.link} className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors mt-auto">
-                      Buka Halaman →
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 9. Quick Navigation */}
-        <section>
-          <h2 className="text-base font-medium text-[#0B1F3A] mb-4">Navigasi Operasional</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: "Pusat Deteksi AI", href: "/officer/ai-detection", helper: "Lihat hasil analisis deteksi visual" },
-              { label: "Plate Monitoring", href: "/officer/vehicle-plate", helper: "Pantau indikasi pajak bermasalah" },
-              { label: "Riwayat Deteksi", href: "/officer/history", helper: "Lihat log aktivitas sebelumnya" },
-              { label: "Buat Laporan", href: "/officer/report", helper: "Unduh rekapitulasi data" },
-            ].map((action, i) => (
-              <Link
-                key={i}
-                href={action.href}
-                className="flex flex-col p-5 rounded-2xl bg-[#0B1F3A] border border-[#142d52] hover:bg-[#142d52] transition-colors shadow-sm group h-full"
-              >
-                <h3 className="text-sm font-medium text-white mb-2">{action.label}</h3>
-                <p className="text-xs font-normal text-blue-200/70 leading-relaxed mb-6 flex-1">{action.helper}</p>
-                <div className="mt-auto pt-4 border-t border-white/10 flex justify-between items-center text-xs font-medium text-white/50 group-hover:text-blue-400 transition-colors">
-                  <span>Buka Menu</span>
-                  <span>→</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <OfficerDisclaimer />
 
       </div>
     </OfficerPageShell>

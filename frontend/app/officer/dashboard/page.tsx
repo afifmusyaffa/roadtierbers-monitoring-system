@@ -1,29 +1,326 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
-import { TrafficVolumeChart, ViolationDistributionChart } from "@/components/charts/officer-dashboard-charts";
+import { KpiCard } from "@/components/officer/kpi-card";
+import { OfficerPageHeader } from "@/components/officer/officer-page-header";
+import { OfficerDisclaimer } from "@/components/officer/officer-disclaimer";
 import { StatusBadge } from "@/components/common";
+import { apiUrl } from "@/lib/api";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+} from "recharts";
+
+// ── Type definitions ────────────────────────────────────────────────────────
+
+interface VolumeDataPoint {
+  time: string;
+  "Volume Kendaraan": number;
+}
+
+interface ViolationDataPoint {
+  name: string;
+  count: number;
+  color: string;
+}
+
+interface DashboardData {
+  total_detections_today: number;
+  total_violations_today: number;
+  total_vehicles: number;
+  dominant_violation: string;
+  volume_data: VolumeDataPoint[];
+  violation_data: ViolationDataPoint[];
+  system_status: string;
+  traffic_condition: string;
+  violation_risk: string;
+}
+
+// ── Small inline chart components with compact heights ──────────────────────
+
+function CompactVolumeChart({ data }: { data: VolumeDataPoint[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-44 text-sm text-slate-400">
+        Belum ada data volume.
+      </div>
+    );
+  }
+  return (
+    <div className="w-full h-44">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={data}
+          margin={{ top: 4, right: 16, left: -20, bottom: 0 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="#e2e8f0"
+          />
+          <XAxis
+            dataKey="time"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#94a3b8", fontSize: 11 }}
+            dy={6}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#94a3b8", fontSize: 11 }}
+          />
+          <Tooltip
+            contentStyle={{
+              borderRadius: "10px",
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 2px 8px rgb(0 0 0 / 0.08)",
+              padding: "10px 14px",
+              fontSize: "13px",
+            }}
+            labelStyle={{ fontWeight: 600, color: "#0f172a" }}
+          />
+          <Line
+            type="monotone"
+            dataKey="Volume Kendaraan"
+            stroke="#1d4ed8"
+            strokeWidth={2.5}
+            dot={false}
+            activeDot={{ r: 5, fill: "#1d4ed8", stroke: "#fff", strokeWidth: 2 }}
+            isAnimationActive={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function CompactViolationChart({ data }: { data: ViolationDataPoint[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-36 text-sm text-slate-400">
+        Belum ada data pelanggaran.
+      </div>
+    );
+  }
+  return (
+    <div className="w-full h-36">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 0, right: 16, left: 4, bottom: 0 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            horizontal={false}
+            stroke="#e2e8f0"
+          />
+          <XAxis
+            type="number"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#94a3b8", fontSize: 11 }}
+          />
+          <YAxis
+            dataKey="name"
+            type="category"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#334155", fontSize: 11, fontWeight: 500 }}
+            width={90}
+          />
+          <Tooltip
+            cursor={{ fill: "#f1f5f9" }}
+            contentStyle={{
+              borderRadius: "10px",
+              border: "1px solid #e2e8f0",
+              padding: "10px 14px",
+              fontSize: "13px",
+            }}
+            formatter={(value) => [`${value} Kasus`, "Jumlah"]}
+          />
+          <Bar
+            dataKey="count"
+            radius={[0, 4, 4, 0]}
+            isAnimationActive={false}
+            barSize={22}
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ── Status row item ─────────────────────────────────────────────────────────
+
+function StatusItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+        {label}
+      </span>
+      <StatusBadge status={value} />
+    </div>
+  );
+}
+
+// ── Recent detections table/card ────────────────────────────────────────────
+
+interface HistoryRow {
+  time: string;
+  loc: string;
+  cat: string;
+  res: string;
+  count: string;
+  risk: string;
+  val: string;
+}
+
+function RecentDetectionsDesktop({ rows }: { rows: HistoryRow[] }) {
+  if (rows.length === 0) {
+    return (
+      <p className="text-sm text-slate-400 py-6 text-center">
+        Belum ada data deteksi terbaru.
+      </p>
+    );
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left">
+        <thead>
+          <tr className="border-b border-slate-100">
+            {["Waktu", "Kategori", "Hasil", "Jumlah", "Risiko", "Status"].map(
+              (h) => (
+                <th
+                  key={h}
+                  className="pb-2 pr-4 text-[11px] font-semibold uppercase tracking-widest text-slate-400 whitespace-nowrap"
+                >
+                  {h}
+                </th>
+              )
+            )}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
+          {rows.slice(0, 5).map((row, i) => (
+            <tr key={i} className="hover:bg-slate-50/60 transition-colors">
+              <td className="py-2.5 pr-4 text-[12px] text-slate-500 whitespace-nowrap">
+                {row.time}
+              </td>
+              <td className="py-2.5 pr-4 text-[12px] font-medium text-slate-700 whitespace-nowrap">
+                {row.cat}
+              </td>
+              <td className="py-2.5 pr-4 text-[12px] text-slate-600 whitespace-nowrap">
+                {row.res}
+              </td>
+              <td className="py-2.5 pr-4 text-[12px] text-slate-600">
+                {row.count}
+              </td>
+              <td className="py-2.5 pr-4">
+                <StatusBadge status={row.risk} />
+              </td>
+              <td className="py-2.5 text-[12px] text-slate-500">
+                {row.val}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RecentDetectionsMobile({ rows }: { rows: HistoryRow[] }) {
+  if (rows.length === 0) {
+    return (
+      <p className="text-sm text-slate-400 py-4 text-center">
+        Belum ada data deteksi terbaru.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {rows.slice(0, 3).map((row, i) => (
+        <div
+          key={i}
+          className="flex items-start justify-between gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100"
+        >
+          <div className="min-w-0">
+            <p className="text-[12px] font-semibold text-slate-700 truncate">
+              {row.cat}
+            </p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {row.time} · {row.count}
+            </p>
+          </div>
+          <StatusBadge status={row.risk} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Main Page Component ─────────────────────────────────────────────────────
 
 export default function OfficerDashboardPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [recentRows, setRecentRows] = useState<HistoryRow[]>([]);
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      const res = await fetch(apiUrl("/history/list?limit=5"));
+      const json = await res.json();
+      if (json.status === "success" && Array.isArray(json.data?.historyRows)) {
+        setRecentRows(json.data.historyRows.slice(0, 5));
+      }
+    } catch {
+      // Non-critical — don't block dashboard on history failure
+    }
+  }, []);
 
   useEffect(() => {
-    async function fetchData(isSilent = false) {
+    async function fetchDashboard(isSilent = false) {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? (window.location.protocol === "https:" ? `https://${window.location.host}/api` : `http://${window.location.hostname}:8001`) : "http://127.0.0.1:8000");
-        const res = await fetch(`${apiUrl}/dashboard/summary`);
+        const res = await fetch(apiUrl("/dashboard/summary"));
         const json = await res.json();
         if (json.status === "success") {
           setData(json.data);
           setError("");
+          setLastUpdated(
+            new Date().toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })
+          );
         } else if (!isSilent) {
-          setError(json.message || "Gagal mengambil data dari server");
+          setError(json.message || "Gagal mengambil data dari server.");
         }
-      } catch (err) {
+      } catch {
         if (!isSilent) {
           setError("Koneksi ke backend gagal.");
         }
@@ -33,286 +330,260 @@ export default function OfficerDashboardPage() {
         }
       }
     }
-    fetchData(false);
-    const interval = setInterval(() => fetchData(true), 5000);
-    return () => clearInterval(interval);
-  }, []);
 
+    fetchDashboard(false);
+    fetchHistory();
+    const interval = setInterval(() => fetchDashboard(true), 5000);
+    return () => clearInterval(interval);
+  }, [fetchHistory]);
+
+  // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
     return (
       <OfficerPageShell>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-500 font-medium animate-pulse">Menghubungkan ke server AI...</p>
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-7 h-7 border-4 border-[#1D4ED8] border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-slate-400 animate-pulse">
+              Menghubungkan ke server…
+            </p>
           </div>
         </div>
       </OfficerPageShell>
     );
   }
 
+  // ── Error state ────────────────────────────────────────────────────────────
   if (error || !data) {
     return (
       <OfficerPageShell>
-        <div className="flex items-center justify-center min-h-[60vh] text-red-500">
-          <p>{error || "Data kosong"}</p>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center space-y-3">
+            <p className="text-sm font-medium text-red-600">
+              {error || "Data tidak tersedia."}
+            </p>
+            <p className="text-xs text-slate-400">
+              Pastikan backend FastAPI berjalan di port 8000.
+            </p>
+          </div>
         </div>
       </OfficerPageShell>
     );
   }
 
+  const lastUpdatedLabel = lastUpdated
+    ? `Diperbarui ${lastUpdated}`
+    : undefined;
+
   return (
     <OfficerPageShell>
-      <div className="max-w-7xl mx-auto space-y-10 pb-12">
-        
-        {/* 1. Monitoring Header Bar */}
-        <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-slate-200">
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-[#0B1F3A]">
-              Dashboard Monitoring Petugas
-            </h1>
-            <p className="text-base font-normal text-slate-600 leading-relaxed max-w-2xl">
-              Pantauan operasional untuk membaca kondisi lalu lintas, pelanggaran, prediksi, dan tindak lanjut petugas.
-            </p>
-          </div>
-          <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl shrink-0">
-            <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Mode:</span> Data Real-time (API)
-            </p>
-            <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Area:</span> Simpang SKA, Pekanbaru
-            </p>
-            <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Update:</span> Live
-            </p>
+      <div className="max-w-7xl mx-auto space-y-5 pb-10">
+
+        {/* ── Page Header ─────────────────────────────────────────────── */}
+        <OfficerPageHeader
+          title="Dashboard Monitoring"
+          badge={{ label: "Operasional", tone: "blue" }}
+          lastUpdated={lastUpdatedLabel}
+          description="Pantauan KPI real-time lalu lintas dan pelanggaran hari ini."
+          compact
+        />
+
+        {/* ── Row 1: 4 Primary KPI Cards ──────────────────────────────── */}
+        <section
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+          aria-label="KPI Utama"
+        >
+          <KpiCard
+            title="Total Deteksi"
+            value={data.total_detections_today.toLocaleString("id-ID")}
+            helper="Analisis CCTV hari ini"
+            tone="blue"
+            unit="kali"
+          />
+          <KpiCard
+            title="Total Pelanggaran"
+            value={data.total_violations_today.toLocaleString("id-ID")}
+            helper="Kasus terkonfirmasi"
+            tone="red"
+            unit="kasus"
+            href="/officer/violation-monitoring"
+          />
+          <KpiCard
+            title="Kendaraan Terpantau"
+            value={data.total_vehicles.toLocaleString("id-ID")}
+            helper="Volume terdeteksi hari ini"
+            tone="cyan"
+            unit="unit"
+          />
+          <KpiCard
+            title="Pelanggaran Dominan"
+            value={data.dominant_violation || "—"}
+            helper="Jenis paling sering"
+            tone="amber"
+            isText
+          />
+        </section>
+
+        {/* ── Row 2: Status strip ─────────────────────────────────────── */}
+        <section
+          className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 rounded-xl bg-white border border-slate-100 shadow-sm"
+          aria-label="Status Operasional"
+        >
+          <StatusItem label="Sistem" value={data.system_status} />
+          <span className="hidden sm:block w-px h-4 bg-slate-200" />
+          <StatusItem label="Kondisi Lalu Lintas" value={data.traffic_condition} />
+          <span className="hidden sm:block w-px h-4 bg-slate-200" />
+          <StatusItem label="Risiko Pelanggaran" value={data.violation_risk} />
+          <span className="hidden sm:block w-px h-4 bg-slate-200" />
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+              Area
+            </span>
+            <span className="text-[12px] font-medium text-slate-600">
+              Simpang SKA, Pekanbaru
+            </span>
           </div>
         </section>
 
-        {/* 2. Live Monitoring Summary */}
-        <section>
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col relative overflow-hidden">
-            <div className="absolute top-0 right-1/4 w-64 h-64 bg-[#1D4ED8]/5 blur-[60px] rounded-full pointer-events-none" />
-            
-            <h2 className="text-lg font-medium text-[#0B1F3A] mb-6 relative z-10">
-              Ringkasan Situasi Saat Ini
-            </h2>
+        {/* ── Row 3: Charts (2/3) + Side Panel (1/3) ─────────────────── */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 divide-y md:divide-y-0 md:divide-x divide-slate-200">
-              
-              <div className="flex flex-col space-y-2 md:pr-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Status Sistem</p>
-                <div className="flex items-center pt-1 pb-2">
-                  <StatusBadge status={data.system_status as string} className="px-4 py-1.5 text-sm" />
-                </div>
-                <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Sistem berjalan normal.
-                </p>
-              </div>
-              
-              <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Kondisi Lalu Lintas</p>
-                <div className="flex items-center pt-1 pb-2">
-                  <StatusBadge status={data.traffic_condition as string} className="px-4 py-1.5 text-sm" />
-                </div>
-                <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Kondisi arus di lapangan.
-                </p>
-              </div>
+          {/* Charts column */}
+          <div className="lg:col-span-2 space-y-4">
 
-              <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:pl-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Risiko Pelanggaran</p>
-                <div className="flex items-center pt-1 pb-2">
-                  <StatusBadge status={data.violation_risk as string} className="px-4 py-1.5 text-sm" />
-                </div>
-                <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Tingkat deteksi risiko saat ini.
-                </p>
+            {/* Traffic volume chart */}
+            <div className="rounded-xl bg-white border border-slate-100 shadow-sm p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-[#0B1F3A]">
+                  Tren Volume Kendaraan
+                </h2>
+                <span className="text-[11px] text-slate-400">Per jam hari ini</span>
               </div>
-
+              <CompactVolumeChart data={data.volume_data} />
             </div>
-          </div>
-        </section>
 
-        {/* 3. Monitoring KPI Grid */}
-        <section>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { 
-                label: "Total Deteksi", 
-                value: data.total_detections_today.toLocaleString('id-ID'), 
-                color: "text-[#1D4ED8]",
-                helper: "Analisis kamera CCTV hari ini."
-              },
-              { 
-                label: "Total Pelanggaran", 
-                value: data.total_violations_today.toLocaleString('id-ID'), 
-                color: "text-red-600",
-                helper: "Kasus terkonfirmasi."
-              },
-              { 
-                label: "Kendaraan Aktif", 
-                value: data.total_vehicles.toLocaleString('id-ID'), 
-                color: "text-[#14B8A6]",
-                helper: "Estimasi volume terdeteksi."
-              },
-              { 
-                label: "Pelanggaran Dominan", 
-                value: data.dominant_violation, 
-                color: "text-amber-600", 
-                isText: true,
-                helper: "Kasus paling sering terjadi."
-              },
-              { 
-                label: "Tren Data", 
-                value: data.volume_data.length > 0 ? "Aktif" : "Menunggu",
-                unit: "", 
-                color: "text-blue-600",
-                helper: "Tangkapan deret waktu."
-              },
-              { 
-                label: "Sumber AI", 
-                value: "YOLOv8",
-                unit: "", 
-                color: "text-purple-600",
-                helper: "Engine pendeteksi utama."
-              },
-            ].map((metric, i) => (
-              <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{metric.label}</p>
-                <div className="mb-4">
-                  <span className={`${metric.isText ? 'text-xl' : 'text-4xl'} font-medium ${metric.color} tracking-tight`}>
-                    {metric.value}
-                  </span>
-                  {metric.unit && <span className="text-base font-medium text-slate-500 ml-2">{metric.unit}</span>}
-                </div>
-                <div className="mt-auto pt-4 border-t border-slate-100">
-                  <p className="text-sm font-normal text-slate-500">{metric.helper}</p>
-                </div>
+            {/* Violation distribution chart */}
+            <div className="rounded-xl bg-white border border-slate-100 shadow-sm p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-[#0B1F3A]">
+                  Komposisi Pelanggaran
+                </h2>
+                <Link
+                  href="/officer/violation-monitoring"
+                  className="text-[11px] text-[#1D4ED8] hover:underline"
+                >
+                  Detail →
+                </Link>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 4. Main Monitoring Workspace */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column (Charts) */}
-          <div className="lg:col-span-2 space-y-8">
-            <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-              <h2 className="text-lg font-medium text-[#0B1F3A] mb-6">Grafik Pemantauan Aktual</h2>
-              
-              <div className="space-y-10">
-                <div>
-                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Tren Volume Kendaraan</h3>
-                  <TrafficVolumeChart data={data.volume_data} />
-                  <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                      Grafik di atas menunjukkan akumulasi kendaraan yang ditangkap secara periodik hari ini oleh kamera Simpang SKA.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-8 border-t border-slate-200">
-                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Komposisi Pelanggaran</h3>
-                  <ViolationDistributionChart data={data.violation_data} />
-                  <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                      Sebaran kategori pelanggaran yang paling banyak dilakukan berdasarkan ekstraksi AI YOLO terbaru.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* 7. Recent Detection Activity */}
-            <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm overflow-hidden flex flex-col">
-              <h2 className="text-lg font-medium text-[#0B1F3A] mb-6">Akses Cepat Halaman Petugas</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-                {[
-                  { 
-                    label: "Mulai Deteksi AI", 
-                    href: "/officer/ai-detection",
-                    helper: "Buka halaman utama deteksi kamera."
-                  },
-                  { 
-                    label: "Lihat Forecasting", 
-                    href: "/officer/forecasting",
-                    helper: "Periksa detail prediksi volume & kemacetan."
-                  },
-                  { 
-                    label: "Cek Riwayat Deteksi", 
-                    href: "/officer/history",
-                    helper: "Lihat data riwayat operasional."
-                  },
-                  { 
-                    label: "Buat Laporan", 
-                    href: "/officer/report",
-                    helper: "Cetak atau unduh hasil monitoring."
-                  },
-                ].map((action, i) => (
-                  <Link
-                    key={i}
-                    href={action.href}
-                    className="flex flex-col p-6 rounded-2xl bg-[#0B1F3A] border border-[#142d52] hover:bg-[#142d52] transition-colors shadow-md group h-full"
-                  >
-                    <h3 className="text-base font-medium text-white mb-2">{action.label}</h3>
-                    <p className="text-sm font-normal text-blue-200/70 leading-relaxed mb-6 flex-1">{action.helper}</p>
-                    <div className="mt-auto pt-4 border-t border-white/10 flex justify-between items-center text-sm font-medium text-white/50 group-hover:text-blue-400 transition-colors">
-                      <span>Buka Menu</span>
-                      <span>→</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <CompactViolationChart data={data.violation_data} />
             </div>
           </div>
 
-          {/* Right Column (Priority, Actions) */}
-          <div className="lg:col-span-1 space-y-8">
-            
-            {/* Right: Area Monitoring Priority */}
-            <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-              <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Prioritas Area (Simpang SKA)</h2>
-              <div className="space-y-4">
-                {[
-                  { area: "Kamera Utama (Tengah)", status: data.traffic_condition, note: "Pusat pantauan." },
-                  { area: "Kamera Utara (Jl. Tuanku Tambusai)", status: "Lancar", note: "Pantauan sekunder." },
-                  { area: "Kamera Selatan (Jl. Soekarno Hatta)", status: "Lancar", note: "Pantauan sekunder." },
-                  { area: "Kamera Timur (Arah Sudirman)", status: "Lancar", note: "Pantauan sekunder." },
-                ].map((loc, i) => (
-                  <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-sm font-medium text-[#0B1F3A]">{loc.area}</p>
-                      <StatusBadge status={loc.status} />
-                    </div>
-                    <p className="text-sm font-normal text-slate-600">{loc.note}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Side panel column */}
+          <div className="lg:col-span-1 space-y-4">
 
-            {/* 8. Recommended Officer Actions */}
-            <div className="p-6 rounded-2xl bg-blue-50/50 backdrop-blur-xl border border-blue-200 shadow-sm flex flex-col">
-              <h2 className="text-base font-medium text-[#0B1F3A] mb-5 flex items-center gap-2">
-                Rekomendasi Tindakan
+            {/* Area priority */}
+            <div className="rounded-xl bg-white border border-slate-100 shadow-sm p-4">
+              <h2 className="text-sm font-semibold text-[#0B1F3A] mb-3">
+                Prioritas Area Pantauan
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {[
-                  { title: "Prioritaskan Area Padat", desc: "Pantau Simpang SKA jika data real-time menunjukkan peningkatan kepadatan secara eksponensial." },
-                  { title: `Pantau Pelanggaran ${data.dominant_violation}`, desc: "Fokus pada deteksi dominan yang sering terjadi hari ini berdasarkan statistik AI." },
-                  { title: "Cek Log Riwayat", desc: "Verifikasi visual di menu Riwayat Deteksi untuk anomali yang mencurigakan." },
-                ].map((action, i) => (
-                  <div key={i} className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
-                    <p className="text-sm font-medium text-[#0B1F3A] mb-1">{action.title}</p>
-                    <p className="text-sm font-normal text-slate-600 leading-relaxed">{action.desc}</p>
+                  {
+                    area: "Kamera Utama (Tengah)",
+                    status: data.traffic_condition,
+                  },
+                  { area: "Kamera Utara (Jl. Tuanku Tambusai)", status: "Lancar" },
+                  { area: "Kamera Selatan (Jl. Soekarno Hatta)", status: "Lancar" },
+                  { area: "Kamera Timur (Arah Sudirman)", status: "Lancar" },
+                ].map((loc, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between gap-2 py-1.5 border-b border-slate-50 last:border-0"
+                  >
+                    <p className="text-[12px] text-slate-600 leading-tight min-w-0 truncate">
+                      {loc.area}
+                    </p>
+                    <StatusBadge status={loc.status} />
                   </div>
                 ))}
               </div>
             </div>
 
+            {/* Operational focus */}
+            <div className="rounded-xl bg-[#0B1F3A] border border-[#142d52] shadow-sm p-4">
+              <h2 className="text-sm font-semibold text-white mb-3">
+                Fokus Operasional
+              </h2>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0 mt-1.5" />
+                  <p className="text-[12px] text-blue-200/80 leading-snug">
+                    Pantau dominasi{" "}
+                    <span className="text-white font-medium">
+                      {data.dominant_violation}
+                    </span>{" "}
+                    hari ini.
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0 mt-1.5" />
+                  <p className="text-[12px] text-blue-200/80 leading-snug">
+                    Validasi visual riwayat deteksi terbaru.
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0 mt-1.5" />
+                  <p className="text-[12px] text-blue-200/80 leading-snug">
+                    Cek forecasting untuk antisipasi jam padat.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex gap-2 flex-wrap">
+                <Link
+                  href="/officer/ai-detection"
+                  className="text-[11px] font-medium text-cyan-300 hover:text-cyan-200 transition-colors"
+                >
+                  Buka Deteksi AI →
+                </Link>
+                <Link
+                  href="/officer/forecasting"
+                  className="text-[11px] font-medium text-cyan-300 hover:text-cyan-200 transition-colors"
+                >
+                  Forecasting →
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
 
+        {/* ── Row 4: Recent Detections ─────────────────────────────────── */}
+        <section className="rounded-xl bg-white border border-slate-100 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-[#0B1F3A]">
+              Deteksi Terbaru
+            </h2>
+            <Link
+              href="/officer/history"
+              className="text-[11px] text-[#1D4ED8] hover:underline"
+            >
+              Lihat semua →
+            </Link>
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block">
+            <RecentDetectionsDesktop rows={recentRows} />
+          </div>
+
+          {/* Mobile card stack */}
+          <div className="sm:hidden">
+            <RecentDetectionsMobile rows={recentRows} />
+          </div>
+        </section>
+
+        {/* ── Disclaimer ───────────────────────────────────────────────── */}
+        <OfficerDisclaimer />
       </div>
     </OfficerPageShell>
   );

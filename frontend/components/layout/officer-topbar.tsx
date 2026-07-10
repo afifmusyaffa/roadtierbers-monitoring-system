@@ -22,7 +22,7 @@ export function OfficerTopbar() {
   });
 
   return (
-    <header className="sticky top-0 z-40 w-full h-14 flex items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shrink-0">
+    <header className="hidden lg:flex sticky top-0 z-40 w-full h-14 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shrink-0">
       {/* Left: page title */}
       <div className="flex items-center gap-3">
         <p className="text-sm font-semibold text-slate-800 tracking-tight">
