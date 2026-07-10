@@ -7,7 +7,7 @@ interface OfficerPageHeaderProps {
     label: string;
     tone?: "blue" | "green" | "red" | "amber" | "slate";
   };
-  lastUpdated?: string | null;
+  lastUpdated?: string | Date | null;
   /** Optional action element (button, link) on the right side */
   action?: React.ReactNode;
   /** Compact mode reduces vertical padding */
@@ -32,6 +32,10 @@ export function OfficerPageHeader({
 }: OfficerPageHeaderProps) {
   const badgeTone = badge?.tone ?? "blue";
 
+  const lastUpdatedText = lastUpdated instanceof Date
+    ? `Diperbarui ${lastUpdated.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB`
+    : lastUpdated;
+
   return (
     <div
       className={cn(
@@ -52,10 +56,10 @@ export function OfficerPageHeader({
               {badge.label}
             </span>
           )}
-          {lastUpdated && (
+          {lastUpdatedText && (
             <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-              {lastUpdated}
+              {lastUpdatedText}
             </span>
           )}
         </div>

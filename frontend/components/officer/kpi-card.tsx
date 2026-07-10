@@ -58,6 +58,7 @@ interface KpiCardProps {
   href?: string;
   /** Whether the value is long text (smaller font) */
   isText?: boolean;
+  className?: string;
 }
 
 function KpiCardContent({
@@ -119,15 +120,19 @@ function KpiCardContent({
   );
 }
 
-export function KpiCard({ href, ...props }: KpiCardProps) {
+export function KpiCard({ href, className, ...props }: KpiCardProps) {
   if (href) {
     return (
-      <Link href={href} className="block h-full group">
+      <Link href={href} className={cn("block h-full group", className)}>
         <div className="h-full transition-shadow group-hover:shadow-md">
           <KpiCardContent {...props} />
         </div>
       </Link>
     );
   }
-  return <KpiCardContent {...props} />;
+  return (
+    <div className={className}>
+      <KpiCardContent {...props} />
+    </div>
+  );
 }

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
+import { OfficerPageHeader } from "@/components/officer/officer-page-header";
 import { OfficerDisclaimer } from "@/components/officer/officer-disclaimer";
+import { KpiCard } from "@/components/officer/kpi-card";
 import { StatusBadge } from "@/components/common";
 import { ViolationTrendChart, ViolationCompositionChart } from "@/components/charts/officer-violation-charts";
 import { apiUrl } from "@/lib/api";
@@ -11,6 +13,7 @@ export default function OfficerViolationMonitoringPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
     async function fetchData(isSilent = false) {
@@ -20,6 +23,7 @@ export default function OfficerViolationMonitoringPage() {
         if (json.status === "success") {
           setData(json.data);
           setError("");
+          setLastUpdated(new Date());
         } else if (!isSilent) {
           setError(json.message || "Gagal mengambil data dari server");
         }
@@ -69,160 +73,86 @@ export default function OfficerViolationMonitoringPage() {
 
   return (
     <OfficerPageShell>
-      <div className="max-w-7xl mx-auto space-y-10 pb-12">
+      <div className="max-w-7xl mx-auto space-y-8 pb-12">
         
-        {/* 1. Monitoring Header Bar */}
-        <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-slate-200">
-          <div className="space-y-2">
-            <span className="inline-flex items-center gap-2.5 rounded-full border border-red-200 bg-red-50/80 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-red-700">
-              Violation Monitoring
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-[#0B1F3A]">
-              Monitoring Pelanggaran
-            </h1>
-            <p className="text-base font-normal text-slate-600 leading-relaxed max-w-2xl">
-              Pantauan pelanggaran lalu lintas dari sample pemantauan untuk membantu petugas membaca risiko dan menentukan tindak lanjut.
-            </p>
-          </div>
-          <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl shrink-0">
-            <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Mode:</span> Data Real-time (API)
-            </p>
-            <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Area:</span> Pekanbaru
-            </p>
-            <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Validasi:</span> Perlu pemeriksaan petugas
-            </p>
-          </div>
-        </section>
+        <OfficerPageHeader
+          title="Monitoring Pelanggaran"
+          description="Pantauan pelanggaran lalu lintas dari sample pemantauan untuk membantu petugas membaca risiko dan menentukan tindak lanjut."
+          badge={{ label: "Violation Monitoring", tone: "red" }}
+          lastUpdated={lastUpdated}
+          compact
+        />
 
-        {/* 2. Violation Status Summary */}
+        {/* 2. KPI Monitoring Grid */}
         <section>
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col relative overflow-hidden">
-            <div className="absolute top-0 right-1/4 w-64 h-64 bg-red-500/5 blur-[60px] rounded-full pointer-events-none" />
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 divide-y md:divide-y-0 md:divide-x divide-slate-200">
-              
-              <div className="flex flex-col space-y-2 md:pr-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Total Pelanggaran</p>
-                <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-[#0B1F3A]">{data.total_violations_today} Kasus</span>
-                </div>
-                <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Jumlah indikasi pelanggaran dari data pemantauan hari ini.
-                </p>
-              </div>
-              
-              <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Risiko Dominan</p>
-                <div className="flex items-center pt-1 pb-2">
-                  <StatusBadge status={data.total_violations_today > 30 ? "Tinggi" : "Sedang"} className="px-4 py-1.5 text-sm" />
-                </div>
-                <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Beberapa kategori perlu diprioritaskan petugas.
-                </p>
-              </div>
-
-              <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:pl-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Pelanggaran Terbanyak</p>
-                <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-[#0B1F3A]">{dominantViolation}</span>
-                </div>
-                <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Kategori ini paling sering muncul dalam pemantauan sistem.
-                </p>
-              </div>
-
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <KpiCard
+              title="Pelanggaran Hari Ini"
+              value={`${data.total_violations_today} Kasus`}
+              tone="red"
+              helper="Total indikasi pelanggaran"
+            />
+            <KpiCard
+              title="Kasus Perlu Validasi"
+              value={`${data.kasus_perlu_validasi} Kasus`}
+              tone="amber"
+              helper="Pemeriksaan visual tertunda"
+            />
+            <KpiCard
+              title="Area Risiko Tinggi"
+              value={`${data.area_risiko_tinggi} Area`}
+              tone="cyan"
+              helper="Tingkat prioritas operasional"
+              className="col-span-2 lg:col-span-1"
+            />
           </div>
         </section>
-
-        {/* 3. KPI Monitoring Grid */}
+        {/* 3. Charts Section */}
         <section>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { label: "Tanpa Helm", value: helmCount, unit: "Kasus", color: "text-amber-600", helper: "Mendominasi pelanggaran hari ini." },
-              { label: "Bonceng Lebih Dari 2", value: boncengCount, unit: "Kasus", color: "text-teal-600", helper: "Mulai meningkat siang ini." },
-              { label: "Plat/Pajak Mati", value: platPajakCount, unit: "Kasus", color: "text-[#1D4ED8]", helper: "Terdeteksi dari pemindaian ANPR." },
-            ].map((kpi, i) => (
-              <div key={i} className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-3">{kpi.label}</p>
-                <div className="mb-4">
-                  <span className={`text-4xl font-medium ${kpi.color} tracking-tight`}>
-                    {kpi.value}
-                  </span>
-                  {kpi.unit && <span className="text-base font-medium text-slate-500 ml-2">{kpi.unit}</span>}
-                </div>
-                <div className="mt-auto pt-4 border-t border-slate-100">
-                  <p className="text-sm font-normal text-slate-500">{kpi.helper}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 4. Charts Section & Area Priority Panel */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Charts (Left Column) */}
-          <div className="lg:col-span-2 space-y-8">
-            <div className="p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
-              <h2 className="text-lg font-medium text-[#0B1F3A] mb-6">Grafik Pelanggaran</h2>
-              
-              <div className="space-y-10">
-                <div>
-                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Tren Pelanggaran per Jam</h3>
-                  <ViolationTrendChart data={data.trend_data} />
-                  <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                      Indikasi pelanggaran meningkat menuju siang. Petugas perlu memprioritaskan validasi pada jam padat.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-8 border-t border-slate-200">
-                  <h3 className="text-base font-medium text-[#0B1F3A] mb-2">Komposisi Jenis Pelanggaran</h3>
-                  <ViolationCompositionChart data={data.composition_data} />
-                  <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <p className="text-sm font-normal text-slate-700 leading-relaxed">
-                      Tanpa helm mendominasi total indikasi pelanggaran. Area rawan seperti Simpang SKA perlu diawasi khusus.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 5. Area Priority Panel (Right Column) */}
-          <div className="lg:col-span-1 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col h-full">
-              <h2 className="text-base font-medium text-[#0B1F3A] mb-5">Prioritas Area</h2>
-              <div className="space-y-4">
-                {[
-                  { area: "Simpang SKA (Utara)", risk: "Tinggi", note: "Tanpa helm dominan pada lajur kiri.", focus: "Fokus edukasi helm" },
-                  { area: "Simpang SKA (Barat)", risk: "Sedang", note: "Kepadatan antrean lajur lambat dekat mall.", focus: "Pantau antrean" },
-                  { area: "Simpang SKA (Selatan)", risk: "Sedang", note: "Boncengan lebih dari 2 orang meningkat.", focus: "Teguran visual" },
-                ].map((loc, i) => (
-                  <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-sm font-medium text-[#0B1F3A]">{loc.area}</p>
-                      <StatusBadge status={loc.risk} />
-                    </div>
-                    <p className="text-sm font-normal text-slate-600 mb-2">{loc.note}</p>
-                    <p className="text-xs font-medium text-blue-600">↳ {loc.focus}</p>
-                  </div>
-                ))}
+              <h3 className="text-sm font-medium text-[#0B1F3A] mb-4">Tren Indikasi Pelanggaran</h3>
+              <div className="h-44">
+                <ViolationTrendChart data={data.trend_data} />
+              </div>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col h-full">
+              <h3 className="text-sm font-medium text-[#0B1F3A] mb-4">Komposisi Kasus (Hari Ini)</h3>
+              <div className="h-44">
+                <ViolationCompositionChart data={data.composition_data} />
               </div>
             </div>
           </div>
         </section>
 
-        {/* 6. Violation Case Table */}
+        {/* 4. Violation Case Table */}
         <section>
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm overflow-hidden flex flex-col">
-            <h2 className="text-lg font-medium text-[#0B1F3A] mb-6">Daftar Indikasi Kasus</h2>
-            <div className="overflow-x-auto">
+          <div className="p-6 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col">
+            <h2 className="text-sm font-medium text-[#0B1F3A] mb-4">Daftar Kasus Membutuhkan Validasi</h2>
+            
+            {/* Mobile View: Cards */}
+            <div className="grid grid-cols-1 gap-3 md:hidden">
+              {data.cases_list.slice(0, 5).map((row: any, i: number) => (
+                <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-2">
+                  <div className="flex justify-between items-start">
+                    <span className="text-xs font-medium text-slate-500">{row.time}</span>
+                    <StatusBadge status={row.risk} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#0B1F3A]">{row.type}</p>
+                    <p className="text-xs text-slate-600">{row.loc}</p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                    <span className="text-xs font-medium text-amber-600">{row.val}</span>
+                    <span className="text-xs font-medium text-slate-700">{row.count} kasus</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-200">
@@ -236,7 +166,7 @@ export default function OfficerViolationMonitoringPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {data.cases_list.map((row: any, i: number) => (
+                  {data.cases_list.slice(0, 10).map((row: any, i: number) => (
                     <tr key={i} className="hover:bg-slate-50 transition-colors">
                       <td className="p-4 text-sm font-medium text-slate-500">{row.time}</td>
                       <td className="p-4 text-sm font-medium text-[#0B1F3A]">{row.loc}</td>

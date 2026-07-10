@@ -3,21 +3,19 @@
 import { useEffect, useState } from "react";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
 import {
-  ReportHeaderBar,
-  ReportStatusSummary,
-  ReportKpiGrid,
   ReportControlPanel,
   ReportPreviewPanel,
-  ReportDetailTable,
-  ValidationChecklistPanel,
-  ReportDisclaimerPanel,
-  ReportQuickNavigation
+  ReportDetailTable
 } from "@/components/officer/report/report-components";
+import { OfficerPageHeader } from "@/components/officer/officer-page-header";
+import { OfficerDisclaimer } from "@/components/officer/officer-disclaimer";
+import { KpiCard } from "@/components/officer/kpi-card";
 
 export default function OfficerReportPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
     async function fetchData() {
@@ -27,6 +25,7 @@ export default function OfficerReportPage() {
         const json = await res.json();
         if (json.status === "success") {
           setData(json.data);
+          setLastUpdated(new Date());
         } else {
           setError(json.message || "Gagal mengambil data laporan");
         }
@@ -197,20 +196,57 @@ export default function OfficerReportPage() {
     );
   }
 
+  const totalDetections = data ? data.total_data_masuk : 0;
+  const totalViolations = data ? data.total_violations : 0;
+
   return (
     <OfficerPageShell>
-      <div className="max-w-7xl mx-auto space-y-10 pb-12">
-        <ReportHeaderBar data={data} />
-        <ReportStatusSummary data={data} />
-        <ReportKpiGrid kpis={data.kpi_list} />
+      <div className="max-w-7xl mx-auto space-y-8 pb-12">
+        
+        <OfficerPageHeader
+          title="Laporan Monitoring Petugas"
+          description="Rangkuman hasil pemantauan lalu lintas, pelanggaran, plat tersamarkan, forecasting, dan rekomendasi tindak lanjut untuk kebutuhan dokumentasi petugas."
+          badge={{ label: "Officer Report", tone: "blue" }}
+          lastUpdated={lastUpdated}
+          compact
+        />
+
+        <section>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <KpiCard
+              title="Total Data Masuk"
+              value={`${totalDetections}`}
+              unit="Data"
+              tone="blue"
+              helper="Dari pemantauan hari ini"
+            />
+            <KpiCard
+              title="Pelanggaran Terdeteksi"
+              value={`${totalViolations}`}
+              unit="Kasus"
+              tone="amber"
+              helper="Indikasi masuk ke sistem"
+            />
+            <KpiCard
+              title="Status Laporan"
+              value="Draft"
+              isText
+              tone="blue"
+              className="col-span-2 lg:col-span-1"
+              helper="Perlu pemeriksaan petugas"
+            />
+          </div>
+        </section>
+
         <ReportControlPanel onExportCsv={handleExportCsv} onExportExcel={handleExportExcel} onExportPdf={handleExportPdf} />
-        <div id="laporan-pdf-content" className="space-y-10">
+        
+        <div id="laporan-pdf-content" className="space-y-8">
           <ReportPreviewPanel data={data} />
           <ReportDetailTable rows={data.report_rows} />
         </div>
-        <ValidationChecklistPanel />
-        <ReportDisclaimerPanel />
-        <ReportQuickNavigation />
+        
+        <OfficerDisclaimer />
+
       </div>
     </OfficerPageShell>
   );
