@@ -492,7 +492,7 @@ export default function TrafficSignEducationPage() {
   };
 
   // True class mapping preserved securely
-  const rawDetectionName = detectionResult?.name ?? detectionResult?.class ?? detectionResult?.class_id ?? detectionResult?.id ?? detectionResult?.label ?? detectionResult?.class_name ?? detectionResult?.className;
+  const rawDetectionName = detectionResult?.class ?? detectionResult?.class_id ?? detectionResult?.name ?? detectionResult?.id ?? detectionResult?.label ?? detectionResult?.class_name ?? detectionResult?.className;
   const signId = rawDetectionName != null ? String(rawDetectionName) : null;
   const currentInfo = signId 
     ? TRAFFIC_SIGN_DIRECTORY.find(s => String(s.yolo_index) === signId) 

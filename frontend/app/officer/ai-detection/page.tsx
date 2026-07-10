@@ -98,7 +98,7 @@ export default function OfficerAIDetectionPage() {
   const fetchDetection = async (blob: Blob) => {
     const formData = new FormData();
     formData.append("file", new File([blob], "video_frame.jpg", { type: "image/jpeg" }));
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? (window.location.protocol === "https:" ? `https://${window.location.host}/api` : `http://${window.location.hostname}:8001`) : "http://127.0.0.1:8000");
     const res = await fetch(`${apiUrl}/detection/analyze-all`, {
       method: "POST",
       body: formData,

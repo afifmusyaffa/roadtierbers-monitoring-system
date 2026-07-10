@@ -534,13 +534,15 @@ export default function CongestionPredictionPage() {
                           </p>
                         </div>
                           <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Estimasi Tiba</p>
-                            <p className="text-2xl font-extrabold text-[#0B1F3A]">
-                              {data?.estimated_arrival || "Belum tersedia"}
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Jam Terpadat</p>
+                            <p className="text-4xl font-normal text-[#0B1F3A] mb-2">
+                              {data?.busiest_hour_summary?.jam_terpadat || "-"}
                             </p>
-                            <p className="text-xs text-slate-500 mt-1">
-                              Berangkat: {formatMinutes(timeRangeStart)}
-                            </p>
+                            {data?.busiest_hour_summary?.volume && (
+                              <span className="inline-flex items-center px-2 py-0.5 bg-[#e5f5ea] text-[#16a34a] text-xs font-semibold rounded-full">
+                                {data.busiest_hour_summary.volume}
+                              </span>
+                            )}
                           </div>
                       </div>
 
@@ -549,36 +551,7 @@ export default function CongestionPredictionPage() {
                 </div>
               )}
 
-              {data?.busiest_hour_summary && (
-                <div className="mt-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <h3 className="text-xs font-bold text-[#0B1F3A] uppercase tracking-wider mb-6">
-                    Ringkasan Kondisi Jam Paling Sibuk
-                  </h3>
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex gap-12">
-                      <div>
-                        <p className="text-sm font-medium text-slate-500 mb-1">Jam Terpadat</p>
-                        <p className="text-4xl font-normal text-slate-700 mb-2">{data.busiest_hour_summary.jam_terpadat}</p>
-                        {data.busiest_hour_summary.volume && (
-                          <span className="inline-flex items-center px-2 py-0.5 bg-[#e5f5ea] text-[#16a34a] text-xs font-semibold rounded-full">
-                            {data.busiest_hour_summary.volume}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-500 mb-1">Tundaan Puncak</p>
-                        <p className="text-4xl font-normal text-slate-700">{data.busiest_hour_summary.tundaan_puncak} Menit</p>
-                      </div>
-                    </div>
-                    <div className="text-center md:mr-10">
-                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status</p>
-                      <p className={`text-3xl font-bold uppercase tracking-tight ${data.busiest_hour_summary.status.includes('MACET') ? 'text-[#7f1d1d]' : 'text-slate-700'}`}>
-                        {data.busiest_hour_summary.status}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+
 
             </ScrollReveal>
           )}
