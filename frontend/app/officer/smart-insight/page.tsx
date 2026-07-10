@@ -67,7 +67,7 @@ export default function OfficerSmartInsightPage() {
       <div className="max-w-7xl mx-auto space-y-10 pb-12">
         
         {/* 1. Insight Header Bar */}
-        <section className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-6 border-b border-slate-200">
+        <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-slate-200">
           <div className="space-y-2">
             <span className="inline-flex items-center gap-2.5 rounded-full border border-teal-200 bg-teal-50/80 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-teal-700">
               Smart Insight
@@ -79,7 +79,7 @@ export default function OfficerSmartInsightPage() {
               Ringkasan analisis kondisi lalu lintas, risiko pelanggaran, area prioritas, dan rekomendasi tindakan untuk membantu petugas membaca situasi.
             </p>
           </div>
-          <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl">
+          <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl shrink-0">
             <p className="text-xs font-medium text-slate-500">
               <span className="text-slate-400">Mode:</span> Data Real-time (API)
             </p>
