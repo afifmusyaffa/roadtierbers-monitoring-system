@@ -94,7 +94,7 @@ export default function CongestionPredictionPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? `http://${window.location.hostname}:8001` : "http://127.0.0.1:8000");
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? (window.location.protocol === "https:" ? `https://${window.location.host}/api` : `http://${window.location.hostname}:8001`) : "http://127.0.0.1:8000");
       
       const queryParams = new URLSearchParams({
         origin: "Simpang SKA",

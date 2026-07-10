@@ -87,7 +87,7 @@ export default function DepartureRecommendationPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? `http://${window.location.hostname}:8001` : "http://127.0.0.1:8000");
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? (window.location.protocol === "https:" ? `https://${window.location.host}/api` : `http://${window.location.hostname}:8001`) : "http://127.0.0.1:8000");
       // Keep defaults to preserve API compatibility
       const response = await fetch(`${apiUrl}/forecasting/plan?origin=Simpang SKA&destination=Bandara SSK II&time_mode=berangkat&target_time=08:00&weather=Cerah`);
       
