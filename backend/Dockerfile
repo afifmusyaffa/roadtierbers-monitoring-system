@@ -23,6 +23,9 @@ ENV OMP_NUM_THREADS=2 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
+# Upgrade pip dulu (menghindari notice & bantu resolusi versi)
+RUN pip install --no-cache-dir --upgrade pip
+
 # Install torch versi CPU-only lebih dulu dari index resmi PyTorch.
 # Ini memangkas ukuran (tanpa CUDA) & mempercepat build di server tanpa GPU.
 RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \

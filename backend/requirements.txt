@@ -1,16 +1,28 @@
 # ============================================================
-# OMNI-ROAD Backend - requirements.txt
-# Dibersihkan: hapus duplikat (sebelumnya seluruh daftar tertulis 2x).
-# Dependency berat yang WAJIB (dipakai kode):
-#   - torch/torchvision  -> dipakai ultralytics YOLO & models/forecasting_kendaraan.py (import torch langsung)
-#   - ultralytics        -> models/detect_all.py (deteksi YOLO)
-#   - tensorflow         -> models/forecasting_kel8.py & kel9.py (LSTM .keras)
-#   - onnxruntime/onnx   -> model kendaraan .onnx
-#   - scikit-learn/joblib-> load scaler .pkl/.joblib
-#   - google-generativeai-> fitur assistant (butuh env GEMINI_API_KEY)
+# requirements.txt - Backend RoadTierbers Monitoring System
+# ============================================================
+# CATATAN KOMPATIBILITAS - jangan naikkan versi sembarangan:
+#   onnxruntime 1.27.0 butuh   : protobuf>=4.25.8
+#   numpy 1.26.4               : dibutuhkan scikit-learn 1.3.2 & opencv 4.10
+#   opencv 4.10.0.84           : cocok numpy 1.x (opencv 5 minta numpy>=2)
+#
+# TENSORFLOW SENGAJA DIHAPUS (v4):
+#   CPU server produksi TIDAK punya instruksi AVX (hanya SSE2).
+#   Binary resmi TensorFlow wajib AVX -> import tensorflow membuat
+#   proses mati seketika: "Illegal instruction (core dumped)".
+#   Model LSTM kel8 & kel9 (.keras) telah dikonversi ke bobot .npz+.json
+#   (tools/export_lstm_weights.py) dan dijalankan dengan NumPy murni
+#   (models/lstm_numpy.py). Hasil identik (parity check < 1e-7).
+#   JANGAN menambahkan kembali tensorflow ke file ini.
+#
+# Riwayat perbaikan deploy:
+#   v2 : numpy 2.2.6 -> 1.26.4 ; opencv 5.0.0.93 -> 4.10.0.84
+#   v3 : protobuf 7.35.1 -> 4.25.8 (bentrok tensorflow<5 vs onnxruntime>=4.25.8)
+#   v4 : tensorflow & ml_dtypes DIHAPUS (CPU server tanpa AVX);
+#        LSTM kel8/kel9 pindah ke runtime NumPy (lstm_numpy.py)
 # ============================================================
 
-# --- Web framework ---
+# --- Web framework / API ---
 fastapi==0.139.0
 uvicorn==0.50.2
 starlette==1.3.1
@@ -22,23 +34,21 @@ pydantic_core==2.46.4
 SQLAlchemy==2.0.51
 greenlet==3.5.3
 
-# --- Computer Vision / YOLO ---
+# --- Deep learning: YOLO / PyTorch / ONNX ---
 ultralytics==8.4.90
 ultralytics-thop==2.0.20
 torch==2.12.1
 torchvision==0.27.1
-opencv-python==5.0.0.93
-onnxruntime==1.23.2
+opencv-python==4.10.0.84
+onnxruntime==1.27.0
 onnx
 
-# --- Forecasting (LSTM) ---
-tensorflow==2.15.0
-ml_dtypes
+# --- ML klasik (scaler .pkl/.joblib) ---
 scikit-learn==1.3.2
 joblib==1.3.2
 
-# --- Data / numerik ---
-numpy==2.2.6
+# --- Numerik & visualisasi ---
+numpy==1.26.4
 polars==1.42.1
 polars-runtime-32==1.42.1
 matplotlib==3.10.9
@@ -49,11 +59,11 @@ kiwisolver==1.5.0
 pyparsing==3.3.2
 pillow==12.3.0
 
-# --- AI Assistant ---
+# --- Gemini API ---
 google-generativeai
 python-dotenv
 
-# --- Utilitas & dependency transitif ---
+# --- Utilitas & dependency terkunci hasil freeze ---
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.14.1
@@ -73,7 +83,7 @@ mpmath==1.3.0
 networkx==3.4.2
 nvidia-ml-py==13.610.43
 packaging==26.2
-protobuf==7.35.1
+protobuf==4.25.8
 psutil==7.2.2
 python-dateutil==2.9.0.post0
 pytz==2026.2

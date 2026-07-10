@@ -1,0 +1,44 @@
+{
+ "input_shape": [
+  21,
+  5
+ ],
+ "layers": [
+  {
+   "type": "lstm",
+   "units": 64,
+   "activation": "tanh",
+   "recurrent_activation": "sigmoid",
+   "return_sequences": true,
+   "weights": [
+    "l0_W",
+    "l0_U",
+    "l0_b"
+   ]
+  },
+  {
+   "type": "lstm",
+   "units": 32,
+   "activation": "tanh",
+   "recurrent_activation": "sigmoid",
+   "return_sequences": false,
+   "weights": [
+    "l1_W",
+    "l1_U",
+    "l1_b"
+   ]
+  },
+  {
+   "type": "dropout",
+   "weights": []
+  },
+  {
+   "type": "dense",
+   "activation": "linear",
+   "weights": [
+    "l3_W",
+    "l3_b"
+   ]
+  }
+ ]
+}

@@ -12,7 +12,7 @@ export function OfficerPageShell({ children }: OfficerPageShellProps) {
       <OfficerSidebar />
       <div className="flex flex-col flex-1 min-w-0">
         <OfficerTopbar />
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
       <OfficerFloatingAssistant />
     </div>
