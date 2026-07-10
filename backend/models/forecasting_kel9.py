@@ -115,7 +115,22 @@ def get_onehot_vector(weather, origin, destination):
     if f"dest_{destination}" in onehot_dict: onehot_dict[f"dest_{destination}"] = 1
     return [onehot_dict[col] for col in onehot_cols]
 
+_WEATHER_ALIASES = {
+    "cerah": "Cerah", "berawan": "Berawan", "mendung": "Berawan",
+    "hujan ringan": "Hujan Ringan", "gerimis": "Hujan Ringan",
+    "hujan deras": "Hujan Deras", "hujan lebat": "Hujan Deras", "hujan": "Hujan Deras",
+    "berkabut": "Berkabut/Asap", "kabut": "Berkabut/Asap", "asap": "Berkabut/Asap",
+    "berkabut/asap": "Berkabut/Asap",
+}
+
+def _normalize_weather(w):
+    """Samakan input cuaca apa pun (beda kapital/sinonim) dengan kategori training."""
+    if not w:
+        return w
+    return _WEATHER_ALIASES.get(str(w).strip().lower(), w)
+
 def predict_congestion(origin, destination, weather, temp_c, target_hour_str, current_date, yolo_history=None):
+    weather = _normalize_weather(weather)
     """
     yolo_history: dictionary berisi data YOLO per jam, e.g. {8: 500, 9: 750}
     """

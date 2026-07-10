@@ -398,8 +398,9 @@ export default function CongestionPredictionPage() {
                         <option>Tidak diketahui</option>
                         <option>Cerah</option>
                         <option>Berawan</option>
-                        <option>Hujan ringan</option>
-                        <option>Hujan deras</option>
+                        <option>Hujan Ringan</option>
+                        <option>Hujan Deras</option>
+                        <option>Berkabut/Asap</option>
                       </select>
                     </div>
                     <div>

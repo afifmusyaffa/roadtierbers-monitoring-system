@@ -342,6 +342,12 @@ export default function TrafficSignEducationPage() {
   const startCamera = async () => {
     setCameraError(null);
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError(window.isSecureContext === false
+          ? "Kamera diblokir browser karena halaman diakses lewat HTTP. Buka situs versi HTTPS, atau gunakan tab Unggah Foto."
+          : "Browser/perangkat ini tidak mendukung akses kamera. Gunakan tab Unggah Foto.");
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -492,7 +498,7 @@ export default function TrafficSignEducationPage() {
   };
 
   // True class mapping preserved securely
-  const rawDetectionName = detectionResult?.class ?? detectionResult?.class_id ?? detectionResult?.name ?? detectionResult?.id ?? detectionResult?.label ?? detectionResult?.class_name ?? detectionResult?.className;
+  const rawDetectionName = detectionResult?.name ?? detectionResult?.class_name ?? detectionResult?.className ?? detectionResult?.label ?? detectionResult?.class ?? detectionResult?.class_id ?? detectionResult?.id;
   const signId = rawDetectionName != null ? String(rawDetectionName) : null;
   const currentInfo = signId 
     ? TRAFFIC_SIGN_DIRECTORY.find(s => String(s.yolo_index) === signId) 
