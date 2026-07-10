@@ -29,6 +29,7 @@ export const OFFICER_ROUTE_GROUPS: OfficerRouteGroup[] = [
       { label: "Pusat Deteksi AI", path: "/officer/ai-detection" },
       { label: "Monitoring Pelanggaran", path: "/officer/violation-monitoring" },
       { label: "Kendaraan & Plat", path: "/officer/vehicle-plate" },
+      { label: "Peta Arus Lalu Lintas", path: "/officer/traffic-map" },
     ],
   },
   {

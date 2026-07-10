@@ -15,6 +15,12 @@ interface ForecastData {
   total_travel_time?: number;
   risk_level?: string;
   congestion_category?: string;
+  busiest_hour_summary?: {
+    jam_terpadat: string;
+    tundaan_puncak: number;
+    status: string;
+    volume: string;
+  };
 }
 
 // Minimal Scroll Reveal Component for tasteful animations
@@ -98,23 +104,57 @@ export default function CongestionPredictionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasRunPrediction, setHasRunPrediction] = useState(false);
+  const [isSyncingWeather, setIsSyncingWeather] = useState(false);
+  const [timeRangeStart, setTimeRangeStart] = useState(420); // 07:00 in minutes
+  const [timeRangeEnd, setTimeRangeEnd] = useState(720); // 12:00 in minutes
+
+  const formatMinutes = (mins: number) => {
+    const h = Math.floor(mins / 60).toString().padStart(2, '0');
+    const m = (mins % 60).toString().padStart(2, '0');
+    return `${h}:${m}`;
+  };
+
+  const syncWeather = async () => {
+    setIsSyncingWeather(true);
+    try {
+      const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=0.5333&longitude=101.4500&current=temperature_2m,weather_code");
+      const data = await res.json();
+      
+      const tempC = Math.round(data.current.temperature_2m);
+      setTemp(tempC.toString());
+      
+      const code = data.current.weather_code;
+      let weatherStr = "Tidak diketahui";
+      if (code === 0) weatherStr = "Cerah";
+      else if (code >= 1 && code <= 48) weatherStr = "Berawan";
+      else if (code >= 51 && code <= 67) weatherStr = "Hujan ringan";
+      else if (code >= 71 && code <= 99) weatherStr = "Hujan deras";
+      
+      setWeather(weatherStr);
+    } catch (err) {
+      console.error("Gagal sinkronisasi cuaca", err);
+    } finally {
+      setIsSyncingWeather(false);
+    }
+  };
 
   const fetchPlan = async () => {
     setHasRunPrediction(true);
     setIsLoading(true);
     setError(null);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       
       const selectedRoute = routesData[routeIdx];
       const queryParams = new URLSearchParams({
         origin: selectedRoute.origin,
         destination: selectedRoute.dest,
         time_mode: "berangkat",
-        target_time: time
+        target_time: formatMinutes(timeRangeStart),
+        target_time_end: formatMinutes(timeRangeEnd)
       });
       
-      if (weather !== "Tidak diketahui") {
+      if (weather && weather !== "Tidak diketahui") {
         queryParams.append("weather", weather);
       }
       
@@ -202,7 +242,6 @@ export default function CongestionPredictionPage() {
   const riskStr = data?.risk_level ?? "Belum tersedia";
   const delayMinutes = data?.delay_minutes;
   const hasData = data?.data_available === true;
-  const targetTime = data?.target_arrival || data?.departure_time || "Belum tersedia";
   
   const statusInfo = getStatusInfo(categoryStr);
   const displayRisk = riskStr !== "Belum tersedia" ? riskStr : statusInfo.risk;
@@ -310,16 +349,45 @@ export default function CongestionPredictionPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jam Prediksi</label>
+                  <div className="mb-5">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">Pilih Rentang Waktu (Jam Berangkat & Target Tiba)</label>
+                    <div className="relative flex items-center w-full px-2 mb-2 h-8">
+                      {/* Jam Start Label */}
+                      <div className="absolute -top-6 text-blue-600 font-bold text-sm transform -translate-x-1/2 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100" style={{ left: `${(timeRangeStart / 1440) * 100}%` }}>
+                        {formatMinutes(timeRangeStart)}
+                      </div>
+                      {/* Jam End Label */}
+                      <div className="absolute -top-6 text-blue-600 font-bold text-sm transform -translate-x-1/2 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100" style={{ left: `${(timeRangeEnd / 1440) * 100}%` }}>
+                        {formatMinutes(timeRangeEnd)}
+                      </div>
+                      
+                      {/* Track */}
+                      <div className="relative w-full h-2 bg-slate-200 rounded-full">
+                        <div 
+                          className="absolute h-full bg-blue-500 rounded-full"
+                          style={{ left: `${(timeRangeStart / 1440) * 100}%`, right: `${100 - (timeRangeEnd / 1440) * 100}%` }}
+                        />
+                      </div>
+                      
+                      {/* Inputs */}
                       <input 
-                        type="time" 
-                        value={time}
-                        onChange={(e) => setTime(e.target.value)}
-                        className="w-full bg-white border border-slate-200 text-[#0B1F3A] text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+                        type="range" min="0" max="1440" step="15"
+                        value={timeRangeStart}
+                        onChange={(e) => setTimeRangeStart(Math.min(Number(e.target.value), timeRangeEnd - 15))}
+                        className="absolute top-1/2 -translate-y-1/2 left-0 w-full h-4 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:shadow-md cursor-pointer"
+                        style={{ zIndex: timeRangeStart > 1340 ? 5 : 3 }}
+                      />
+                      <input 
+                        type="range" min="0" max="1440" step="15"
+                        value={timeRangeEnd}
+                        onChange={(e) => setTimeRangeEnd(Math.max(Number(e.target.value), timeRangeStart + 15))}
+                        className="absolute top-1/2 -translate-y-1/2 left-0 w-full h-4 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:shadow-md cursor-pointer"
+                        style={{ zIndex: 4 }}
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Cuaca (Opsional)</label>
                       <select 
@@ -346,10 +414,25 @@ export default function CongestionPredictionPage() {
                     </div>
                   </div>
 
-                  <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-xs font-medium text-slate-400">
-                      *Cuaca dan suhu boleh dikosongkan jika tidak diketahui.
-                    </p>
+                  <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 mt-2">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                      <button
+                        onClick={syncWeather}
+                        disabled={isSyncingWeather}
+                        className="w-full sm:w-auto px-4 py-3 bg-sky-100 hover:bg-sky-200 text-sky-700 font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm"
+                        title="Ambil data cuaca Pekanbaru terkini"
+                      >
+                        {isSyncingWeather ? (
+                           <div className="w-4 h-4 border-2 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                           <CloudLightning className="w-4 h-4" />
+                        )}
+                        Sync Cuaca
+                      </button>
+                      <p className="text-xs font-medium text-slate-400 max-w-[200px] hidden sm:block leading-tight">
+                        *Klik untuk isi otomatis,<br/>atau biarkan kosong.
+                      </p>
+                    </div>
                     <button
                       onClick={fetchPlan}
                       disabled={isLoading}
@@ -450,18 +533,53 @@ export default function CongestionPredictionPage() {
                             {delayMinutes !== undefined ? `${delayMinutes} mnt` : "-"}
                           </p>
                         </div>
-                        <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Estimasi Sampai</p>
-                          <p className="text-2xl font-extrabold text-[#0B1F3A]">
-                            {targetTime}
-                          </p>
-                        </div>
+                          <div className="col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Estimasi Tiba</p>
+                            <p className="text-2xl font-extrabold text-[#0B1F3A]">
+                              {data?.estimated_arrival || "Belum tersedia"}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              Berangkat: {formatMinutes(timeRangeStart)}
+                            </p>
+                          </div>
                       </div>
 
                     </div>
                   </div>
                 </div>
               )}
+
+              {data?.busiest_hour_summary && (
+                <div className="mt-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                  <h3 className="text-xs font-bold text-[#0B1F3A] uppercase tracking-wider mb-6">
+                    Ringkasan Kondisi Jam Paling Sibuk
+                  </h3>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex gap-12">
+                      <div>
+                        <p className="text-sm font-medium text-slate-500 mb-1">Jam Terpadat</p>
+                        <p className="text-4xl font-normal text-slate-700 mb-2">{data.busiest_hour_summary.jam_terpadat}</p>
+                        {data.busiest_hour_summary.volume && (
+                          <span className="inline-flex items-center px-2 py-0.5 bg-[#e5f5ea] text-[#16a34a] text-xs font-semibold rounded-full">
+                            {data.busiest_hour_summary.volume}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-500 mb-1">Tundaan Puncak</p>
+                        <p className="text-4xl font-normal text-slate-700">{data.busiest_hour_summary.tundaan_puncak} Menit</p>
+                      </div>
+                    </div>
+                    <div className="text-center md:mr-10">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status</p>
+                      <p className={`text-3xl font-bold uppercase tracking-tight ${data.busiest_hour_summary.status.includes('MACET') ? 'text-[#7f1d1d]' : 'text-slate-700'}`}>
+                        {data.busiest_hour_summary.status}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </ScrollReveal>
           )}
 

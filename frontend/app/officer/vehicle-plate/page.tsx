@@ -82,7 +82,7 @@ export default function OfficerVehiclePlatePage() {
               Monitoring Kendaraan dan Plat
             </h1>
             <p className="text-base font-normal text-slate-600 leading-relaxed max-w-2xl">
-              Pantauan kendaraan, pembacaan plat tersamarkan, dan status administrasi simulasi untuk membantu petugas menentukan tindak lanjut.
+              Pantauan kendaraan, pembacaan plat, dan status administrasi simulasi untuk membantu petugas menentukan tindak lanjut.
             </p>
           </div>
           <div className="flex flex-col gap-1.5 text-right bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl">
@@ -93,7 +93,7 @@ export default function OfficerVehiclePlatePage() {
               <span className="text-slate-400">Area:</span> Pekanbaru
             </p>
             <p className="text-xs font-medium text-slate-500">
-              <span className="text-slate-400">Data:</span> Plat tersamarkan
+              <span className="text-slate-400">Data:</span> Plat ditampilkan penuh
             </p>
             <p className="text-xs font-medium text-slate-500">
               <span className="text-slate-400">Validasi:</span> Perlu pemeriksaan petugas
@@ -106,7 +106,7 @@ export default function OfficerVehiclePlatePage() {
           <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col relative overflow-hidden">
             <div className="absolute top-0 right-1/4 w-64 h-64 bg-teal-500/5 blur-[60px] rounded-full pointer-events-none" />
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10 divide-y md:divide-y-0 md:divide-x divide-slate-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 divide-y md:divide-y-0 md:divide-x divide-slate-200">
               
               <div className="flex flex-col space-y-2 md:pr-6">
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Kendaraan Terpantau</p>
@@ -125,16 +125,6 @@ export default function OfficerVehiclePlatePage() {
                 </div>
                 <p className="text-sm font-normal text-slate-600 leading-relaxed">
                   Plat yang berhasil terbaca oleh sistem dalam pemantauan.
-                </p>
-              </div>
-
-              <div className="flex flex-col space-y-2 pt-6 md:pt-0 md:px-6">
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">Perlu Validasi</p>
-                <div className="flex items-center pt-1 pb-2">
-                  <span className="text-2xl font-medium text-amber-600">{data.perlu_validasi} data</span>
-                </div>
-                <p className="text-sm font-normal text-slate-600 leading-relaxed">
-                  Data yang perlu diperiksa kembali oleh petugas secara manual.
                 </p>
               </div>
 
@@ -210,7 +200,7 @@ export default function OfficerVehiclePlatePage() {
         {/* 6. Plate Monitoring Table */}
         <section>
           <div className="p-6 sm:p-8 rounded-2xl bg-white/70 backdrop-blur-xl border border-white shadow-sm overflow-hidden flex flex-col">
-            <h2 className="text-lg font-medium text-[#0B1F3A] mb-6">Daftar Pantauan Plat (Tersamarkan)</h2>
+            <h2 className="text-lg font-medium text-[#0B1F3A] mb-6">Daftar Pantauan Plat</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
@@ -231,7 +221,7 @@ export default function OfficerVehiclePlatePage() {
                       <td className="p-4 text-sm font-medium text-slate-500">{row.time}</td>
                       <td className="p-4 text-sm font-medium text-[#0B1F3A]">{row.loc}</td>
                       <td className="p-4 text-sm font-normal text-slate-600">{row.type}</td>
-                      <td className="p-4 text-sm font-medium text-slate-700 tracking-wider bg-slate-100/50 rounded">{row.plate}</td>
+                      <td className="p-4 text-sm font-bold text-slate-800 tracking-wider bg-slate-100/50 rounded">{row.plate}</td>
                       <td className="p-4 text-sm font-normal text-slate-600">{row.read}</td>
                       <td className="p-4 text-sm font-normal text-slate-600">{row.adm}</td>
                       <td className="p-4">

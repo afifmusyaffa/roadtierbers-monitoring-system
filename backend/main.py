@@ -236,6 +236,7 @@ async def plan_trip(
     destination: str,
     time_mode: str = "berangkat",
     target_time: str = "08:00",
+    target_time_end: str = None,
     weather: str = "Cerah",
     temp_c: float = 30.0
 ):
@@ -391,6 +392,44 @@ async def plan_trip(
             risk = res["risk_level"] if res else "Rendah"
             total_travel_time = base_travel_time_minutes + delay
             arrival_time = target_dt + timedelta(minutes=total_travel_time)
+
+            busiest_hour_summary = None
+            if target_time_end:
+                try:
+                    hour_end, min_end = map(int, target_time_end.split(":"))
+                    end_dt = now.replace(hour=hour_end, minute=min_end, second=0, microsecond=0)
+                    if end_dt > target_dt:
+                        peak_delay = -1
+                        peak_hour = None
+                        peak_cat = None
+                        peak_vol = 0
+                        
+                        curr_dt = target_dt
+                        while curr_dt <= end_dt:
+                            c_hour_str = curr_dt.strftime("%H:00")
+                            c_res = predict_congestion(
+                                origin=origin, destination=destination, weather=weather,
+                                temp_c=temp_c, target_hour_str=c_hour_str,
+                                current_date=now.date(), yolo_history=yolo_history
+                            )
+                            c_delay = c_res["delay_minutes"] if c_res else 0
+                            if c_delay > peak_delay:
+                                peak_delay = c_delay
+                                peak_hour = curr_dt.strftime("%H:00")
+                                peak_cat = c_res["category"] if c_res else "Tidak Diketahui"
+                                peak_vol = c_res.get("volume_pred", 0) if c_res else 0
+                            curr_dt += timedelta(hours=1)
+                            
+                        if peak_hour:
+                            busiest_hour_summary = {
+                                "jam_terpadat": peak_hour,
+                                "tundaan_puncak": peak_delay,
+                                "status": peak_cat.upper() if peak_cat else "TIDAK DIKETAHUI",
+                                "volume": f"↑ {peak_vol:,.0f} kdr/jam".replace(",", ".") if peak_vol else ""
+                            }
+                except Exception as e:
+                    print(f"Error calculating busiest hour: {e}")
+
             return ApiResponse(
                 status="success",
                 message="Plan generated successfully",
@@ -404,7 +443,8 @@ async def plan_trip(
                     "delay_minutes": delay,
                     "total_travel_time": total_travel_time,
                     "congestion_category": cat,
-                    "risk_level": risk
+                    "risk_level": risk,
+                    "busiest_hour_summary": busiest_hour_summary
                 }
             )
     except Exception as e:
@@ -939,7 +979,7 @@ async def get_vehicles_summary():
                 "time": time_str,
                 "loc": loc_str,
                 "type": v_type,
-                "plate": f"{plate_num[:4]}***{plate_num[-2:]}" if read_status == "Terbaca" else "BM ****",
+                "plate": plate_num,
                 "read": read_status,
                 "adm": adm_status,
                 "risk": risk_status,
@@ -948,10 +988,10 @@ async def get_vehicles_summary():
             
         if not plates_list:
             plates_list = [
-                { "time": "10:15", "loc": "Simpang SKA", "type": "Motor", "plate": "BM 1*** AB", "read": "Terbaca", "adm": "Aktif", "risk": "Rendah", "note": "Tidak ada tindakan khusus" },
-                { "time": "10:18", "loc": "Panam (UNRI)", "type": "Motor", "plate": "BM 7*** KP", "read": "Terbaca", "adm": "Perlu pemeriksaan", "risk": "Tinggi", "note": "Arahkan untuk validasi administrasi" },
-                { "time": "10:22", "loc": "Jl. Sudirman", "type": "Mobil", "plate": "BM 2*** CD", "read": "Tidak jelas", "adm": "Belum diverifikasi", "risk": "Sedang", "note": "Perlu cek ulang frame sample" },
-                { "time": "10:25", "loc": "Harapan Raya", "type": "Motor", "plate": "BM 9*** RS", "read": "Terbaca", "adm": "Perlu pemeriksaan", "risk": "Tinggi", "note": "Cocokkan dengan pantauan petugas" },
+                { "time": "10:15", "loc": "Simpang SKA", "type": "Motor", "plate": "BM 1425 AB", "read": "Terbaca", "adm": "Aktif", "risk": "Rendah", "note": "Tidak ada tindakan khusus" },
+                { "time": "10:18", "loc": "Panam (UNRI)", "type": "Motor", "plate": "BM 7912 KP", "read": "Terbaca", "adm": "Perlu pemeriksaan", "risk": "Tinggi", "note": "Arahkan untuk validasi administrasi" },
+                { "time": "10:22", "loc": "Jl. Sudirman", "type": "Mobil", "plate": "BM 1234 CD", "read": "Tidak jelas", "adm": "Belum diverifikasi", "risk": "Sedang", "note": "Perlu cek ulang frame sample" },
+                { "time": "10:25", "loc": "Harapan Raya", "type": "Motor", "plate": "BM 9123 RS", "read": "Terbaca", "adm": "Perlu pemeriksaan", "risk": "Tinggi", "note": "Cocokkan dengan pantauan petugas" },
             ]
 
         return ApiResponse(

@@ -34,11 +34,13 @@ interface AnalyzeResponse {
 }
 
 // Global state to persist data during client-side navigation
-let globalAIDetectionState = {
+export let globalAIDetectionState = {
   selectedFile: null as File | null,
   previewUrl: null as string | null,
   imgSize: { width: 0, height: 0 },
   results: null as AnalyzeResponse | null,
+  cumulativeVehicles: 0,
+  cumulativeViolations: 0,
 };
 
 export default function OfficerAIDetectionPage() {
@@ -47,6 +49,9 @@ export default function OfficerAIDetectionPage() {
   const [imgSize, setImgSize] = useState<{ width: number; height: number }>(globalAIDetectionState.imgSize);
   const [isDetecting, setIsDetecting] = useState(false);
   const [results, setResults] = useState<AnalyzeResponse | null>(globalAIDetectionState.results);
+  const [cumulativeVehicles, setCumulativeVehicles] = useState(globalAIDetectionState.cumulativeVehicles);
+  const [cumulativeViolations, setCumulativeViolations] = useState(globalAIDetectionState.cumulativeViolations);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -128,8 +133,25 @@ export default function OfficerAIDetectionPage() {
                    const url = URL.createObjectURL(blob);
                    setSyncedFrameUrl(url);
                    setResults(data);
-                   // Step the video forward 
-                   video.currentTime += 0.25;
+
+                   // Accumulate totals
+                   const vCount = data.data?.detections?.kendaraan?.data?.length || 0;
+                   const hCount = data.data?.detections?.helm?.data?.length || 0;
+                   const bCount = data.data?.detections?.boncengan?.data?.length || 0;
+                   
+                   setCumulativeVehicles(prev => {
+                      const next = prev + vCount;
+                      globalAIDetectionState.cumulativeVehicles = next;
+                      return next;
+                   });
+                   setCumulativeViolations(prev => {
+                      const next = prev + hCount + bCount;
+                      globalAIDetectionState.cumulativeViolations = next;
+                      return next;
+                   });
+
+                   // Step the video forward (2 detik agar lebih cepat)
+                   video.currentTime += 2.0;
                 }
               } catch (e) {
                 // If API fails, wait a bit before retrying
@@ -186,6 +208,16 @@ export default function OfficerAIDetectionPage() {
       });
       const data = await res.json();
       setResults(data);
+      
+      const vCount = data.data?.detections?.kendaraan?.data?.length || 0;
+      const hCount = data.data?.detections?.helm?.data?.length || 0;
+      const bCount = data.data?.detections?.boncengan?.data?.length || 0;
+      
+      setCumulativeVehicles(vCount);
+      globalAIDetectionState.cumulativeVehicles = vCount;
+      setCumulativeViolations(hCount + bCount);
+      globalAIDetectionState.cumulativeViolations = hCount + bCount;
+
     } catch (err) {
       console.error(err);
       alert("Failed to connect to backend API");
@@ -421,7 +453,13 @@ export default function OfficerAIDetectionPage() {
                         />
                         {isContinuousMode && isPlaying && (
                            <div className="relative w-full">
-                              <img src={syncedFrameUrl || previewUrl} className="w-full h-auto object-contain block" />
+                              {syncedFrameUrl ? (
+                                <img src={syncedFrameUrl} className="w-full h-auto object-contain block" />
+                              ) : (
+                                <div className="w-full aspect-video flex items-center justify-center bg-slate-100 rounded-xl">
+                                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                                </div>
+                              )}
                               <button 
                                  onClick={() => setIsPlaying(false)}
                                  className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium z-30 shadow-lg backdrop-blur-sm transition-all"
@@ -436,6 +474,10 @@ export default function OfficerAIDetectionPage() {
                                 setIsPlaying(true);
                                 setResults(null);
                                 setSyncedFrameUrl(null);
+                                setCumulativeVehicles(0);
+                                setCumulativeViolations(0);
+                                globalAIDetectionState.cumulativeVehicles = 0;
+                                globalAIDetectionState.cumulativeViolations = 0;
                               }}
                               className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-600/90 hover:bg-blue-600 text-white px-6 py-3 rounded-xl text-md font-semibold shadow-xl backdrop-blur-sm flex items-center gap-2 transition-all"
                            >
@@ -519,13 +561,27 @@ export default function OfficerAIDetectionPage() {
               <h2 className="text-lg font-medium text-[#0B1F3A] mb-4">Rangkuman Deteksi</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between col-span-2">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-1">Total Kendaraan</p>
-                  <p className="text-3xl font-medium text-[#1D4ED8] mb-2">{totalVehicles || "-"}</p>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-1">Total Akumulasi Kendaraan</p>
+                  <div className="flex items-end gap-3 mb-2">
+                    <p className="text-3xl font-medium text-[#1D4ED8]">{cumulativeVehicles || "0"}</p>
+                    {isContinuousMode && totalVehicles > 0 && (
+                      <span className="text-sm font-medium text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full mb-1">
+                        +{totalVehicles} frame ini
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs font-normal text-slate-500">Berdasarkan model Kelompok 6</p>
                 </div>
                 <div className="p-4 rounded-xl bg-white/70 backdrop-blur-xl border border-white shadow-sm flex flex-col justify-between col-span-2">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-1">Indikasi Pelanggaran</p>
-                  <p className="text-3xl font-medium text-red-500 mb-2">{totalViolations || "-"}</p>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-1">Total Akumulasi Pelanggaran</p>
+                  <div className="flex items-end gap-3 mb-2">
+                    <p className="text-3xl font-medium text-red-500">{cumulativeViolations || "0"}</p>
+                    {isContinuousMode && totalViolations > 0 && (
+                      <span className="text-sm font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full mb-1">
+                        +{totalViolations} frame ini
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs font-normal text-slate-500">Helm & Boncengan</p>
                 </div>
               </div>
