@@ -1304,9 +1304,20 @@ Berikut adalah konteks deteksi terbaru dari sistem:
 Berikan insight yang berguna, ringkas, dan praktis. Jangan mengarang data yang tidak ada di konteks. Jika ditanya tentang prioritas area, sebutkan area dengan pelanggaran terbanyak dari data. Jika data kosong, sampaikan bahwa belum ada data deteksi.
 """
         
-        download_tool = {
-            "function_declarations": [
-                {
+        from openai import OpenAI
+        import os
+        import json
+        
+        client = OpenAI(
+            base_url="https://integrate.api.nvidia.com/v1",
+            api_key=os.environ.get("NVIDIA_API_KEY")
+        )
+        
+        # Tools definition for OpenAI
+        tools = [
+            {
+                "type": "function",
+                "function": {
                     "name": "download_report",
                     "description": "Gunakan fungsi ini jika pengguna meminta untuk membuat, mengunduh, mengekspor, atau mendownload laporan. Format yang didukung: csv, excel, pdf.",
                     "parameters": {
@@ -1320,37 +1331,62 @@ Berikan insight yang berguna, ringkas, dan praktis. Jangan mengarang data yang t
                         "required": ["format"]
                     }
                 }
-            ]
-        }
+            }
+        ]
         
-        model = genai.GenerativeModel(
-            "gemini-2.5-flash", 
-            system_instruction=system_instruction,
-            tools=[download_tool]
-        )
+        # Format history for OpenAI
+        formatted_messages = [
+            {"role": "system", "content": system_instruction}
+        ]
         
-        # format history for gemini
-        formatted_history = []
         for msg in req.history:
-            role = "user" if msg.role == "user" else "model"
-            formatted_history.append({"role": role, "parts": [{"text": msg.content}]})
+            role = "user" if msg.role == "user" else "assistant"
+            formatted_messages.append({"role": role, "content": msg.content})
             
-        chat = model.start_chat(history=formatted_history)
-        response = chat.send_message(req.message)
+        formatted_messages.append({"role": "user", "content": req.message})
+        
+        # Use timeout for OpenAI call
+        import asyncio
+        import concurrent.futures
+        
+        def _call_openai():
+            return client.chat.completions.create(
+                model="deepseek-ai/deepseek-v4-pro",
+                messages=formatted_messages,
+                temperature=0.7,
+                top_p=0.95,
+                max_tokens=1024,
+                tools=tools,
+                tool_choice="auto",
+                extra_body={"chat_template_kwargs": {"thinking": False}},
+                stream=False
+            )
+            
+        loop = asyncio.get_event_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            try:
+                response = await asyncio.wait_for(
+                    loop.run_in_executor(pool, _call_openai),
+                    timeout=15.0
+                )
+            except asyncio.TimeoutError:
+                return {"error": "API NVIDIA sedang sibuk atau terkena rate limit. Silakan coba lagi dalam beberapa detik."}
+                
+        message = response.choices[0].message
         
         action_name = None
         action_format = "csv"
-        if response.candidates and response.candidates[0].content.parts:
-            for part in response.candidates[0].content.parts:
-                if getattr(part, "function_call", None):
-                    action_name = part.function_call.name
-                    try:
-                        args = dict(part.function_call.args)
-                        if "format" in args:
-                            action_format = args["format"].lower()
-                    except:
-                        pass
-                    break
+        
+        if message.tool_calls:
+            tool_call = message.tool_calls[0]
+            if tool_call.function.name == "download_report":
+                action_name = "download_report"
+                try:
+                    args = json.loads(tool_call.function.arguments)
+                    if "format" in args:
+                        action_format = args["format"].lower()
+                except:
+                    pass
                     
         if action_name == "download_report":
             return {
@@ -1359,8 +1395,11 @@ Berikan insight yang berguna, ringkas, dan praktis. Jangan mengarang data yang t
                 "format": action_format
             }
             
-        return {"response": response.text}
+        return {"response": message.content}
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return {"error": str(e)}
+        error_msg = str(e)
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
+            return {"error": "API sedang terkena rate limit. Silakan tunggu 1-2 menit lalu coba lagi."}
+        return {"error": error_msg}

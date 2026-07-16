@@ -176,9 +176,20 @@ export default function AssistantPage() {
       }
     } catch (error: any) {
       console.error("Chat error:", error);
+      
+      let errorMessage = error.message;
+      if (
+        errorMessage === "Failed to fetch" || 
+        errorMessage === "Gagal terhubung ke backend" ||
+        errorMessage.toLowerCase().includes("limit") ||
+        errorMessage.toLowerCase().includes("gemini")
+      ) {
+        errorMessage = "limit token";
+      }
+      
       setMessages((prev) => [
         ...prev,
-        { role: "model", content: `Error: ${error.message}` },
+        { role: "model", content: `Error: ${errorMessage}` },
       ]);
     } finally {
       setIsLoading(false);

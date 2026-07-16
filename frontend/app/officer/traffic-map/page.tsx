@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { OfficerPageShell } from "@/components/layout/officer-page-shell";
 import dynamic from 'next/dynamic';
-import { globalAIDetectionState } from "@/app/officer/ai-detection/page";
 
 const TrafficMap = dynamic(() => import('@/components/map/traffic-map'), { 
   ssr: false, 
@@ -13,47 +12,51 @@ const TrafficMap = dynamic(() => import('@/components/map/traffic-map'), {
 export default function OfficerTrafficMapPage() {
   const [totalVehicles, setTotalVehicles] = useState(0);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
+  const [congestionLabel, setCongestionLabel] = useState<string>("");
   
-  // State for interactive slider
-  const [sliderValue, setSliderValue] = useState(0);
-  const [isManualMode, setIsManualMode] = useState(false);
-
-  useEffect(() => {
-    // Read the global state from AI detection periodically to allow real-time updates
-    const interval = setInterval(() => {
-      const results = globalAIDetectionState.results;
-      if (results && results.data && results.data.detections) {
-        if (results.data.detections.kendaraan?.data) {
-          setTotalVehicles(results.data.detections.kendaraan.data.length);
-        }
-        setLastUpdate(new Date().toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':'));
-      }
-    }, 1000); // Poll every second
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Update slider automatically if not in manual mode
-  useEffect(() => {
-    if (!isManualMode) {
-      if (lastUpdate) {
-        const timePart = lastUpdate.split(' ')[1]; // assumes "DD/MM/YYYY HH:mm:ss"
-        if (timePart) {
-          const [h, m] = timePart.split(':');
-          setSliderValue(parseInt(h) * 60 + parseInt(m));
-        }
-      } else {
-        const now = new Date();
-        setSliderValue(now.getHours() * 60 + now.getMinutes());
-      }
-    }
-  }, [lastUpdate, isManualMode]);
+  // Slider starts at current time
+  const [sliderValue, setSliderValue] = useState(() => {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  });
 
   // Derived display time from slider value
   const displayHours = Math.floor(sliderValue / 60).toString().padStart(2, '0');
   const displayMinutes = (sliderValue % 60).toString().padStart(2, '0');
   const displayTime = `${displayHours}:${displayMinutes}`;
 
+  // ALWAYS fetch forecasting data from Kelompok 9 model whenever displayTime changes
+  useEffect(() => {
+    const fetchForecast = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== "undefined" ? (window.location.protocol === "https:" ? `https://${window.location.host}/api` : `http://${window.location.hostname}:8001`) : "http://127.0.0.1:8001");
+        const url = new URL(`${apiUrl}/forecasting/plan`);
+        url.searchParams.append("origin", "Simpang SKA");
+        url.searchParams.append("destination", "Bandara SSK II");
+        url.searchParams.append("target_time", displayTime);
+        
+        const res = await fetch(url.toString());
+        const json = await res.json();
+        if (json.status === "success" && json.data) {
+          const cat = (json.data.congestion_category || "").toLowerCase();
+          setCongestionLabel(json.data.congestion_category || "Lancar");
+          if (cat.includes("padat")) {
+            setTotalVehicles(20);
+          } else if (cat.includes("sedang")) {
+            setTotalVehicles(10);
+          } else {
+            setTotalVehicles(2); // Lancar
+          }
+          setLastUpdate(displayTime);
+        }
+      } catch (e) {
+        console.error("Failed to fetch forecast map data", e);
+      }
+    };
+    
+    const timeoutId = setTimeout(fetchForecast, 300);
+    return () => clearTimeout(timeoutId);
+  }, [displayTime]);
 
   return (
     <OfficerPageShell>
@@ -65,10 +68,10 @@ export default function OfficerTrafficMapPage() {
               Peta Pantauan
             </span>
             <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-[#0B1F3A]">
-              Peta Arus Lalu Lintas (Live)
+              Peta Arus Lalu Lintas
             </h1>
             <p className="text-base font-normal text-slate-600 leading-relaxed max-w-2xl">
-              Peta interaktif untuk memantau kepadatan lalu lintas secara real-time berdasarkan hasil deteksi AI terakhir Anda.
+              Peta interaktif kepadatan lalu lintas berdasarkan hasil prediksi model forecasting (Kelompok 9).
             </p>
           </div>
         </section>
@@ -79,11 +82,22 @@ export default function OfficerTrafficMapPage() {
             {/* Timeline Slider Section */}
             <div className="mb-6 space-y-4 border-b border-slate-100 pb-6">
               <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">
-                LIVE HEATMAP AREA PEKANBARU
+                HEATMAP PREDIKSI AREA PEKANBARU
               </h2>
               <div className="space-y-2">
-                <p className="text-sm font-medium text-slate-600">Pilih Jam Pantauan (Live Heatmap):</p>
-                <p className="text-sm font-medium text-red-500">{displayTime}</p>
+                <p className="text-sm font-medium text-slate-600">Pilih Jam Prediksi Kepadatan:</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-lg font-bold text-red-500 tabular-nums">{displayTime}</p>
+                  {congestionLabel && (
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      congestionLabel.toLowerCase().includes("padat") ? "bg-red-100 text-red-700" :
+                      congestionLabel.toLowerCase().includes("sedang") ? "bg-yellow-100 text-yellow-700" :
+                      "bg-green-100 text-green-700"
+                    }`}>
+                      {congestionLabel}
+                    </span>
+                  )}
+                </div>
                 
                 <input 
                   type="range" 
@@ -91,11 +105,17 @@ export default function OfficerTrafficMapPage() {
                   max="1439" 
                   value={sliderValue} 
                   onChange={(e) => {
-                    setIsManualMode(true);
                     setSliderValue(parseInt(e.target.value));
                   }}
                   className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-500"
                 />
+                <div className="flex justify-between text-xs text-slate-400">
+                  <span>00:00</span>
+                  <span>06:00</span>
+                  <span>12:00</span>
+                  <span>18:00</span>
+                  <span>23:59</span>
+                </div>
               </div>
             </div>
 

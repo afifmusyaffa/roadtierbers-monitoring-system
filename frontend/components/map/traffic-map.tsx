@@ -41,7 +41,7 @@ export default function TrafficMap({ totalVehicles, lastUpdate }: TrafficMapProp
       <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%", zIndex: 10 }}>
         <TileLayer url={tileUrl} attribution={tileAttribution} />
         
-        <Polyline positions={roadCoordinates} color={lineColor} weight={8} opacity={0.8}>
+        <Polyline key={lineColor} positions={roadCoordinates} color={lineColor} weight={8} opacity={0.8}>
           <Tooltip sticky direction="top">
             <div className="text-sm font-medium">
               <p>Area: Jl. Soekarno Hatta</p>

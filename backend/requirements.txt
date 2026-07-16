@@ -20,7 +20,7 @@
 #   v3 : protobuf 7.35.1 -> 4.25.8 (bentrok tensorflow<5 vs onnxruntime>=4.25.8)
 #   v4 : tensorflow & ml_dtypes DIHAPUS (CPU server tanpa AVX);
 #        LSTM kel8/kel9 pindah ke runtime NumPy (lstm_numpy.py)
-# ============================================================
+# ============================================================X 
 
 # --- Web framework / API ---
 fastapi==0.139.0
@@ -59,7 +59,8 @@ kiwisolver==1.5.0
 pyparsing==3.3.2
 pillow==12.3.0
 
-# --- Gemini API ---
+# --- Generative AI API ---
+openai
 google-generativeai
 python-dotenv
 
